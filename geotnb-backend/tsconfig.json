@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",  // Choisis la version ES que tu préfères
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": false,  // Selon ton choix, tu peux ajuster les options strictes
+    "strictNullChecks": false,  // Ou true si tu veux activer la vérification stricte des null
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false, // Ou true si tu préfères un contrôle strict des noms de fichiers
+    "noFallthroughCasesInSwitch": false
+  }
+}
