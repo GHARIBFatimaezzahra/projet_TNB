@@ -1,0 +1,131 @@
+<div class="parcelle-list">
+    <div class="page-header">
+      <div class="header-content">
+        <h1>Gestion des Parcelles</h1>
+        <p>Gérer les parcelles soumises à la TNB</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="createParcelle()">
+          <i class="fas fa-plus"></i>
+          Nouvelle Parcelle
+        </button>
+      </div>
+    </div>
+  
+    <!-- Filtres et recherche -->
+    <div class="filters-section">
+      <div class="search-bar">
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="Rechercher par référence foncière..."
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()">
+        <button class="btn btn-outline" (click)="onSearch()">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+  
+      <div class="filters">
+        <select class="form-control" [(ngModel)]="selectedZonage" (change)="onFilterChange()">
+          <option *ngFor="let zonage of zonages" [value]="zonage.value">
+            {{ zonage.label }}
+          </option>
+        </select>
+  
+        <select class="form-control" [(ngModel)]="selectedStatut" (change)="onFilterChange()">
+          <option *ngFor="let statut of statuts" [value]="statut.value">
+            {{ statut.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+  
+    <!-- Tableau des parcelles -->
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Surface (m²)</th>
+            <th>Zonage</th>
+            <th>Statut</th>
+            <th>Montant TNB</th>
+            <th>État</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let parcelle of parcelles">
+            <td>{{ parcelle.referenceFonciere }}</td>
+            <td>{{ parcelle.surfaceTotale | number:'1.0-2' }}</td>
+            <td>{{ parcelle.zonage }}</td>
+            <td>{{ parcelle.statutFoncier }}</td>
+            <td>{{ parcelle.montantTotalTNB | currency:'MAD':'symbol':'1.0-2' }}</td>
+            <td>
+              <span class="status-badge" [class]="getStatusClass(parcelle.etatValidation)">
+                {{ parcelle.etatValidation }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" (click)="viewParcelle(parcelle.id)" title="Voir">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-icon" (click)="editParcelle(parcelle.id)" title="Modifier">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon danger" (click)="deleteParcelle(parcelle.id)" title="Supprimer">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+  
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="totalItems > pageSize">
+        <div class="pagination-info">
+          Affichage {{ (currentPage - 1) * pageSize + 1 }} à 
+          {{ Math.min(currentPage * pageSize, totalItems) }} sur {{ totalItems }} parcelles
+        </div>
+        <div class="pagination">
+          <button 
+            class="btn btn-outline" 
+            [disabled]="currentPage === 1"
+            (click)="onPageChange(currentPage - 1)">
+            Précédent
+          </button>
+          <span class="page-numbers">
+            <button 
+              *ngFor="let page of [].constructor(Math.ceil(totalItems / pageSize)); let i = index"
+              class="btn"
+              [class.btn-primary]="i + 1 === currentPage"
+              [class.btn-outline]="i + 1 !== currentPage"
+              (click)="onPageChange(i + 1)">
+              {{ i + 1 }}
+            </button>
+          </span>
+          <button 
+            class="btn btn-outline"
+            [disabled]="currentPage >= Math.ceil(totalItems / pageSize)"
+            (click)="onPageChange(currentPage + 1)">
+            Suivant
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Loading -->
+    <div class="loading-container" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement des parcelles...</p>
+    </div>
+  
+    <!-- Erreur -->
+    <div class="error-container" *ngIf="error">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>{{ error }}</p>
+    </div>
+  </div>

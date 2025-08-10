@@ -1,0 +1,50 @@
+<div class="auth-form-container">
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+    <h2>Connexion</h2>
+    
+    <div class="form-group">
+      <label for="username">Nom d'utilisateur</label>
+      <input 
+        type="text" 
+        id="username" 
+        formControlName="username" 
+        class="form-control"
+        [class.error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+      <div class="error-message" 
+           *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+        Le nom d'utilisateur est requis
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Mot de passe</label>
+      <input 
+        type="password" 
+        id="password" 
+        formControlName="password" 
+        class="form-control"
+        [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+      <div class="error-message" 
+           *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+        Le mot de passe est requis
+      </div>
+    </div>
+
+    <div class="error-message" *ngIf="error">
+      {{ error }}
+    </div>
+
+    <button 
+      type="submit" 
+      class="btn btn-primary full-width"
+      [disabled]="loading || loginForm.invalid">
+      <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+      {{ loading ? 'Connexion...' : 'Se connecter' }}
+    </button>
+
+    <p class="auth-link">
+      Pas encore de compte ? 
+      <a (click)="navigateToRegister()">S'inscrire</a>
+    </p>
+  </form>
+</div>

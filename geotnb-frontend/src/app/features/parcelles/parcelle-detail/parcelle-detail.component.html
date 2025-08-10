@@ -1,0 +1,141 @@
+<div class="parcelle-detail" *ngIf="parcelle">
+    <div class="page-header">
+      <div class="header-content">
+        <h1>Détail de la Parcelle</h1>
+        <p>Référence: {{ parcelle.referenceFonciere }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="editParcelle()">
+          <i class="fas fa-edit"></i>
+          Modifier
+        </button>
+        <button class="btn btn-primary" (click)="generateFiche()">
+          <i class="fas fa-file-pdf"></i>
+          Générer Fiche
+        </button>
+      </div>
+    </div>
+  
+    <div class="detail-sections">
+      <!-- Section Identification -->
+      <div class="detail-section">
+        <h3>Identification</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Référence Foncière</label>
+            <span>{{ parcelle.referenceFonciere }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Statut Foncier</label>
+            <span>{{ parcelle.statutFoncier }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Statut d'Occupation</label>
+            <span>{{ parcelle.statutOccupation }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Zonage</label>
+            <span>{{ parcelle.zonage }}</span>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Section Surface -->
+      <div class="detail-section">
+        <h3>Surface</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Surface Totale</label>
+            <span>{{ parcelle.surfaceTotale | number:'1.0-2' }} m²</span>
+          </div>
+          <div class="detail-item">
+            <label>Surface Imposable</label>
+            <span>{{ parcelle.surfaceImposable | number:'1.0-2' }} m²</span>
+          </div>
+          <div class="detail-item">
+            <label>Taux d'Occupation</label>
+            <span>{{ (parcelle.surfaceImposable / parcelle.surfaceTotale * 100) | number:'1.0-1' }}%</span>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Section Fiscale -->
+      <div class="detail-section">
+        <h3>Informations Fiscales</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Catégorie Fiscale</label>
+            <span>{{ parcelle.categorieFiscale || 'Non définie' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Prix Unitaire</label>
+            <span>{{ parcelle.prixUnitaireM2 | currency:'MAD':'symbol':'1.0-2' }}/m²</span>
+          </div>
+          <div class="detail-item">
+            <label>Montant TNB</label>
+            <span class="amount-highlight">{{ parcelle.montantTotalTNB | currency:'MAD':'symbol':'1.0-2' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Exonéré</label>
+            <span class="status-badge" [class]="parcelle.exonereTNB ? 'status-success' : 'status-info'">
+              {{ parcelle.exonereTNB ? 'Oui' : 'Non' }}
+            </span>
+          </div>
+        </div>
+  
+        <!-- Informations d'exonération -->
+        <div *ngIf="parcelle.exonereTNB && parcelle.datePermis" class="exoneration-info">
+          <h4>Détails de l'Exonération</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Date du Permis</label>
+              <span>{{ parcelle.datePermis | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Durée d'Exonération</label>
+              <span>{{ parcelle.dureeExoneration }} années</span>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Section Propriétaires -->
+      <div class="detail-section" *ngIf="parcelle.proprietaires && parcelle.proprietaires.length > 0">
+        <h3>Propriétaires</h3>
+        <div class="proprietaires-list">
+          <div *ngFor="let proprietaire of parcelle.proprietaires" class="proprietaire-item">
+            <div class="proprietaire-info">
+              <h4>{{ proprietaire.nom }}</h4>
+              <p>{{ proprietaire.nature }} - {{ proprietaire.cin_ou_rc }}</p>
+              <p>{{ proprietaire.adresse }}</p>
+            </div>
+            <div class="proprietaire-quote">
+              <span class="quote-label">Quote-part</span>
+              <span class="quote-value">{{ proprietaire.quotePart * 100 | number:'1.0-1' }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Section État -->
+      <div class="detail-section">
+        <h3>État et Traçabilité</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>État de Validation</label>
+            <span class="status-badge" [class]="getStatusClass(parcelle.etatValidation)">
+              {{ parcelle.etatValidation }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <label>Date de Création</label>
+            <span>{{ parcelle.dateCreation | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Dernière Modification</label>
+            <span>{{ parcelle.dateModification | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,86 @@
+<div class="drawing-tools">
+    <div class="panel-header">
+      <h3>Outils de Dessin</h3>
+      <button class="close-btn" (click)="onClose()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  
+    <div class="panel-content">
+      <div class="tool-groups">
+        <div class="tool-group">
+          <h4>Dessiner</h4>
+          <div class="tool-buttons">
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('point')"
+              (click)="selectTool('point')">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>Point</span>
+            </button>
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('line')"
+              (click)="selectTool('line')">
+              <i class="fas fa-draw-polygon"></i>
+              <span>Ligne</span>
+            </button>
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('polygon')"
+              (click)="selectTool('polygon')">
+              <i class="fas fa-vector-square"></i>
+              <span>Polygone</span>
+            </button>
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('circle')"
+              (click)="selectTool('circle')">
+              <i class="fas fa-circle"></i>
+              <span>Cercle</span>
+            </button>
+          </div>
+        </div>
+  
+        <div class="tool-group">
+          <h4>Mesurer</h4>
+          <div class="tool-buttons">
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('measure-line')"
+              (click)="selectTool('measure-line')">
+              <i class="fas fa-ruler"></i>
+              <span>Distance</span>
+            </button>
+            <button 
+              class="tool-btn"
+              [class.active]="isToolActive('measure-area')"
+              (click)="selectTool('measure-area')">
+              <i class="fas fa-ruler-combined"></i>
+              <span>Surface</span>
+            </button>
+          </div>
+        </div>
+      </div>
+  
+      <div class="drawing-options">
+        <div class="option-group">
+          <label>Couleur de trait</label>
+          <div class="color-picker">
+            <input type="color" value="#1976d2">
+            <span>Bleu</span>
+          </div>
+        </div>
+  
+        <div class="option-group">
+          <label>Épaisseur de trait</label>
+          <select class="form-control">
+            <option value="1">1px</option>
+            <option value="2" selected>2px</option>
+            <option value="3">3px</option>
+            <option value="5">5px</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,91 @@
+<div class="proprietaire-form">
+    <div class="page-header">
+      <h1>{{ isEditMode ? 'Modifier' : 'Créer' }} un Propriétaire</h1>
+      <p>{{ isEditMode ? 'Modifier les informations' : 'Saisir les informations' }} du propriétaire</p>
+    </div>
+  
+    <form [formGroup]="proprietaireForm" (ngSubmit)="onSubmit()" class="form-container">
+      <div class="form-sections">
+        <div class="form-section">
+          <h3>Informations générales</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nom">Nom / Raison Sociale *</label>
+              <input 
+                type="text" 
+                id="nom" 
+                formControlName="nom" 
+                class="form-control"
+                [class.error]="proprietaireForm.get('nom')?.invalid && proprietaireForm.get('nom')?.touched">
+              <div class="error-message" 
+                   *ngIf="proprietaireForm.get('nom')?.invalid && proprietaireForm.get('nom')?.touched">
+                Le nom est requis
+              </div>
+            </div>
+  
+            <div class="form-group">
+              <label for="nature">Nature *</label>
+              <select 
+                id="nature" 
+                formControlName="nature" 
+                class="form-control"
+                [class.error]="proprietaireForm.get('nature')?.invalid && proprietaireForm.get('nature')?.touched">
+                <option value="">Sélectionner une nature</option>
+                <option value="Physique">Personne Physique</option>
+                <option value="Morale">Personne Morale</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cin_ou_rc">CIN / Registre de Commerce *</label>
+              <input 
+                type="text" 
+                id="cin_ou_rc" 
+                formControlName="cin_ou_rc" 
+                class="form-control">
+            </div>
+  
+            <div class="form-group">
+              <label for="telephone">Téléphone</label>
+              <input 
+                type="tel" 
+                id="telephone" 
+                formControlName="telephone" 
+                class="form-control">
+            </div>
+          </div>
+  
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="adresse">Adresse</label>
+              <textarea 
+                id="adresse" 
+                formControlName="adresse" 
+                class="form-control"
+                rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="error-message" *ngIf="error">
+        {{ error }}
+      </div>
+  
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" (click)="onCancel()">
+          Annuler
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="loading || proprietaireForm.invalid">
+          <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
+          {{ loading ? 'Sauvegarde...' : (isEditMode ? 'Modifier' : 'Créer') }}
+        </button>
+      </div>
+    </form>
+  </div>

@@ -1,0 +1,43 @@
+<div class="map-container">
+    <!-- Barre d'outils -->
+    <app-map-toolbar 
+      (layerControlToggle)="toggleLayerControl()"
+      (searchToggle)="toggleSearchPanel()"
+      (drawingToggle)="toggleDrawingTools()"
+      (zoomToExtent)="zoomToExtent()">
+    </app-map-toolbar>
+  
+    <!-- Conteneur principal -->
+    <div class="map-content">
+      <!-- Carte OpenLayers -->
+      <div #mapContainer class="ol-map"></div>
+  
+      <!-- Panneaux latéraux -->
+      <div class="side-panels">
+        <!-- Contrôle des couches -->
+        <app-layer-control 
+          *ngIf="showLayerControl"
+          class="side-panel">
+        </app-layer-control>
+  
+        <!-- Panneau de recherche -->
+        <app-search-panel 
+          *ngIf="showSearchPanel"
+          class="side-panel">
+        </app-search-panel>
+  
+        <!-- Outils de dessin -->
+        <app-drawing-tools 
+          *ngIf="showDrawingTools"
+          class="side-panel">
+        </app-drawing-tools>
+      </div>
+  
+      <!-- Informations sur la parcelle sélectionnée -->
+      <app-parcelle-info 
+        *ngIf="showParcelleInfo && selectedParcelle"
+        [parcelle]="selectedParcelle"
+        class="parcelle-info-panel">
+      </app-parcelle-info>
+    </div>
+  </div>

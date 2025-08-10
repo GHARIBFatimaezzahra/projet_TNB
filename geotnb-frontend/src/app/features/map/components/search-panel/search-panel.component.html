@@ -1,0 +1,64 @@
+<div class="search-panel">
+    <div class="panel-header">
+      <h3>Recherche</h3>
+      <button class="close-btn" (click)="onClose()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  
+    <div class="panel-content">
+      <form [formGroup]="searchForm" class="search-form">
+        <div class="form-group">
+          <label for="referenceFonciere">Référence Foncière</label>
+          <input 
+            type="text" 
+            id="referenceFonciere" 
+            formControlName="referenceFonciere" 
+            class="form-control"
+            placeholder="Ex: 123/45">
+        </div>
+  
+        <div class="form-group">
+          <label for="zonage">Zonage</label>
+          <select id="zonage" formControlName="zonage" class="form-control">
+            <option value="">Tous les zonages</option>
+            <option value="Résidentiel">Résidentiel</option>
+            <option value="Commercial">Commercial</option>
+            <option value="Industriel">Industriel</option>
+            <option value="Agricole">Agricole</option>
+          </select>
+        </div>
+  
+        <div class="form-group">
+          <label for="proprietaire">Propriétaire</label>
+          <input 
+            type="text" 
+            id="proprietaire" 
+            formControlName="proprietaire" 
+            class="form-control"
+            placeholder="Nom du propriétaire">
+        </div>
+  
+        <div class="search-actions">
+          <button type="button" class="btn btn-outline" (click)="onClear()">
+            <i class="fas fa-eraser"></i>
+            Effacer
+          </button>
+          <button type="button" class="btn btn-primary" (click)="onSearch()">
+            <i class="fas fa-search"></i>
+            Rechercher
+          </button>
+        </div>
+      </form>
+  
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <h4>Résultats ({{ searchResults.length }})</h4>
+        <div class="result-list">
+          <div class="result-item" *ngFor="let result of searchResults">
+            <div class="result-title">{{ result.referenceFonciere }}</div>
+            <div class="result-details">{{ result.zonage }} - {{ result.proprietaire }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
