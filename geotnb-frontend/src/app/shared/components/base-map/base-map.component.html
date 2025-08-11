@@ -1,0 +1,16 @@
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Menu Principal</span>
+  </div>
+  
+  <ul class="sidebar-menu">
+    <li *ngFor="let item of menuItems" 
+        class="menu-item" 
+        [class.active]="isActive(item.route)">
+      <a *ngIf="canShowMenuItem(item)" (click)="navigateTo(item.route)" class="menu-link">
+        <i [class]="item.icon"></i>
+        <span>{{ item.title }}</span>
+      </a>
+    </li>
+  </ul>
+</nav>

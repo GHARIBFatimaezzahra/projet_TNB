@@ -1,0 +1,85 @@
+.pagination-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    flex-wrap: wrap;
+    gap: 1rem;
+  
+    .pagination-info {
+      color: var(--text-secondary, #718096);
+      font-size: 0.875rem;
+    }
+  
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+  
+      .btn-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.5rem;
+        height: 2.5rem;
+        padding: 0.5rem;
+        border: 1px solid var(--border-color, #e2e8f0);
+        background: var(--bg-primary, white);
+        color: var(--text-primary, #2d3748);
+        text-decoration: none;
+        border-radius: var(--border-radius, 8px);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+  
+        &:hover:not(:disabled) {
+          background: var(--bg-secondary, #f7fafc);
+          border-color: var(--primary-color, #667eea);
+        }
+  
+        &.active {
+          background: var(--primary-color, #667eea);
+          border-color: var(--primary-color, #667eea);
+          color: white;
+        }
+  
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+  
+        &.ellipsis {
+          border: none;
+          background: none;
+          cursor: default;
+  
+          &:hover {
+            background: none;
+            border: none;
+          }
+        }
+      }
+    }
+  
+    .page-size-selector {
+      select {
+        padding: 0.5rem;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: var(--border-radius, 8px);
+        background: var(--bg-primary, white);
+        font-size: 0.875rem;
+        cursor: pointer;
+  
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color, #667eea);
+        }
+      }
+    }
+  }
+  
+  .icon-chevron-left::before { content: "◀"; }
+  .icon-chevron-right::before { content: "▶"; }
+  .icon-chevron-double-left::before { content: "⏪"; }
+  .icon-chevron-double-right::before { content: "⏩"; }

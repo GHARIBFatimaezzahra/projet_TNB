@@ -1,0 +1,35 @@
+<div class="import-data">
+    <div class="page-header">
+      <h1>Import de Données</h1>
+      <p>Importer des données SIG (Shapefile, GeoJSON, etc.)</p>
+    </div>
+  
+    <div class="import-container">
+      <div class="upload-zone">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Glisser-déposer vos fichiers ici</h3>
+        <p>ou cliquez pour sélectionner</p>
+        <input 
+          type="file" 
+          (change)="onFileSelected($event)"
+          accept=".shp,.geojson,.json,.zip"
+          multiple>
+      </div>
+  
+      <div class="import-options">
+        <h4>Options d'import</h4>
+        <div class="option-group">
+          <label>
+            <input type="checkbox" checked>
+            Vérifier la géométrie
+          </label>
+        </div>
+        <div class="option-group">
+          <label>
+            <input type="checkbox">
+            Remplacer les données existantes
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
