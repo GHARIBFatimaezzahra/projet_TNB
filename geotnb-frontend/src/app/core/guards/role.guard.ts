@@ -1,15 +1,19 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { 
+  CanActivate, 
+  ActivatedRouteSnapshot, 
+  RouterStateSnapshot, 
+  Router 
+} from '@angular/router';
 import { Observable, map, take } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { UserRole } from '../models/user.interface';
+import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
+import { UserRole } from '../models/enums/user-roles.enum';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RoleGuard implements CanActivate {
-
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -19,12 +23,14 @@ export class RoleGuard implements CanActivate {
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean> | boolean {
-    
+  ): Observable<boolean> {
     const requiredRoles = route.data['roles'] as UserRole[];
     
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
+      return new Observable(observer => {
+        observer.next(true);
+        observer.complete();
+      });
     }
 
     return this.authService.currentUser$.pipe(
@@ -35,16 +41,18 @@ export class RoleGuard implements CanActivate {
           return false;
         }
 
-        if (this.authService.hasAnyRole(requiredRoles)) {
-          return true;
+        const hasRequiredRole = requiredRoles.includes(user.profil as UserRole);
+        
+        if (!hasRequiredRole) {
+          this.notificationService.error(
+            'Accès refusé',
+            'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.'
+          );
+          this.router.navigate(['/dashboard']);
+          return false;
         }
 
-        this.notificationService.error(
-          'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.',
-          'Accès refusé'
-        );
-        this.router.navigate(['/dashboard']);
-        return false;
+        return true;
       })
     );
   }

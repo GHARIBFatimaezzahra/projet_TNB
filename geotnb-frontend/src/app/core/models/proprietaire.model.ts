@@ -1,18 +1,29 @@
+import { NatureProprietaire } from './enums/nature-proprietaire.enum';
+
 export interface Proprietaire {
   id: number;
   nom: string;
-  nature: 'Physique' | 'Morale';
+  nature: NatureProprietaire;
   cin_ou_rc: string;
   adresse: string;
-  telephone: string;
-  quotePart?: number; // Pour l'affichage dans parcelle
+  telephone?: string;
+  quotePart?: number;
+  dateCreation: Date;
+  dateModification?: Date;
 }
 
-export interface ParcelleProprietaire {
-  id: number;
-  parcelleId: number;
-  proprietaireId: number;
-  quotePart: number;
-  montantIndividuel: number;
-  proprietaire?: Proprietaire; // Pour les requêtes avec join
+export interface CreateProprietaireDto {
+  nom: string;
+  nature: NatureProprietaire;
+  cin_ou_rc: string;
+  adresse: string;
+  telephone?: string;
+}
+
+export interface UpdateProprietaireDto {
+  nom?: string;
+  nature?: NatureProprietaire;
+  cin_ou_rc?: string;
+  adresse?: string;
+  telephone?: string;
 }

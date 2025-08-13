@@ -1,46 +1,39 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoadingService {
   private loadingSubject = new BehaviorSubject<boolean>(false);
-  private loadingCountSubject = new BehaviorSubject<number>(0);
-
   public loading$ = this.loadingSubject.asObservable();
-  public loadingCount$ = this.loadingCountSubject.asObservable();
 
-  show(): void {
-    const currentCount = this.loadingCountSubject.value;
-    this.loadingCountSubject.next(currentCount + 1);
-    this.loadingSubject.next(true);
+  private loadingMap = new Map<string, boolean>();
+
+  show(key = 'global'): void {
+    this.loadingMap.set(key, true);
+    this.updateLoadingState();
   }
 
-  hide(): void {
-    const currentCount = this.loadingCountSubject.value;
-    const newCount = Math.max(0, currentCount - 1);
-    this.loadingCountSubject.next(newCount);
-    
-    if (newCount === 0) {
-      this.loadingSubject.next(false);
+  hide(key = 'global'): void {
+    this.loadingMap.delete(key);
+    this.updateLoadingState();
+  }
+
+  hideAll(): void {
+    this.loadingMap.clear();
+    this.updateLoadingState();
+  }
+
+  private updateLoadingState(): void {
+    const isLoading = this.loadingMap.size > 0;
+    this.loadingSubject.next(isLoading);
+  }
+
+  isLoading(key?: string): boolean {
+    if (key) {
+      return this.loadingMap.has(key);
     }
-  }
-
-  setLoading(loading: boolean): void {
-    if (loading) {
-      this.show();
-    } else {
-      this.hide();
-    }
-  }
-
-  isLoading(): boolean {
     return this.loadingSubject.value;
-  }
-
-  forceHide(): void {
-    this.loadingCountSubject.next(0);
-    this.loadingSubject.next(false);
   }
 }

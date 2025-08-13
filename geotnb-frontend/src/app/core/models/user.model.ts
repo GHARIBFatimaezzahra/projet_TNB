@@ -1,25 +1,39 @@
+import { UserRole } from './enums/user-roles.enum';
+
 export interface User {
   id: number;
   username: string;
   email: string;
-  profil: 'Admin' | 'AgentFiscal' | 'TechnicienSIG' | 'Lecteur';
+  profil: UserRole;
   estActif: boolean;
-  dernierAcces: Date;
-}
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-  profil: string;
+  dernierAcces?: Date;
+  dateCreation: Date;
+  dateModification?: Date;
 }
 
 export interface AuthResponse {
-  access_token: string;
   user: User;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface CreateUserDto {
+  username: string;
+  email: string;
+  password: string;
+  profil: UserRole;
+  estActif?: boolean;
+}
+
+export interface UpdateUserDto {
+  username?: string;
+  email?: string;
+  profil?: UserRole;
+  estActif?: boolean;
 }

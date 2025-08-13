@@ -1,43 +1,48 @@
-import { NgModule, Optional, SkipSelf, ModuleWithProviders } from '@angular/core';
+import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 // Services
-import { AuthService } from './auth/auth.service';
 import { ApiService } from './services/api.service';
+import { AuthService } from './services/auth.service';
+import { StorageService } from './services/storage.service';
 import { NotificationService } from './services/notification.service';
 import { LoadingService } from './services/loading.service';
-import { ExportService } from './services/export.service';
+import { MapService } from './services/map.service';
 
 // Guards
-import { AuthGuard } from './auth/auth.guard';
-import { RoleGuard } from './auth/role.guard';
+import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
+import { GuestGuard } from './guards/guest.guard';
 
 // Interceptors
-import { JwtInterceptor } from './auth/jwt.interceptor';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { ErrorInterceptor } from './interceptors/error.interceptor';
 import { LoadingInterceptor } from './interceptors/loading.interceptor';
 
 @NgModule({
   imports: [
-    CommonModule
+    CommonModule,
+    HttpClientModule
   ],
   providers: [
-    // Core Services
-    AuthService,
+    // Services
     ApiService,
+    AuthService,
+    StorageService,
     NotificationService,
     LoadingService,
-    ExportService,
+    MapService,
     
     // Guards
     AuthGuard,
     RoleGuard,
-
+    GuestGuard,
+    
     // HTTP Interceptors
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: JwtInterceptor,
+      useClass: AuthInterceptor,
       multi: true
     },
     {
@@ -55,18 +60,7 @@ import { LoadingInterceptor } from './interceptors/loading.interceptor';
 export class CoreModule {
   constructor(@Optional() @SkipSelf() parentModule: CoreModule) {
     if (parentModule) {
-      throw new Error(
-        'CoreModule is already loaded. Import it in the AppModule only'
-      );
+      throw new Error('CoreModule is already loaded. Import it in the AppModule only');
     }
-  }
-
-  static forRoot(): ModuleWithProviders<CoreModule> {
-    return {
-      ngModule: CoreModule,
-      providers: [
-        // Additional root providers can be added here
-      ]
-    };
   }
 }

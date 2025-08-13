@@ -1,8 +1,34 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { ApiService } from '../services/api.service';
-import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/user.interface';
+import { ApiService, ApiResponse } from './api.service';
+import { StorageService } from './storage.service';
+import { API_CONFIG } from '../config/api.config';
+
+// Interfaces locales pour éviter les imports circulaires
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  profil: string;
+  estActif: boolean;
+  dernierAcces?: Date;
+  dateCreation: Date;
+  dateModification?: Date;
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -10,47 +36,99 @@ import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/use
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+
+  // URL to redirect to after login
+  public redirectUrl: string | null = null;
 
   constructor(
     private apiService: ApiService,
+    private storageService: StorageService,
     private router: Router
   ) {
-    this.loadUserFromStorage();
+    this.checkStoredAuth();
   }
 
-  login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.apiService.post<AuthResponse>('auth/login', credentials)
-      .pipe(
-        tap(response => {
-          this.setToken(response.access_token);
-          this.setCurrentUser(response.user);
-        })
-      );
+  private checkStoredAuth(): void {
+    const token = this.storageService.getToken();
+    const user = this.storageService.getItem<User>('user');
+    
+    if (token && user) {
+      this.currentUserSubject.next(user);
+      this.isAuthenticatedSubject.next(true);
+    }
   }
 
-  register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.apiService.post<AuthResponse>('auth/register', userData)
+  login(credentials: LoginCredentials): Observable<AuthResponse> {
+    return this.apiService.post<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, credentials)
       .pipe(
-        tap(response => {
-          this.setToken(response.access_token);
-          this.setCurrentUser(response.user);
-        })
+        map(response => {
+          if (response.success && response.data) {
+            this.setAuthData(response.data);
+            
+            // Redirect to intended page or dashboard
+            const redirectTo = this.redirectUrl || '/dashboard';
+            this.redirectUrl = null;
+            this.router.navigate([redirectTo]);
+            
+            return response.data;
+          }
+          throw new Error(response.message || 'Login failed');
+        }),
+        catchError(error => throwError(() => error))
       );
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.currentUserSubject.next(null);
+    // Call logout endpoint
+    this.apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {}).subscribe();
+    
+    // Clear local data
+    this.clearAuthData();
+    
+    // Redirect to login
     this.router.navigate(['/auth/login']);
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
+  refreshToken(): Observable<AuthResponse> {
+    const refreshToken = this.storageService.getRefreshToken();
+    
+    if (!refreshToken) {
+      this.logout();
+      return throwError(() => new Error('No refresh token'));
+    }
+
+    return this.apiService.post<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.REFRESH, {
+      refreshToken
+    }).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.setAuthData(response.data);
+        }
+      }),
+      map(response => response.data!),
+      catchError(error => {
+        this.logout();
+        return throwError(() => error);
+      })
+    );
   }
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
+  private setAuthData(authData: AuthResponse): void {
+    this.storageService.setToken(authData.accessToken);
+    this.storageService.setRefreshToken(authData.refreshToken);
+    this.storageService.setItem('user', authData.user);
+    
+    this.currentUserSubject.next(authData.user);
+    this.isAuthenticatedSubject.next(true);
+  }
+
+  private clearAuthData(): void {
+    this.storageService.clearTokens();
+    this.currentUserSubject.next(null);
+    this.isAuthenticatedSubject.next(false);
   }
 
   getCurrentUser(): User | null {
@@ -59,7 +137,7 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
-    return user ? user.profil === role : false;
+    return user?.profil === role;
   }
 
   hasAnyRole(roles: string[]): boolean {
@@ -67,25 +145,8 @@ export class AuthService {
     return user ? roles.includes(user.profil) : false;
   }
 
-  private setToken(token: string): void {
-    localStorage.setItem('token', token);
-  }
-
-  private setCurrentUser(user: User): void {
-    localStorage.setItem('user', JSON.stringify(user));
-    this.currentUserSubject.next(user);
-  }
-
-  private loadUserFromStorage(): void {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        this.currentUserSubject.next(user);
-      } catch (error) {
-        console.error('Error parsing user from storage:', error);
-        this.logout();
-      }
-    }
+  isTokenExpired(): boolean {
+    const token = this.storageService.getToken();
+    return !token;
   }
 }

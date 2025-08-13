@@ -1,44 +1,40 @@
+// app.module.ts
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule } from '@angular/common/http';
 
+// Core Module
+import { CoreModule } from './core/core.module';
+
+// Routing
 import { AppRoutingModule } from './app-routing.module';
+
+// Root Component - IMPORTÉ (pas déclaré)
 import { AppComponent } from './app.component';
 
-// Core
-import { JwtInterceptor } from './core/auth/jwt.interceptor';
-
-// Layout Components (déclarés directement dans AppModule)
-import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
-import { AuthLayoutComponent } from './layout/auth-layout/auth-layout.component';
-
-// Shared Components (déclarés directement dans AppModule)
-import { HeaderComponent } from './shared/components/header/header.component';
-import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+// Layout Components - IMPORTÉS (pas déclarés)
+import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
+import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
+import { PrintLayoutComponent } from './layouts/print-layout/print-layout.component';
 
 @NgModule({
-  declarations: [
+  // ❌ SUPPRIMEZ declarations complètement
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    HttpClientModule,
+    CoreModule,
+    
+    // ✅ AJOUTEZ les composants ici
     AppComponent,
     MainLayoutComponent,
     AuthLayoutComponent,
-    HeaderComponent,
-    SidebarComponent
+    PrintLayoutComponent,
+    
+    AppRoutingModule
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    ReactiveFormsModule,
-    FormsModule
-  ],
-  providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: JwtInterceptor,
-      multi: true
-    }
-  ],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

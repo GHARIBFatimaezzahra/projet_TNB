@@ -4,10 +4,10 @@ import { BehaviorSubject } from 'rxjs';
 export interface Notification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
   message: string;
-  title?: string;
   duration?: number;
-  action?: boolean;
+  persistent?: boolean;
 }
 
 @Injectable({
@@ -17,48 +17,53 @@ export class NotificationService {
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   public notifications$ = this.notificationsSubject.asObservable();
 
-  success(message: string, title?: string, duration = 5000): void {
-    this.show({ type: 'success', message, title, duration, action: true });
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
   }
 
-  error(message: string, title?: string, duration = 8000): void {
-    this.show({ type: 'error', message, title, duration, action: true });
-  }
-
-  warning(message: string, title?: string, duration = 6000): void {
-    this.show({ type: 'warning', message, title, duration, action: true });
-  }
-
-  info(message: string, title?: string, duration = 5000): void {
-    this.show({ type: 'info', message, title, duration, action: true });
-  }
-
-  private show(notification: Omit<Notification, 'id'>): void {
+  private addNotification(notification: Omit<Notification, 'id'>): void {
     const newNotification: Notification = {
       ...notification,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+      id: this.generateId(),
+      duration: notification.duration || 5000
     };
 
-    const currentNotifications = this.notificationsSubject.value;
-    this.notificationsSubject.next([...currentNotifications, newNotification]);
+    const current = this.notificationsSubject.value;
+    this.notificationsSubject.next([...current, newNotification]);
 
-    // Auto-remove si duration est définie
-    if (notification.duration && notification.duration > 0) {
+    // Auto remove after duration (if not persistent)
+    if (!notification.persistent && notification.duration !== 0) {
       setTimeout(() => {
         this.remove(newNotification.id);
-      }, notification.duration);
+      }, newNotification.duration);
     }
   }
 
-  remove(id: string): void {
-    const currentNotifications = this.notificationsSubject.value;
-    const updatedNotifications = currentNotifications.filter(n => n.id !== id);
-    this.notificationsSubject.next(updatedNotifications);
+  success(title: string, message: string, duration?: number): void {
+    this.addNotification({ type: 'success', title, message, duration });
   }
 
-  // Alias pour compatibilité
-  removeNotification(id: string): void {
-    this.remove(id);
+  error(title: string, message: string, persistent = false): void {
+    this.addNotification({ 
+      type: 'error', 
+      title, 
+      message, 
+      persistent,
+      duration: persistent ? 0 : 8000 
+    });
+  }
+
+  warning(title: string, message: string, duration?: number): void {
+    this.addNotification({ type: 'warning', title, message, duration });
+  }
+
+  info(title: string, message: string, duration?: number): void {
+    this.addNotification({ type: 'info', title, message, duration });
+  }
+
+  remove(id: string): void {
+    const current = this.notificationsSubject.value;
+    this.notificationsSubject.next(current.filter(n => n.id !== id));
   }
 
   clear(): void {
