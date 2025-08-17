@@ -1,72 +1,128 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
 
-export interface Notification {
+export interface NotificationData {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
   title: string;
   message: string;
   duration?: number;
-  persistent?: boolean;
+  actions?: NotificationAction[];
+  icon?: string;
+}
+
+export interface NotificationAction {
+  label: string;
+  action: () => void;
+  style?: 'primary' | 'secondary';
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private notificationsSubject = new BehaviorSubject<Notification[]>([]);
-  public notifications$ = this.notificationsSubject.asObservable();
+  private notificationSubject = new Subject<NotificationData>();
+  private notifications = signal<NotificationData[]>([]);
 
-  private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
-  }
+  // Observable pour les composants qui écoutent les notifications
+  public notification$ = this.notificationSubject.asObservable();
 
-  private addNotification(notification: Omit<Notification, 'id'>): void {
-    const newNotification: Notification = {
-      ...notification,
-      id: this.generateId(),
-      duration: notification.duration || 5000
-    };
+  // Signal pour l'état des notifications
+  public notifications$ = this.notifications.asReadonly();
 
-    const current = this.notificationsSubject.value;
-    this.notificationsSubject.next([...current, newNotification]);
-
-    // Auto remove after duration (if not persistent)
-    if (!notification.persistent && notification.duration !== 0) {
-      setTimeout(() => {
-        this.remove(newNotification.id);
-      }, newNotification.duration);
-    }
-  }
-
-  success(title: string, message: string, duration?: number): void {
-    this.addNotification({ type: 'success', title, message, duration });
-  }
-
-  error(title: string, message: string, persistent = false): void {
-    this.addNotification({ 
-      type: 'error', 
-      title, 
-      message, 
-      persistent,
-      duration: persistent ? 0 : 8000 
+  // =================== MÉTHODES PUBLIQUES ===================
+  showSuccess(title: string, message: string, duration: number = 5000): void {
+    this.show({
+      type: 'success',
+      title,
+      message,
+      duration,
+      icon: '✅'
     });
   }
 
-  warning(title: string, message: string, duration?: number): void {
-    this.addNotification({ type: 'warning', title, message, duration });
+  showError(title: string, message: string, duration: number = 8000): void {
+    this.show({
+      type: 'error',
+      title,
+      message,
+      duration,
+      icon: '❌'
+    });
   }
 
-  info(title: string, message: string, duration?: number): void {
-    this.addNotification({ type: 'info', title, message, duration });
+  showWarning(title: string, message: string, duration: number = 6000): void {
+    this.show({
+      type: 'warning',
+      title,
+      message,
+      duration,
+      icon: '⚠️'
+    });
+  }
+
+  showInfo(title: string, message: string, duration: number = 5000): void {
+    this.show({
+      type: 'info',
+      title,
+      message,
+      duration,
+      icon: 'ℹ️'
+    });
+  }
+
+  showCustom(notification: Partial<NotificationData>): void {
+    this.show({
+      type: 'info',
+      title: '',
+      message: '',
+      duration: 5000,
+      ...notification
+    });
+  }
+
+  // =================== GESTION DES NOTIFICATIONS ===================
+  private show(notification: Omit<NotificationData, 'id'>): void {
+    const id = this.generateId();
+    const fullNotification: NotificationData = {
+      ...notification,
+      id
+    };
+
+    // Ajouter à la liste des notifications
+    this.notifications.update(notifications => [...notifications, fullNotification]);
+
+    // Émettre la notification
+    this.notificationSubject.next(fullNotification);
+
+    // Auto-suppression après la durée spécifiée
+    if (fullNotification.duration && fullNotification.duration > 0) {
+      setTimeout(() => {
+        this.remove(id);
+      }, fullNotification.duration);
+    }
   }
 
   remove(id: string): void {
-    const current = this.notificationsSubject.value;
-    this.notificationsSubject.next(current.filter(n => n.id !== id));
+    this.notifications.update(notifications => 
+      notifications.filter(n => n.id !== id)
+    );
   }
 
   clear(): void {
-    this.notificationsSubject.next([]);
+    this.notifications.set([]);
+  }
+
+  getNotifications(): NotificationData[] {
+    return this.notifications();
+  }
+
+  getUnreadCount(): number {
+    return this.notifications().length;
+  }
+
+  // =================== UTILITAIRES ===================
+  private generateId(): string {
+    return 'notification_' + Math.random().toString(36).substr(2, 9) + Date.now();
   }
 }

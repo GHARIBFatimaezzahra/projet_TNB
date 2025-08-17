@@ -1,0 +1,382 @@
+<div class="main-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+    <!-- Sidebar -->
+    <nav class="sidebar" [class.collapsed]="sidebarCollapsed()">
+      <!-- Logo et titre -->
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo">🗺️</div>
+          @if (!sidebarCollapsed()) {
+            <div class="logo-text">
+              <h2>GeoTNB</h2>
+              <span>SIG Fiscal</span>
+            </div>
+          }
+        </div>
+        <button class="sidebar-toggle" (click)="toggleSidebar()">
+          <i class="icon">{{ sidebarCollapsed() ? '▶️' : '◀️' }}</i>
+        </button>
+      </div>
+  
+      <!-- Navigation Menu -->
+      <div class="sidebar-nav">
+        <ul class="nav-menu">
+          <!-- Dashboard -->
+          <li class="nav-item">
+            <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">📊</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Tableau de Bord</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Cartographie -->
+          <li class="nav-item">
+            <a routerLink="/cartographie" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">🗺️</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Cartographie</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Gestion des données -->
+          @if (!sidebarCollapsed()) {
+            <li class="nav-section">
+              <span class="section-title">Gestion des Données</span>
+            </li>
+          }
+  
+          <!-- Parcelles -->
+          <li class="nav-item">
+            <a routerLink="/parcelles" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">🏞️</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Parcelles</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Propriétaires -->
+          <li class="nav-item">
+            <a routerLink="/proprietaires" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">👥</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Propriétaires</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Indivision -->
+          <li class="nav-item">
+            <a routerLink="/indivision" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">🤝</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Indivision</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Fiscal -->
+          @if (!sidebarCollapsed()) {
+            <li class="nav-section">
+              <span class="section-title">Gestion Fiscale</span>
+            </li>
+          }
+  
+          <!-- Fiches Fiscales -->
+          <li class="nav-item">
+            <a routerLink="/fiches-fiscales" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">📄</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Fiches Fiscales</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Documents -->
+          <li class="nav-item">
+            <a routerLink="/documents" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">📁</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Documents</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Workflow -->
+          <li class="nav-item">
+            <a routerLink="/workflow" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">🔄</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Workflow</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Outils -->
+          @if (!sidebarCollapsed()) {
+            <li class="nav-section">
+              <span class="section-title">Outils & Rapports</span>
+            </li>
+          }
+  
+          <!-- Import/Export (Admin + TechnicienSIG) -->
+          @if (canAccess(['Admin', 'TechnicienSIG'])) {
+            <li class="nav-item">
+              <a routerLink="/import-export" routerLinkActive="active" class="nav-link">
+                <i class="nav-icon">⚡</i>
+                @if (!sidebarCollapsed()) {
+                  <span class="nav-text">Import/Export</span>
+                }
+              </a>
+            </li>
+          }
+  
+          <!-- Rapports -->
+          <li class="nav-item">
+            <a routerLink="/reporting" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">📈</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Rapports</span>
+              }
+            </a>
+          </li>
+  
+          <!-- Journal (Admin + TechnicienSIG) -->
+          @if (canAccess(['Admin', 'TechnicienSIG'])) {
+            <li class="nav-item">
+              <a routerLink="/journal-actions" routerLinkActive="active" class="nav-link">
+                <i class="nav-icon">📋</i>
+                @if (!sidebarCollapsed()) {
+                  <span class="nav-text">Journal Actions</span>
+                }
+              </a>
+            </li>
+          }
+  
+          <!-- Administration (Admin seulement) -->
+          @if (canAccess(['Admin'])) {
+            @if (!sidebarCollapsed()) {
+              <li class="nav-section">
+                <span class="section-title">Administration</span>
+              </li>
+            }
+            <li class="nav-item">
+              <a routerLink="/users" routerLinkActive="active" class="nav-link">
+                <i class="nav-icon">👤</i>
+                @if (!sidebarCollapsed()) {
+                  <span class="nav-text">Utilisateurs</span>
+                }
+              </a>
+            </li>
+            <li class="nav-item">
+              <a routerLink="/administration" routerLinkActive="active" class="nav-link">
+                <i class="nav-icon">⚙️</i>
+                @if (!sidebarCollapsed()) {
+                  <span class="nav-text">Configuration</span>
+                }
+              </a>
+            </li>
+          }
+  
+          <!-- Support -->
+          @if (!sidebarCollapsed()) {
+            <li class="nav-section">
+              <span class="section-title">Support</span>
+            </li>
+          }
+          
+          <li class="nav-item">
+            <a routerLink="/notifications" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">🔔</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Notifications</span>
+                @if (notificationCount() > 0) {
+                  <span class="notification-badge">{{ notificationCount() }}</span>
+                }
+              }
+            </a>
+          </li>
+          
+          <li class="nav-item">
+            <a routerLink="/help" routerLinkActive="active" class="nav-link">
+              <i class="nav-icon">❓</i>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-text">Aide</span>
+              }
+            </a>
+          </li>
+        </ul>
+      </div>
+  
+      <!-- User info -->
+      <div class="sidebar-user">
+        @if (currentUser()) {
+          <div class="user-info" [class.collapsed]="sidebarCollapsed()">
+            <div class="user-avatar">
+              <div class="avatar-placeholder">{{ getUserInitials() }}</div>
+            </div>
+            @if (!sidebarCollapsed()) {
+              <div class="user-details">
+                <div class="user-name">{{ currentUser().username }}</div>
+                <div class="user-role">{{ getRoleLabel(currentUser().profil) }}</div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </nav>
+  
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle-mobile" (click)="toggleSidebar()">
+            <i class="icon">☰</i>
+          </button>
+          <div class="breadcrumb-container">
+            <nav class="breadcrumb">
+              <span class="breadcrumb-item">GeoTNB</span>
+              <i class="breadcrumb-separator">▶</i>
+              <span class="breadcrumb-item current">{{ currentPageTitle() }}</span>
+            </nav>
+          </div>
+        </div>
+  
+        <div class="header-right">
+          <!-- Search Global -->
+          <div class="search-container">
+            <input 
+              type="text" 
+              placeholder="Recherche globale..." 
+              class="global-search"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="performGlobalSearch()"
+            >
+            <button class="search-button" (click)="performGlobalSearch()">
+              <i class="icon">🔍</i>
+            </button>
+          </div>
+  
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button class="action-button" title="Créer une parcelle" (click)="quickCreateParcelle()">
+              <i class="icon">➕</i>
+            </button>
+            <button class="action-button" title="Générer fiche TNB" (click)="quickGenerateFiche()">
+              <i class="icon">📄</i>
+            </button>
+            <button class="action-button" title="Export rapide" (click)="quickExport()">
+              <i class="icon">📤</i>
+            </button>
+          </div>
+  
+          <!-- Notifications -->
+          <div class="notifications-dropdown">
+            <button class="notification-button" (click)="toggleNotifications()">
+              <i class="icon">🔔</i>
+              @if (notificationCount() > 0) {
+                <span class="notification-count">{{ notificationCount() }}</span>
+              }
+            </button>
+            @if (showNotifications()) {
+              <div class="notifications-panel">
+                <div class="notifications-header">
+                  <h4>Notifications</h4>
+                  <button class="mark-all-read" (click)="markAllNotificationsRead()">Tout marquer lu</button>
+                </div>
+                <div class="notifications-list">
+                  @for (notification of recentNotifications(); track notification.id) {
+                    <div class="notification-item" [class.unread]="!notification.read" (click)="markNotificationRead(notification.id)">
+                      <div class="notification-icon">{{ notification.icon }}</div>
+                      <div class="notification-content">
+                        <div class="notification-title">{{ notification.title }}</div>
+                        <div class="notification-message">{{ notification.message }}</div>
+                        <div class="notification-time">{{ formatDate(notification.time) }}</div>
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="no-notifications">
+                      <i class="empty-icon">📭</i>
+                      <p>Aucune notification</p>
+                    </div>
+                  }
+                </div>
+                <div class="notifications-footer">
+                  <a routerLink="/notifications" (click)="showNotifications.set(false)">Voir toutes</a>
+                </div>
+              </div>
+            }
+          </div>
+  
+          <!-- User Menu -->
+          <div class="user-menu-dropdown">
+            <button class="user-menu-button" (click)="toggleUserMenu()">
+              <div class="user-avatar-small">{{ getUserInitials() }}</div>
+              <span class="user-name-header">{{ currentUser()?.username }}</span>
+              <i class="dropdown-arrow">▼</i>
+            </button>
+            @if (showUserMenu()) {
+              <div class="user-menu-panel">
+                <div class="user-menu-header">
+                  <div class="user-avatar-large">{{ getUserInitials() }}</div>
+                  <div class="user-info-menu">
+                    <div class="user-name">{{ currentUser()?.username }}</div>
+                    <div class="user-email">{{ currentUser()?.email }}</div>
+                    <div class="user-role-badge">{{ getRoleLabel(currentUser()?.profil) }}</div>
+                  </div>
+                </div>
+                <div class="user-menu-actions">
+                  <a routerLink="/profile" class="menu-action" (click)="showUserMenu.set(false)">
+                    <i class="action-icon">👤</i>
+                    Mon Profil
+                  </a>
+                  <a routerLink="/auth/change-password" class="menu-action" (click)="showUserMenu.set(false)">
+                    <i class="action-icon">🔒</i>
+                    Changer le mot de passe
+                  </a>
+                  <a routerLink="/notifications" class="menu-action" (click)="showUserMenu.set(false)">
+                    <i class="action-icon">🔔</i>
+                    Mes notifications
+                  </a>
+                  <div class="menu-divider"></div>
+                  <button class="menu-action logout" (click)="logout()">
+                    <i class="action-icon">🚪</i>
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+  
+      <!-- Page Content -->
+      <main class="page-content">
+        <router-outlet></router-outlet>
+      </main>
+  
+      <!-- Footer -->
+      <footer class="main-footer">
+        <div class="footer-content">
+          <div class="footer-left">
+            <span>&copy; 2025 Commune d'Oujda - GeoTNB v1.0</span>
+          </div>
+          <div class="footer-right">
+            <span>Dernière synchronisation: {{ formatDate(lastSync()) }}</span>
+            <div class="connection-status" [class]="connectionStatus()">
+              <i class="status-icon">{{ getConnectionIcon() }}</i>
+              {{ getConnectionLabel() }}
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  
+    <!-- Mobile Overlay -->
+    @if (!sidebarCollapsed() && isMobile()) {
+      <div class="mobile-overlay" (click)="closeSidebar()"></div>
+    }
+  </div>

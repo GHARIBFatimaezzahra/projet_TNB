@@ -1,0 +1,68 @@
+<div class="auth-container">
+    <!-- Background avec animation -->
+    <div class="background-animation">
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+      </div>
+    </div>
+  
+    <!-- Contenu principal -->
+    <div class="auth-content">
+      <!-- Logo et header -->
+      <div class="auth-header">
+        <div class="logo-container">
+          <div class="logo">🗺️</div>
+          <h1 class="app-title">GeoTNB</h1>
+          <p class="app-subtitle">Système d'Information Géographique<br>Taxe sur les Terrains Non Bâtis</p>
+        </div>
+      </div>
+  
+      <!-- Zone de contenu dynamique -->
+      <div class="auth-form-container">
+        <router-outlet></router-outlet>
+      </div>
+  
+      <!-- Footer -->
+      <div class="auth-footer">
+        <p>&copy; 2025 Commune d'Oujda - Tous droits réservés</p>
+        <div class="footer-links">
+          <a href="#" class="footer-link">Aide</a>
+          <a href="#" class="footer-link">Confidentialité</a>
+          <a href="#" class="footer-link">Contact</a>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Panneau d'information -->
+    <div class="info-panel">
+      <div class="info-content">
+        <h2>Plateforme Cartographique TNB</h2>
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="feature-icon">🗺️</div>
+            <div class="feature-text">
+              <h3>Cartographie Interactive</h3>
+              <p>Visualisation et gestion des parcelles non bâties</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">📊</div>
+            <div class="feature-text">
+              <h3>Calcul Automatique</h3>
+              <p>Génération automatique des fiches fiscales TNB</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-text">
+              <h3>Sécurité Avancée</h3>
+              <p>Authentification sécurisée et gestion des rôles</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

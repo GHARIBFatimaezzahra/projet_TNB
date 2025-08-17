@@ -1,0 +1,99 @@
+<div class="profile-edit-container">
+    <div class="profile-edit-wrapper">
+      <!-- En-tête -->
+      <div class="profile-header">
+        <button mat-icon-button (click)="cancel()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1>Modifier le profil</h1>
+      </div>
+  
+      <!-- Formulaire -->
+      <mat-card class="profile-edit-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>edit</mat-icon>
+            Informations personnelles
+          </mat-card-title>
+          <mat-card-subtitle>
+            Modifiez vos informations de compte
+          </mat-card-subtitle>
+        </mat-card-header>
+  
+        <mat-card-content>
+          <div *ngIf="isFormLoading" class="loading-form">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p>Chargement des données...</p>
+          </div>
+  
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form" *ngIf="!isFormLoading">
+            <!-- Nom d'utilisateur -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nom d'utilisateur</mat-label>
+              <input matInput formControlName="username" autocomplete="username">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-error *ngIf="username?.hasError('required')">
+                Le nom d'utilisateur est requis
+              </mat-error>
+              <mat-error *ngIf="username?.hasError('minlength')">
+                Minimum 3 caractères requis
+              </mat-error>
+              <mat-error *ngIf="username?.hasError('maxlength')">
+                Maximum 20 caractères autorisés
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Email -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Adresse email</mat-label>
+              <input matInput formControlName="email" type="email" autocomplete="email">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="email?.hasError('required')">
+                L'email est requis
+              </mat-error>
+              <mat-error *ngIf="email?.hasError('email')">
+                Format d'email invalide
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Informations en lecture seule -->
+            <div class="readonly-info" *ngIf="currentUser">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Rôle</mat-label>
+                <input matInput [value]="currentUser.profil" readonly>
+                <mat-icon matSuffix>security</mat-icon>
+                <mat-hint>Le rôle ne peut être modifié que par un administrateur</mat-hint>
+              </mat-form-field>
+  
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Statut</mat-label>
+                <input matInput [value]="currentUser.estActif ? 'Actif' : 'Inactif'" readonly>
+                <mat-icon matSuffix>info</mat-icon>
+              </mat-form-field>
+            </div>
+          </form>
+        </mat-card-content>
+  
+        <mat-card-actions align="end" *ngIf="!isFormLoading">
+          <button mat-button (click)="cancel()" [disabled]="isLoading">
+            Annuler
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="onSubmit()"
+            [disabled]="profileForm.invalid || isLoading">
+            <span *ngIf="!isLoading">Enregistrer</span>
+            <span *ngIf="isLoading">Enregistrement...</span>
+          </button>
+        </mat-card-actions>
+  
+        <!-- Barre de progression -->
+        <mat-progress-bar 
+          *ngIf="isLoading" 
+          mode="indeterminate" 
+          class="progress-bar">
+        </mat-progress-bar>
+      </mat-card>
+    </div>
+  </div>

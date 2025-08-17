@@ -1,0 +1,583 @@
+.profile-edit-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    
+    // Pattern de fond subtil
+    &::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+  }
+  
+  .profile-edit-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  // En-tête de la page
+  .profile-header {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    
+    .back-button {
+      margin-right: 20px;
+      color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba(102, 126, 234, 0.2);
+        transform: translateX(-2px);
+      }
+      
+      mat-icon {
+        font-size: 24px;
+      }
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      color: #2c3e50;
+      letter-spacing: -0.5px;
+      
+      // Effet de dégradé sur le texte
+      background: linear-gradient(135deg, #2c3e50 0%, #667eea 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+  
+  // Carte principale d'édition
+  .profile-edit-card {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    overflow: hidden;
+    
+    // En-tête de la carte
+    mat-card-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px;
+      margin: -16px -16px 0 -16px;
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0;
+        
+        mat-icon {
+          font-size: 28px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          padding: 8px;
+        }
+      }
+      
+      mat-card-subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+    }
+    
+    // Contenu de la carte
+    mat-card-content {
+      padding: 32px 24px;
+    }
+    
+    // Actions de la carte
+    mat-card-actions {
+      padding: 0 24px 24px;
+      background: #f8f9fa;
+      margin: 0 -16px -16px -16px;
+      border-top: 1px solid #e9ecef;
+      
+      button {
+        margin: 0 8px;
+        border-radius: 12px;
+        padding: 0 24px;
+        height: 48px;
+        font-weight: 500;
+        
+        &[mat-button] {
+          color: #6c757d;
+          
+          &:hover {
+            background: rgba(108, 117, 125, 0.1);
+          }
+        }
+        
+        &[mat-raised-button] {
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          
+          &:hover {
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+          }
+          
+          &:disabled {
+            box-shadow: none;
+            transform: none;
+          }
+        }
+        
+        mat-icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+  
+  // État de chargement du formulaire
+  .loading-form {
+    text-align: center;
+    padding: 60px 20px;
+    
+    mat-progress-bar {
+      margin-bottom: 20px;
+      border-radius: 4px;
+      height: 6px;
+    }
+    
+    p {
+      color: #666;
+      font-size: 16px;
+      margin: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+  }
+  
+  // Formulaire d'édition
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    
+    .full-width {
+      width: 100%;
+    }
+    
+    // Styles des champs de formulaire
+    mat-form-field {
+      &.mat-form-field {
+        font-size: 16px;
+        
+        .mat-form-field-outline {
+          border-radius: 12px;
+        }
+        
+        .mat-form-field-outline-thick {
+          border-width: 2px;
+        }
+        
+        &.mat-focused {
+          .mat-form-field-outline-thick {
+            border-color: #667eea;
+          }
+          
+          .mat-form-field-label {
+            color: #667eea;
+          }
+        }
+        
+        // Icônes de suffixe
+        .mat-form-field-suffix {
+          mat-icon {
+            color: #667eea;
+            font-size: 20px;
+          }
+        }
+        
+        // Hints et erreurs
+        .mat-form-field-subscript-wrapper {
+          margin-top: 8px;
+          
+          .mat-hint {
+            color: #6c757d;
+            font-size: 12px;
+          }
+          
+          .mat-error {
+            color: #dc3545;
+            font-size: 12px;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+  
+  // Section des informations en lecture seule
+  .readonly-info {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid #e9ecef;
+    
+    &::before {
+      content: 'Informations système';
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    
+    mat-form-field {
+      opacity: 0.8;
+      
+      input {
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+      
+      .mat-form-field-outline {
+        border-color: #e9ecef !important;
+      }
+      
+      .mat-form-field-label {
+        color: #6c757d !important;
+      }
+    }
+  }
+  
+  // Barre de progression
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0 0 20px 20px;
+    height: 4px;
+    
+    .mat-progress-bar-fill::after {
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+  }
+  
+  // Animations
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  // Animation d'entrée pour les éléments
+  .profile-edit-wrapper > * {
+    animation: slideIn 0.6s ease-out;
+    
+    &:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+    
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+  }
+  
+  // États de validation des champs
+  .mat-form-field {
+    &.ng-valid.ng-touched {
+      .mat-form-field-outline-thick {
+        border-color: #28a745;
+      }
+      
+      .mat-form-field-suffix mat-icon {
+        color: #28a745;
+      }
+    }
+    
+    &.ng-invalid.ng-touched {
+      .mat-form-field-outline-thick {
+        border-color: #dc3545;
+      }
+      
+      .mat-form-field-suffix mat-icon {
+        color: #dc3545;
+      }
+    }
+  }
+  
+  // Responsive Design
+  @media (max-width: 768px) {
+    .profile-edit-container {
+      padding: 16px;
+      
+      &::before {
+        display: none; // Masquer le pattern sur mobile
+      }
+    }
+    
+    .profile-edit-wrapper {
+      gap: 20px;
+    }
+    
+    .profile-header {
+      padding: 16px 20px;
+      
+      .back-button {
+        margin-right: 16px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+    }
+    
+    .profile-edit-card {
+      border-radius: 16px;
+      
+      mat-card-header {
+        padding: 20px;
+        
+        mat-card-title {
+          font-size: 20px;
+          
+          mat-icon {
+            font-size: 24px;
+            padding: 6px;
+          }
+        }
+      }
+      
+      mat-card-content {
+        padding: 24px 20px;
+      }
+      
+      mat-card-actions {
+        padding: 0 20px 20px;
+        
+        button {
+          margin: 0 4px;
+          padding: 0 20px;
+          height: 44px;
+          
+          &:first-child {
+            margin-left: 0;
+          }
+          
+          &:last-child {
+            margin-right: 0;
+          }
+        }
+      }
+    }
+    
+    .profile-form {
+      gap: 24px;
+    }
+    
+    .readonly-info {
+      margin-top: 24px;
+      padding-top: 20px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .profile-edit-container {
+      padding: 12px;
+    }
+    
+    .profile-header {
+      padding: 12px 16px;
+      border-radius: 12px;
+      
+      h1 {
+        font-size: 20px;
+      }
+    }
+    
+    .profile-edit-card {
+      border-radius: 12px;
+      
+      mat-card-header {
+        padding: 16px;
+        
+        mat-card-title {
+          font-size: 18px;
+          gap: 8px;
+        }
+      }
+      
+      mat-card-content {
+        padding: 20px 16px;
+      }
+      
+      mat-card-actions {
+        padding: 0 16px 16px;
+        flex-direction: column;
+        gap: 8px;
+        
+        button {
+          margin: 0;
+          width: 100%;
+          height: 48px;
+          
+          &[mat-button] {
+            order: 2;
+          }
+          
+          &[mat-raised-button] {
+            order: 1;
+          }
+        }
+      }
+    }
+    
+    .profile-form {
+      gap: 20px;
+      
+      mat-form-field {
+        .mat-form-field-infix {
+          font-size: 16px; // Éviter le zoom sur iOS
+        }
+      }
+    }
+    
+    .loading-form {
+      padding: 40px 16px;
+      
+      p {
+        font-size: 14px;
+      }
+    }
+  }
+  
+  // Mode sombre
+  @media (prefers-color-scheme: dark) {
+    .profile-edit-container {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    
+    .profile-header {
+      background: rgba(26, 26, 46, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      
+      h1 {
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    }
+    
+    .profile-edit-card {
+      background: rgba(26, 26, 46, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      
+      mat-card-actions {
+        background: rgba(22, 33, 62, 0.8);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    .readonly-info {
+      border-top: 2px solid rgba(255, 255, 255, 0.1);
+      
+      mat-form-field input {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+    
+    .loading-form p {
+      color: #ccc;
+    }
+  }
+  
+  // Accessibilité
+  @media (prefers-reduced-motion: reduce) {
+    .profile-edit-wrapper > * {
+      animation: none;
+    }
+    
+    .loading-form p {
+      animation: none;
+    }
+    
+    .profile-header .back-button:hover {
+      transform: none;
+    }
+    
+    .profile-edit-card mat-card-actions button[mat-raised-button]:hover {
+      transform: none;
+    }
+  }
+  
+  // Focus visible pour l'accessibilité
+  .profile-header .back-button:focus-visible,
+  .profile-edit-card button:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
+  
+  // Styles pour les champs requis
+  .mat-form-field-required-marker {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  
+  // Amélioration des transitions
+  * {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  // Styles pour les tooltips (si utilisés)
+  .mat-tooltip {
+    background: rgba(33, 37, 41, 0.95);
+    color: white;
+    border-radius: 8px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }

@@ -1,153 +1,114 @@
-import { environment } from '../../../environments/environment';
-
-export const MAP_CONFIG = {
-  DEFAULT_CENTER: environment.mapConfig.defaultCenter,
-  DEFAULT_ZOOM: environment.mapConfig.defaultZoom,
-  MIN_ZOOM: environment.mapConfig.minZoom,
-  MAX_ZOOM: environment.mapConfig.maxZoom,
-  PROJECTION: 'EPSG:4326',
-  EXTENT: [-2.5, 34.2, -1.3, 35.2], // Oujda region extent
+export interface LayerConfig {
+    id: string;
+    name: string;
+    type: LayerType;
+    url?: string;
+    visible: boolean;
+    opacity: number;
+    minZoom?: number;
+    maxZoom?: number;
+    style?: LayerStyle;
+    attribution?: string;
+    queryable?: boolean;
+  }
   
-  STYLES: {
-    PARCELLE_DEFAULT: {
-      fill: { color: 'rgba(0, 123, 255, 0.3)' },
-      stroke: { color: '#007bff', width: 2 }
-    },
-    PARCELLE_SELECTED: {
-      fill: { color: 'rgba(255, 193, 7, 0.5)' },
-      stroke: { color: '#ffc107', width: 3 }
-    },
-    PARCELLE_EXONEREE: {
-      fill: { color: 'rgba(40, 167, 69, 0.3)' },
-      stroke: { color: '#28a745', width: 2 }
-    },
-    PARCELLE_INVALID: {
-      fill: { color: 'rgba(220, 53, 69, 0.3)' },
-      stroke: { color: '#dc3545', width: 2 }
-    },
-    PARCELLE_DRAFT: {
-      fill: { color: 'rgba(108, 117, 125, 0.3)' },
-      stroke: { color: '#6c757d', width: 2 }
-    }
-  },
-
-  COLORS_BY_STATUS: {
-    'nu': '#007bff',
-    'construit': '#28a745',
-    'partiellement_construit': '#ffc107',
-    'en_construction': '#fd7e14'
-  },
-
-  COLORS_BY_ZONE: {
-    'R1': '#e3f2fd',
-    'R2': '#bbdefb',
-    'R3': '#90caf9',
-    'R4': '#64b5f6',
-    'I1': '#fff3e0',
-    'I2': '#ffe0b2',
-    'I3': '#ffcc02',
-    'C': '#f3e5f5',
-    'E': '#e8f5e8'
-  },
-
-  BASE_LAYERS: [
-    {
-      id: 'osm',
-      name: 'OpenStreetMap',
-      type: 'xyz',
-      url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      visible: true,
-      attribution: '© OpenStreetMap contributors'
-    },
-    {
-      id: 'satellite',
-      name: 'Satellite',
-      type: 'xyz',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      visible: false,
-      attribution: '© Esri'
-    },
-    {
-      id: 'terrain',
-      name: 'Terrain',
-      type: 'xyz',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
-      visible: false,
-      attribution: '© Esri'
-    }
-  ],
-
-  OVERLAY_LAYERS: [
-    {
-      id: 'parcelles',
-      name: 'Parcelles TNB',
-      type: 'vector',
-      visible: true,
-      opacity: 0.8,
-      zIndex: 100
-    },
-    {
-      id: 'zonage',
-      name: 'Zonage Urbanistique',
-      type: 'vector',
-      visible: false,
-      opacity: 0.6,
-      zIndex: 50
-    },
-    {
-      id: 'limites_admin',
-      name: 'Limites Administratives',
-      type: 'vector',
-      visible: false,
-      opacity: 0.8,
-      zIndex: 75
-    }
-  ],
-
-  DRAWING_TOOLS: {
-    POINT: {
-      type: 'Point',
-      style: {
-        image: {
-          radius: 6,
-          fill: { color: '#ff0000' },
-          stroke: { color: '#ffffff', width: 2 }
+  export type LayerType = 'tile' | 'wms' | 'wmts' | 'vector' | 'geojson';
+  
+  export interface LayerStyle {
+    fill?: {
+      color: string;
+      opacity: number;
+    };
+    stroke?: {
+      color: string;
+      width: number;
+      opacity: number;
+    };
+    point?: {
+      radius: number;
+      fill: string;
+      stroke: string;
+    };
+  }
+  
+  export interface MapControls {
+    zoom: boolean;
+    rotate: boolean;
+    attribution: boolean;
+    scaleLine: boolean;
+    fullScreen: boolean;
+    mousePosition: boolean;
+    overviewMap: boolean;
+  }
+  
+  export interface DrawingConfig {
+    enabled: boolean;
+    tools: DrawingTool[];
+    style: LayerStyle;
+    snapTolerance: number;
+  }
+  
+  export type DrawingTool = 'point' | 'line' | 'polygon' | 'circle' | 'rectangle';
+  
+  export const MAP_CONFIG: {
+    projection: string;
+    extent: [number, number, number, number];
+    layers: LayerConfig[];
+    controls: MapControls;
+    drawing: DrawingConfig;
+  } = {
+    projection: 'EPSG:26191',
+    extent: [400000, 300000, 700000, 500000], // Étendue du Maroc Oriental
+    layers: [
+      {
+        id: 'base-osm',
+        name: 'OpenStreetMap',
+        type: 'tile',
+        url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        visible: true,
+        opacity: 1,
+        attribution: '© OpenStreetMap contributors'
+      },
+      {
+        id: 'parcelles-tnb',
+        name: 'Parcelles TNB',
+        type: 'vector',
+        visible: true,
+        opacity: 0.8,
+        style: {
+          fill: { color: '#3498db', opacity: 0.3 },
+          stroke: { color: '#2980b9', width: 2, opacity: 1 }
+        },
+        queryable: true
+      },
+      {
+        id: 'limites-administratives',
+        name: 'Limites administratives',
+        type: 'wms',
+        url: 'http://localhost:8080/geoserver/tnb/wms',
+        visible: false,
+        opacity: 0.7,
+        style: {
+          stroke: { color: '#e74c3c', width: 3, opacity: 1 }
         }
       }
+    ],
+    controls: {
+      zoom: true,
+      rotate: true,
+      attribution: true,
+      scaleLine: true,
+      fullScreen: true,
+      mousePosition: true,
+      overviewMap: false
     },
-    LINE: {
-      type: 'LineString',
+    drawing: {
+      enabled: true,
+      tools: ['polygon', 'rectangle', 'circle'],
       style: {
-        stroke: { color: '#ff0000', width: 3 }
-      }
-    },
-    POLYGON: {
-      type: 'Polygon',
-      style: {
-        fill: { color: 'rgba(255, 0, 0, 0.3)' },
-        stroke: { color: '#ff0000', width: 2 }
-      }
+        fill: { color: '#e67e22', opacity: 0.3 },
+        stroke: { color: '#d35400', width: 3, opacity: 1 }
+      },
+      snapTolerance: 10
     }
-  },
-
-  POPUP_CONFIG: {
-    positioning: 'bottom-center',
-    autoPan: true,
-    autoPanAnimation: {
-      duration: 250
-    },
-    className: 'ol-popup'
-  },
-
-  INTERACTION_CONFIG: {
-    doubleClickZoom: true,
-    dragAndDrop: true,
-    dragPan: true,
-    keyboardEventTarget: document,
-    keyboardPan: true,
-    keyboardZoom: true,
-    mouseWheelZoom: true,
-    pointer: true,
-    select: true
-  }
-};
+  };

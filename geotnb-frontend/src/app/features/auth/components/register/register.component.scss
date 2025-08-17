@@ -1,0 +1,111 @@
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+  }
+  
+  .register-card-wrapper {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .register-card {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  .register-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    
+    .logo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      
+      .logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: white;
+        padding: 8px;
+      }
+      
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+      
+      .subtitle {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+    }
+  }
+  
+  .register-form {
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    
+    .full-width {
+      width: 100%;
+    }
+    
+    .register-button {
+      height: 48px;
+      font-size: 16px;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    
+    .progress-bar {
+      margin-top: 10px;
+    }
+  }
+  
+  .password-toggle {
+    cursor: pointer;
+    color: #666;
+    
+    &:hover {
+      color: #333;
+    }
+  }
+  
+  .login-link-section {
+    text-align: center;
+    padding: 0 20px 20px;
+    
+    p {
+      margin: 0 0 8px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .login-link {
+      color: #667eea;
+      font-weight: 500;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .register-container {
+      padding: 10px;
+    }
+    
+    .register-form {
+      padding: 20px 15px;
+      gap: 16px;
+    }
+  }

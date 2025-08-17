@@ -1,216 +1,156 @@
-// features/auth/login/login.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { AuthFeatureService } from '../../services/auth-feature.service';
+import { NotificationService } from '../../../../core/services/notification/notification.service';
+import { LoadingService } from '../../../../core/services/loading/loading.service';
+import { LoginRequest } from '../../models/auth-feature.model';
 
 @Component({
   selector: 'app-login',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    MatSnackBarModule
+  ],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrl: './login.component.scss'
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class LoginComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthFeatureService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly notificationService = inject(NotificationService);
+  private readonly loadingService = inject(LoadingService);
 
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
+  loginForm: FormGroup;
+  hidePassword = true;
+  isLoading = false;
+  returnUrl = '/dashboard';
+
+  constructor() {
+    this.loginForm = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
 
   ngOnInit(): void {
-    // Animation d'entrée
-    this.animateOnLoad();
-  }
+    // Récupérer l'URL de retour si spécifiée
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  onSubmit(event: Event): void {
-    event.preventDefault();
-    
-    const form = event.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    
-    // Validation simple côté client
-    if (!email || !password) {
-      this.showError('Veuillez remplir tous les champs');
-      return;
-    }
-    
-    if (!this.isValidEmail(email)) {
-      this.showError('Format email invalide');
-      return;
-    }
-    
-    if (password.length < 6) {
-      this.showError('Le mot de passe doit contenir au moins 6 caractères');
-      return;
-    }
-    
-    // Simulation de connexion
-    this.simulateLogin(form, { email, password });
-  }
-
-  togglePassword(): void {
-    const passwordField = document.getElementById('password') as HTMLInputElement;
-    const passwordIcon = document.getElementById('passwordIcon') as HTMLElement;
-    
-    if (passwordField && passwordIcon) {
-      if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        passwordIcon.classList.remove('fa-eye');
-        passwordIcon.classList.add('fa-eye-slash');
-      } else {
-        passwordField.type = 'password';
-        passwordIcon.classList.remove('fa-eye-slash');
-        passwordIcon.classList.add('fa-eye');
-      }
+    // Rediriger si déjà connecté
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate([this.returnUrl]);
     }
   }
 
-  private simulateLogin(form: HTMLFormElement, credentials: { email: string; password: string }): void {
-    const button = form.querySelector('.login-button') as HTMLButtonElement;
-    
-    if (button) {
-      // État de chargement
-      button.classList.add('loading');
-      button.disabled = true;
-      button.innerHTML = '<i class="fas fa-spinner"></i> Connexion en cours...';
-      
-      // Simulation d'un appel API
-      setTimeout(() => {
-        button.classList.remove('loading');
-        button.disabled = false;
-        button.innerHTML = '<i class="fas fa-sign-in-alt"></i> Se connecter';
-        
-        // Simuler une connexion réussie
-        this.handleSuccessfulLogin();
-        
-      }, 2000);
+  onSubmit(): void {
+    if (this.loginForm.valid && !this.isLoading) {
+      this.isLoading = true;
+      const credentials: LoginRequest = this.loginForm.value;
+
+      this.authService.login(credentials).subscribe({
+        next: (response) => {
+          this.notificationService.success(
+            `Bienvenue ${response.user.username} ! Connexion réussie.`
+          );
+          
+          // Redirection selon le rôle
+          this.redirectAfterLogin(response.user.profil);
+        },
+        error: (error) => {
+          console.error('Erreur de connexion:', error);
+          let errorMessage = 'Erreur de connexion. Vérifiez vos identifiants.';
+          
+          if (error.status === 401) {
+            errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect.';
+          } else if (error.status === 403) {
+            errorMessage = 'Votre compte est désactivé. Contactez l\'administrateur.';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+          
+          this.notificationService.error(errorMessage);
+          this.isLoading = false;
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
+    } else {
+      this.markFormGroupTouched();
     }
   }
 
-  private handleSuccessfulLogin(): void {
-    // Simulation de sauvegarde de token
-    const mockUser = {
-      id: 1,
-      email: 'user@example.com',
-      name: 'Admin User',
-      role: 'ADMIN'
-    };
-    
-    // Stockage temporaire (à remplacer par votre AuthService)
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    localStorage.setItem('token', 'mock-jwt-token');
-    
-    // Afficher un message de succès
-    this.showSuccess('Connexion réussie !');
-    
-    // Redirection vers le dashboard après un court délai
-    setTimeout(() => {
-      this.router.navigate(['/dashboard']);
-    }, 1000);
-  }
-
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  private showError(message: string): void {
-    // Implémentation simple d'affichage d'erreur
-    // À remplacer par votre service de notification
-    const existingAlert = document.querySelector('.error-alert');
-    if (existingAlert) {
-      existingAlert.remove();
+  private redirectAfterLogin(userRole: string): void {
+    // Redirection intelligente selon le rôle
+    switch (userRole) {
+      case 'Admin':
+        this.router.navigate(['/dashboard']);
+        break;
+      case 'AgentFiscal':
+        this.router.navigate(['/fiches-fiscales']);
+        break;
+      case 'TechnicienSIG':
+        this.router.navigate(['/cartographie']);
+        break;
+      case 'Lecteur':
+        this.router.navigate(['/parcelles']);
+        break;
+      default:
+        this.router.navigate([this.returnUrl]);
     }
-
-    const alert = document.createElement('div');
-    alert.className = 'error-alert';
-    alert.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #fee;
-      color: #c53030;
-      padding: 12px 20px;
-      border-radius: 8px;
-      border: 1px solid #fed7d7;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      animation: slideInRight 0.3s ease-out;
-    `;
-    alert.innerHTML = `
-      <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
-      ${message}
-    `;
-
-    document.body.appendChild(alert);
-
-    // Suppression automatique après 5 secondes
-    setTimeout(() => {
-      if (alert && alert.parentNode) {
-        alert.remove();
-      }
-    }, 5000);
   }
 
-  private showSuccess(message: string): void {
-    // Implémentation simple d'affichage de succès
-    const existingAlert = document.querySelector('.success-alert');
-    if (existingAlert) {
-      existingAlert.remove();
-    }
-
-    const alert = document.createElement('div');
-    alert.className = 'success-alert';
-    alert.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #f0fff4;
-      color: #38a169;
-      padding: 12px 20px;
-      border-radius: 8px;
-      border: 1px solid #c6f6d5;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      animation: slideInRight 0.3s ease-out;
-    `;
-    alert.innerHTML = `
-      <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-      ${message}
-    `;
-
-    document.body.appendChild(alert);
-
-    // Suppression automatique après 3 secondes
-    setTimeout(() => {
-      if (alert && alert.parentNode) {
-        alert.remove();
-      }
-    }, 3000);
+  private markFormGroupTouched(): void {
+    Object.keys(this.loginForm.controls).forEach(key => {
+      const control = this.loginForm.get(key);
+      control?.markAsTouched();
+    });
   }
 
-  private animateOnLoad(): void {
-    // Animation d'entrée pour le composant
-    setTimeout(() => {
-      const container = document.querySelector('.login-container');
-      if (container) {
-        container.classList.add('animate-in');
-      }
-    }, 100);
+  togglePasswordVisibility(): void {
+    this.hidePassword = !this.hidePassword;
   }
 
-  // Méthodes utilitaires pour les templates
-  navigateToRegister(): void {
-    this.router.navigate(['/auth/register']);
-  }
-
-  navigateToForgotPassword(): void {
+  goToForgotPassword(): void {
     this.router.navigate(['/auth/forgot-password']);
+  }
+
+  // Getters pour faciliter l'accès aux contrôles du formulaire
+  get username() { return this.loginForm.get('username'); }
+  get password() { return this.loginForm.get('password'); }
+
+  // Méthodes utilitaires pour l'UI
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.loginForm.get(fieldName);
+    return !!(field && field.invalid && field.touched);
+  }
+
+  getFieldError(fieldName: string): string {
+    const field = this.loginForm.get(fieldName);
+    if (field?.errors) {
+      if (field.errors['required']) return `${fieldName} est requis`;
+      if (field.errors['minlength']) return `Minimum ${field.errors['minlength'].requiredLength} caractères`;
+    }
+    return '';
   }
 }

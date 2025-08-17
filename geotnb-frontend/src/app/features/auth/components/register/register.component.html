@@ -1,0 +1,138 @@
+<div class="register-container">
+    <div class="register-card-wrapper">
+      <mat-card class="register-card">
+        <mat-card-header class="register-header">
+          <div class="logo-section">
+            <img src="assets/images/logo/logo-tnb.png" alt="Logo TNB" class="logo">
+            <h1>Créer un compte</h1>
+            <p class="subtitle">Géoportail TNB - Oujda</p>
+          </div>
+        </mat-card-header>
+  
+        <mat-card-content>
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+            
+            <!-- Nom d'utilisateur -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nom d'utilisateur</mat-label>
+              <input matInput formControlName="username" autocomplete="username">
+              <mat-icon matSuffix>person</mat-icon>
+              <mat-error *ngIf="username?.hasError('required')">
+                Le nom d'utilisateur est requis
+              </mat-error>
+              <mat-error *ngIf="username?.hasError('minlength')">
+                Minimum 3 caractères requis
+              </mat-error>
+              <mat-error *ngIf="username?.hasError('maxlength')">
+                Maximum 20 caractères autorisés
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Email -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Adresse email</mat-label>
+              <input matInput formControlName="email" type="email" autocomplete="email">
+              <mat-icon matSuffix>email</mat-icon>
+              <mat-error *ngIf="email?.hasError('required')">
+                L'email est requis
+              </mat-error>
+              <mat-error *ngIf="email?.hasError('email')">
+                Format d'email invalide
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Profil/Rôle -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Profil utilisateur</mat-label>
+              <mat-select formControlName="profil">
+                <mat-option *ngFor="let role of userRoles" [value]="role.value">
+                  {{ role.label }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matSuffix>security</mat-icon>
+              <mat-error *ngIf="profil?.hasError('required')">
+                Le profil est requis
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Mot de passe -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Mot de passe</mat-label>
+              <input 
+                matInput 
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password"
+                autocomplete="new-password">
+              <mat-icon 
+                matSuffix 
+                (click)="togglePasswordVisibility()" 
+                class="password-toggle">
+                {{ hidePassword ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+              <mat-error *ngIf="password?.hasError('required')">
+                Le mot de passe est requis
+              </mat-error>
+              <mat-error *ngIf="password?.hasError('minlength')">
+                Minimum 8 caractères requis
+              </mat-error>
+              <mat-error *ngIf="password?.hasError('passwordStrength')">
+                Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Confirmation mot de passe -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Confirmer le mot de passe</mat-label>
+              <input 
+                matInput 
+                [type]="hideConfirmPassword ? 'password' : 'text'"
+                formControlName="confirmPassword"
+                autocomplete="new-password">
+              <mat-icon 
+                matSuffix 
+                (click)="toggleConfirmPasswordVisibility()" 
+                class="password-toggle">
+                {{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+              <mat-error *ngIf="confirmPassword?.hasError('required')">
+                La confirmation est requise
+              </mat-error>
+              <mat-error *ngIf="registerForm?.hasError('passwordMismatch') && confirmPassword?.touched">
+                Les mots de passe ne correspondent pas
+              </mat-error>
+            </mat-form-field>
+  
+            <!-- Bouton d'inscription -->
+            <button 
+              mat-raised-button 
+              color="primary" 
+              type="submit"
+              class="register-button full-width"
+              [disabled]="registerForm.invalid || isLoading">
+              <span *ngIf="!isLoading">Créer le compte</span>
+              <span *ngIf="isLoading">Création en cours...</span>
+            </button>
+  
+            <!-- Barre de progression -->
+            <mat-progress-bar 
+              *ngIf="isLoading" 
+              mode="indeterminate" 
+              class="progress-bar">
+            </mat-progress-bar>
+          </form>
+  
+          <!-- Lien vers connexion -->
+          <div class="login-link-section">
+            <p>Vous avez déjà un compte ?</p>
+            <button 
+              mat-button 
+              color="accent" 
+              (click)="goToLogin()"
+              class="login-link">
+              Se connecter
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
