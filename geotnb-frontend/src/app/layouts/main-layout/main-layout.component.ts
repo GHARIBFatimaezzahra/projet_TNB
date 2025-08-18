@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, HostListener } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +9,6 @@ interface User {
   id: number;
   username: string;
   email: string;
-  
   profil: 'Admin' | 'AgentFiscal' | 'TechnicienSIG' | 'Lecteur';
   estActif: boolean;
 }
@@ -58,7 +57,7 @@ export class MainLayoutComponent implements OnInit {
       id: 1,
       title: 'Nouvelle parcelle ajoutée',
       message: 'La parcelle REF-2024-001 a été créée avec succès',
-      icon: '🏞️',
+      icon: '��️',
       time: new Date(Date.now() - 1000 * 60 * 30),
       read: false,
       type: 'success'
@@ -87,7 +86,7 @@ export class MainLayoutComponent implements OnInit {
   connectionStatus = signal<'online' | 'offline'>('online');
   lastSync = signal(new Date());
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   onResize(): void {
     this.checkMobile();
   }
@@ -245,7 +244,9 @@ export class MainLayoutComponent implements OnInit {
     return user.username.substring(0, 2).toUpperCase();
   }
 
-  getRoleLabel(role: string): string {
+  getRoleLabel(role: string | undefined): string {
+    if (!role) return 'Utilisateur';
+    
     const labels: Record<string, string> = {
       'Admin': 'Administrateur',
       'AgentFiscal': 'Agent Fiscal',

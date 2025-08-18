@@ -155,9 +155,10 @@ export class AuthService {
   /**
    * Mot de passe oublié
    */
-  forgotPassword(email: string): Observable<any> {
-    return this.apiService.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+  forgotPassword(request: { email: string }): Observable<any> {
+    return this.apiService.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, request);
   }
+
 
   /**
    * Réinitialisation mot de passe

@@ -1,111 +1,66 @@
-import { Injectable } from '@angular/core';
-import { ToastrService } from 'ngx-toastr';
-
-export interface NotificationConfig {
-  duration?: number;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
-  closable?: boolean;
-  progressBar?: boolean;
-}
+import { Injectable, inject } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private readonly defaultConfig: NotificationConfig = {
-    duration: 5000,
-    position: 'top-right',
-    closable: true,
-    progressBar: true
-  };
+  private readonly snackBar = inject(MatSnackBar);
 
-  constructor(private toastr: ToastrService) {}
-
-  /**
-   * Notification de succès
-   */
-  success(message: string, title = 'Succès', config?: NotificationConfig): void {
-    const options = this.mergeConfig(config);
-    this.toastr.success(message, title, {
-      timeOut: options.duration,
-      positionClass: `toast-${options.position}`,
-      closeButton: options.closable,
-      progressBar: options.progressBar
+  showSuccess(message: string, duration: number = 3000): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration,
+      panelClass: ['success-snackbar'],
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
     });
   }
 
-  /**
-   * Notification d'erreur
-   */
-  error(message: string, title = 'Erreur', config?: NotificationConfig): void {
-    const options = this.mergeConfig(config);
-    this.toastr.error(message, title, {
-      timeOut: options.duration,
-      positionClass: `toast-${options.position}`,
-      closeButton: options.closable,
-      progressBar: options.progressBar
+  showError(message: string, duration: number = 5000): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration,
+      panelClass: ['error-snackbar'],
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
     });
   }
 
-  /**
-   * Notification d'avertissement
-   */
-  warning(message: string, title = 'Attention', config?: NotificationConfig): void {
-    const options = this.mergeConfig(config);
-    this.toastr.warning(message, title, {
-      timeOut: options.duration,
-      positionClass: `toast-${options.position}`,
-      closeButton: options.closable,
-      progressBar: options.progressBar
+  showInfo(message: string, duration: number = 3000): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration,
+      panelClass: ['info-snackbar'],
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
     });
   }
 
-  /**
-   * Notification d'information
-   */
-  info(message: string, title = 'Information', config?: NotificationConfig): void {
-    const options = this.mergeConfig(config);
-    this.toastr.info(message, title, {
-      timeOut: options.duration,
-      positionClass: `toast-${options.position}`,
-      closeButton: options.closable,
-      progressBar: options.progressBar
+  showWarning(message: string, duration: number = 4000): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration,
+      panelClass: ['warning-snackbar'],
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
     });
   }
 
-  /**
-   * Notification personnalisée
-   */
-  show(
-    message: string, 
-    title: string, 
-    type: 'success' | 'error' | 'warning' | 'info',
-    config?: NotificationConfig
-  ): void {
-    switch (type) {
-      case 'success':
-        this.success(message, title, config);
-        break;
-      case 'error':
-        this.error(message, title, config);
-        break;
-      case 'warning':
-        this.warning(message, title, config);
-        break;
-      case 'info':
-        this.info(message, title, config);
-        break;
-    }
+  // Méthodes compatibles avec votre ancien code
+  success(message: string, title?: string): void {
+    this.showSuccess(message);
   }
 
-  /**
-   * Fermer toutes les notifications
-   */
+  error(message: string, title?: string): void {
+    this.showError(message);
+  }
+
+  warning(message: string, title?: string): void {
+    this.showWarning(message);
+  }
+
+  info(message: string, title?: string): void {
+    this.showInfo(message);
+  }
+
   clear(): void {
-    this.toastr.clear();
-  }
-
-  private mergeConfig(config?: NotificationConfig): NotificationConfig {
-    return { ...this.defaultConfig, ...config };
+    // MatSnackBar n'a pas de clear global, mais chaque snackbar se ferme automatiquement
   }
 }
