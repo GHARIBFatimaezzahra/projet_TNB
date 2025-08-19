@@ -1,10 +1,20 @@
+// src/app/app.component.ts
 import { Component } from '@angular/core';
-import { LoginComponent } from './features/auth/components/login/login.component';
+import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [LoginComponent],
-  template: `<app-login></app-login>`
+  imports: [RouterOutlet, CommonModule],
+  template: `<router-outlet></router-outlet>`,
+  styles: [`
+    :host {
+      display: block;
+      min-height: 100vh;
+    }
+  `]
 })
-export class AppComponent {}
+export class AppComponent {
+  title = 'TNB SIG - Géoportail Oujda';
+}

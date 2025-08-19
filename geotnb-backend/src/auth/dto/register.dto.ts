@@ -1,16 +1,30 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsIn } from 'class-validator';
 
 export class RegisterDto {
+  @IsNotEmpty({ message: 'Le nom est requis' })
   @IsString()
+  nom: string;
+
+  @IsNotEmpty({ message: 'Le nom d\'utilisateur est requis' })
+  @IsString()
+  @MinLength(3, { message: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' })
   username: string;
 
-  @IsString()
-  @MinLength(6)
-  password: string;
-
-  @IsEmail()
+  @IsEmail({}, { message: 'Format email invalide' })
   email: string;
 
+  @IsNotEmpty({ message: 'Le mot de passe est requis' })
   @IsString()
-  profil: 'Admin' | 'AgentFiscal' | 'TechnicienSIG' | 'Lecteur';
+  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+  password: string;
+
+  @IsNotEmpty({ message: 'Le profil est requis' })
+  @IsIn(['Admin', 'AgentFiscal', 'TechnicienSIG', 'Lecteur'], { 
+    message: 'Profil invalide' 
+  })
+  profil: string;
+
+  @IsOptional()
+  @IsString()
+  telephone?: string;
 }

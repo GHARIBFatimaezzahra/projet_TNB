@@ -1,105 +1,92 @@
-<div class="login-container">
-  <div class="login-card-wrapper">
-    <mat-card class="login-card">
-      <mat-card-header class="login-header">
-        <div class="logo-section">
-          <img src="assets/images/logo/logo-tnb.png" alt="Logo TNB" class="logo">
-          <h1>Géoportail TNB</h1>
-          <p class="subtitle">Commune d'Oujda</p>
+<div class="conteneur-connexion">
+  <div class="carte-connexion-wrapper">
+    <div class="carte-connexion">
+      <!-- En-tête avec logo et branding -->
+      <div class="en-tete-connexion">
+        <div class="conteneur-logo">
+          <mat-icon class="icone-geo">map</mat-icon>
         </div>
-      </mat-card-header>
+        <h1 class="titre-application">Géoportail TNB</h1>
+        <p class="sous-titre-application">Commune d'Oujda</p>
+      </div>
 
-      <mat-card-content>
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
-          <!-- Nom d'utilisateur -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nom d'utilisateur</mat-label>
+      <!-- Contenu principal du formulaire -->
+      <div class="contenu-connexion">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="formulaire-connexion" novalidate>
+          
+          <!-- Champ nom d'utilisateur -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Nom d'utilisateur</label>
             <input 
-              matInput 
+              type="text"
               formControlName="username" 
+              class="champ-saisie"
               autocomplete="username"
-              [class.error]="isFieldInvalid('username')"
               placeholder="Saisissez votre nom d'utilisateur">
-            <mat-icon matSuffix>person</mat-icon>
-            <mat-error *ngIf="username?.hasError('required')">
-              Le nom d'utilisateur est requis
-            </mat-error>
-            <mat-error *ngIf="username?.hasError('minlength')">
-              Minimum 3 caractères requis
-            </mat-error>
-          </mat-form-field>
+            <div class="message-erreur" *ngIf="isFieldInvalid('username')">
+              <span *ngIf="username?.hasError('required')">Le nom d'utilisateur est requis</span>
+              <span *ngIf="username?.hasError('minlength')">Minimum 3 caractères requis</span>
+            </div>
+          </div>
 
-          <!-- Mot de passe -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Mot de passe</mat-label>
-            <input 
-              matInput 
-              [type]="hidePassword ? 'password' : 'text'"
-              formControlName="password"
-              autocomplete="current-password"
-              [class.error]="isFieldInvalid('password')"
-              placeholder="Saisissez votre mot de passe">
-            <mat-icon 
-              matSuffix 
-              (click)="togglePasswordVisibility()" 
-              class="password-toggle"
-              [attr.aria-label]="'Afficher/masquer le mot de passe'"
-              [attr.aria-pressed]="!hidePassword">
-              {{ hidePassword ? 'visibility_off' : 'visibility' }}
-            </mat-icon>
-            <mat-error *ngIf="password?.hasError('required')">
-              Le mot de passe est requis
-            </mat-error>
-            <mat-error *ngIf="password?.hasError('minlength')">
-              Minimum 6 caractères requis
-            </mat-error>
-          </mat-form-field>
+          <!-- Champ mot de passe -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Mot de passe</label>
+            <div class="conteneur-mot-de-passe">
+              <input 
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password"
+                class="champ-saisie"
+                autocomplete="current-password"
+                placeholder="Saisissez votre mot de passe">
+              <button 
+                type="button"
+                class="bouton-visibilite" 
+                (click)="togglePasswordVisibility()">
+                {{ hidePassword ? '👁️' : '🔒' }}
+              </button>
+            </div>
+            <div class="message-erreur" *ngIf="isFieldInvalid('password')">
+              <span *ngIf="password?.hasError('required')">Le mot de passe est requis</span>
+              <span *ngIf="password?.hasError('minlength')">Minimum 6 caractères requis</span>
+            </div>
+          </div>
 
-          <!-- Bouton de connexion -->
+          <!-- Bouton de connexion principal -->
           <button 
-            mat-raised-button 
-            color="primary" 
             type="submit"
-            class="login-button full-width"
-            [disabled]="loginForm.invalid || isLoading"
-            [attr.aria-label]="isLoading ? 'Connexion en cours' : 'Se connecter'">
-            <mat-icon *ngIf="!isLoading">login</mat-icon>
-            <mat-icon *ngIf="isLoading" class="spinning">hourglass_empty</mat-icon>
-            <span *ngIf="!isLoading">Se connecter</span>
-            <span *ngIf="isLoading">Connexion en cours...</span>
+            class="bouton-connexion"
+            [disabled]="loginForm.invalid || isLoading">
+            <span class="indicateur-chargement" *ngIf="isLoading"></span>
+            <span class="texte-bouton">
+              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+            </span>
           </button>
-
-          <!-- Barre de progression -->
-          <mat-progress-bar 
-            *ngIf="isLoading" 
-            mode="indeterminate" 
-            class="progress-bar"
-            aria-label="Connexion en cours">
-          </mat-progress-bar>
         </form>
 
-        <!-- Actions secondaires -->
-        <div class="secondary-actions">
-          <button 
-            mat-button 
-            color="accent" 
-            (click)="goToForgotPassword()"
-            class="forgot-password-link"
-            [disabled]="isLoading">
-            <mat-icon>help_outline</mat-icon>
+        <!-- Actions secondaires avec liens -->
+        <div class="actions-secondaires">
+          <a routerLink="/auth/forgot-password" class="lien-mot-de-passe-oublie">
+            <mat-icon class="icone-lien">lock_reset</mat-icon>
             Mot de passe oublié ?
-          </button>
+          </a>
+          
+          <div class="separateur-ou">
+            <span>ou</span>
+          </div>
+          
+          <a routerLink="/auth/register" class="lien-register">
+            <mat-icon class="icone-lien">person_add</mat-icon>
+            Créer un nouveau compte
+          </a>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
 
-    <!-- Informations système -->
-    <div class="system-info">
-      <p>
-        <mat-icon>info</mat-icon>
-        Système de gestion de la Taxe sur les Terrains Non Bâtis
-      </p>
-      <p class="version">Version 1.0.0</p>
+      <!-- Informations système en bas -->
+      <div class="informations-systeme">
+        <p class="texte-info">Système de Gestion de la Taxe sur les Terrains Non Bâtis</p>
+        <p class="numero-version">Version 1.0.0</p>
+      </div>
     </div>
   </div>
 </div>

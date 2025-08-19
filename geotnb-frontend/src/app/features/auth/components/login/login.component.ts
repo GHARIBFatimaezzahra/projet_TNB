@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-
+import { RouterModule } from '@angular/router';
 import { AuthFeatureService } from '../../services/auth-feature.service';
 import { NotificationService } from '../../../../core/services/notification/notification.service';
 import { LoadingService } from '../../../../core/services/loading/loading.service';
@@ -21,6 +21,7 @@ import { LoginRequest } from '../../models/auth-feature.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,

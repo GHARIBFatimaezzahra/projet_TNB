@@ -8,6 +8,10 @@ import { User } from './user/entities/user.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './common/guards/roles.guard';
 
+// 🚨 AJOUTEZ CES IMPORTS MANQUANTS :
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,14 +24,15 @@ import { RolesGuard } from './common/guards/roles.guard';
       username: 'postgres',
       password: '123456789',
       database: 'Application SIG_TNB',
-      entities: [User, JournalAction], // Enregistrement des entités User et JournalAction
+      entities: [User, JournalAction],
       synchronize: false,
     }),
     AuthModule,
-    UserModule, // Assurez-vous que UserModule est bien importé
+    UserModule,
   ],
-  controllers: [],
+  controllers: [AppController], // 🚨 AJOUTEZ AppController ici !
   providers: [
+    AppService, // 🚨 AJOUTEZ AppService ici !
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

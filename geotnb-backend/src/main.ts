@@ -1,28 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Activer CORS pour accepter les requêtes depuis n'importe quelle origine (pendant le développement)
+  // 🚨 CORS pour Angular (TRÈS IMPORTANT)
   app.enableCors({
-    origin: '*',  // Permet à toutes les origines d'accéder à l'API (remplacer par un domaine spécifique en production)
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',  // Méthodes autorisées
-    allowedHeaders: 'Content-Type, Accept, Authorization',  // En-têtes autorisés
-    credentials: true,  // Autorise l'envoi de cookies et autres informations d'identification (utile pour JWT)
+    origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   });
 
-  // Configuration de Swagger
-  const options = new DocumentBuilder()
-    .setTitle('GeoTNB API')
-    .setDescription('API documentation for GeoTNB backend')
-    .setVersion('1.0')
-    .addBearerAuth()  // Si tu utilises JWT pour l'authentification
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api', app, document);  // L'API sera accessible sur /api
+  // 🎯 Préfixe API (si vous l'utilisez)
+  app.setGlobalPrefix('api');
 
-  await app.listen(3000);  // Assure-toi que ton backend tourne sur le bon port
+  await app.listen(3000);
+  console.log('🚀 Backend TNB démarré sur http://localhost:3000');
+  console.log('🏥 Health check: http://localhost:3000/api/health');
 }
 bootstrap();

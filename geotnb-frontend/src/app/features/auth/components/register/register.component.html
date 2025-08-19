@@ -1,138 +1,141 @@
-<div class="register-container">
-    <div class="register-card-wrapper">
-      <mat-card class="register-card">
-        <mat-card-header class="register-header">
-          <div class="logo-section">
-            <img src="assets/images/logo/logo-tnb.png" alt="Logo TNB" class="logo">
-            <h1>Créer un compte</h1>
-            <p class="subtitle">Géoportail TNB - Oujda</p>
+<div class="conteneur-connexion">
+  <div class="carte-connexion-wrapper">
+    <div class="carte-connexion">
+      <!-- En-tête -->
+      <div class="en-tete-connexion">
+        <div class="conteneur-logo">
+          <mat-icon class="icone-geo">person_add</mat-icon>
+        </div>
+        <h1 class="titre-application">Créer un compte</h1>
+        <p class="sous-titre-application">Géoportail TNB - Commune d'Oujda</p>
+      </div>
+
+      <!-- Contenu principal -->
+      <div class="contenu-connexion">
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="formulaire-connexion" novalidate>
+          
+          <!-- Type d'utilisateur -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Type d'utilisateur</label>
+            <select formControlName="profil" class="champ-saisie" (change)="onUserTypeChange($any($event.target).value)">
+              <option value="" disabled>Sélectionnez votre profil</option>
+              <option *ngFor="let role of userRoles" [value]="role.value">
+                {{ role.label }} - {{ role.description }}
+              </option>
+            </select>
+            <div class="message-erreur" *ngIf="profil?.invalid && profil?.touched">
+              <span>Veuillez sélectionner un type d'utilisateur</span>
+            </div>
           </div>
-        </mat-card-header>
-  
-        <mat-card-content>
-          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-            
-            <!-- Nom d'utilisateur -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nom d'utilisateur</mat-label>
-              <input matInput formControlName="username" autocomplete="username">
-              <mat-icon matSuffix>person</mat-icon>
-              <mat-error *ngIf="username?.hasError('required')">
-                Le nom d'utilisateur est requis
-              </mat-error>
-              <mat-error *ngIf="username?.hasError('minlength')">
-                Minimum 3 caractères requis
-              </mat-error>
-              <mat-error *ngIf="username?.hasError('maxlength')">
-                Maximum 20 caractères autorisés
-              </mat-error>
-            </mat-form-field>
-  
-            <!-- Email -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Adresse email</mat-label>
-              <input matInput formControlName="email" type="email" autocomplete="email">
-              <mat-icon matSuffix>email</mat-icon>
-              <mat-error *ngIf="email?.hasError('required')">
-                L'email est requis
-              </mat-error>
-              <mat-error *ngIf="email?.hasError('email')">
-                Format d'email invalide
-              </mat-error>
-            </mat-form-field>
-  
-            <!-- Profil/Rôle -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Profil utilisateur</mat-label>
-              <mat-select formControlName="profil">
-                <mat-option *ngFor="let role of userRoles" [value]="role.value">
-                  {{ role.label }}
-                </mat-option>
-              </mat-select>
-              <mat-icon matSuffix>security</mat-icon>
-              <mat-error *ngIf="profil?.hasError('required')">
-                Le profil est requis
-              </mat-error>
-            </mat-form-field>
-  
-            <!-- Mot de passe -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Mot de passe</mat-label>
+
+          <!-- Nom d'utilisateur -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Nom d'utilisateur</label>
+            <input 
+              type="text"
+              formControlName="username" 
+              class="champ-saisie"
+              autocomplete="username"
+              placeholder="Saisissez un nom d'utilisateur unique">
+            <div class="message-erreur" *ngIf="username?.invalid && username?.touched">
+              <span *ngIf="username?.hasError('required')">Le nom d'utilisateur est requis</span>
+              <span *ngIf="username?.hasError('minlength')">Minimum 3 caractères requis</span>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Adresse email</label>
+            <input 
+              type="email"
+              formControlName="email" 
+              class="champ-saisie"
+              autocomplete="email"
+              placeholder="nom@commune-oujda.ma">
+            <div class="message-erreur" *ngIf="email?.invalid && email?.touched">
+              <span *ngIf="email?.hasError('required')">L'adresse email est requise</span>
+              <span *ngIf="email?.hasError('email')">Format d'email invalide</span>
+            </div>
+          </div>
+
+          <!-- Mot de passe -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Mot de passe</label>
+            <div class="conteneur-mot-de-passe">
               <input 
-                matInput 
                 [type]="hidePassword ? 'password' : 'text'"
                 formControlName="password"
-                autocomplete="new-password">
-              <mat-icon 
-                matSuffix 
-                (click)="togglePasswordVisibility()" 
-                class="password-toggle">
-                {{ hidePassword ? 'visibility_off' : 'visibility' }}
-              </mat-icon>
-              <mat-error *ngIf="password?.hasError('required')">
-                Le mot de passe est requis
-              </mat-error>
-              <mat-error *ngIf="password?.hasError('minlength')">
-                Minimum 8 caractères requis
-              </mat-error>
-              <mat-error *ngIf="password?.hasError('passwordStrength')">
-                Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial
-              </mat-error>
-            </mat-form-field>
-  
-            <!-- Confirmation mot de passe -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Confirmer le mot de passe</mat-label>
+                class="champ-saisie"
+                autocomplete="new-password"
+                placeholder="Créez un mot de passe sécurisé">
+              <button 
+                type="button"
+                class="bouton-visibilite" 
+                (click)="togglePasswordVisibility()">
+                {{ hidePassword ? '👁️' : '🔒' }}
+              </button>
+            </div>
+            <div class="message-erreur" *ngIf="password?.invalid && password?.touched">
+              <span *ngIf="password?.hasError('required')">Le mot de passe est requis</span>
+              <span *ngIf="password?.hasError('minlength')">Minimum 8 caractères requis</span>
+            </div>
+          </div>
+
+          <!-- Confirmation mot de passe -->
+          <div class="groupe-champ">
+            <label class="etiquette-champ">Confirmer le mot de passe</label>
+            <div class="conteneur-mot-de-passe">
               <input 
-                matInput 
                 [type]="hideConfirmPassword ? 'password' : 'text'"
                 formControlName="confirmPassword"
-                autocomplete="new-password">
-              <mat-icon 
-                matSuffix 
-                (click)="toggleConfirmPasswordVisibility()" 
-                class="password-toggle">
-                {{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}
-              </mat-icon>
-              <mat-error *ngIf="confirmPassword?.hasError('required')">
-                La confirmation est requise
-              </mat-error>
-              <mat-error *ngIf="registerForm?.hasError('passwordMismatch') && confirmPassword?.touched">
-                Les mots de passe ne correspondent pas
-              </mat-error>
-            </mat-form-field>
-  
-            <!-- Bouton d'inscription -->
-            <button 
-              mat-raised-button 
-              color="primary" 
-              type="submit"
-              class="register-button full-width"
-              [disabled]="registerForm.invalid || isLoading">
-              <span *ngIf="!isLoading">Créer le compte</span>
-              <span *ngIf="isLoading">Création en cours...</span>
-            </button>
-  
-            <!-- Barre de progression -->
-            <mat-progress-bar 
-              *ngIf="isLoading" 
-              mode="indeterminate" 
-              class="progress-bar">
-            </mat-progress-bar>
-          </form>
-  
-          <!-- Lien vers connexion -->
-          <div class="login-link-section">
-            <p>Vous avez déjà un compte ?</p>
-            <button 
-              mat-button 
-              color="accent" 
-              (click)="goToLogin()"
-              class="login-link">
-              Se connecter
-            </button>
+                class="champ-saisie"
+                autocomplete="new-password"
+                placeholder="Répétez le mot de passe">
+              <button 
+                type="button"
+                class="bouton-visibilite" 
+                (click)="toggleConfirmPasswordVisibility()">
+                {{ hideConfirmPassword ? '👁️' : '🔒' }}
+              </button>
+            </div>
+            <div class="message-erreur" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
+              <span *ngIf="confirmPassword?.hasError('required')">La confirmation est requise</span>
+            </div>
+            <div class="message-erreur" *ngIf="registerForm?.hasError('passwordMismatch') && confirmPassword?.touched">
+              <span>Les mots de passe ne correspondent pas</span>
+            </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+
+          <!-- Bouton de création -->
+          <button 
+            type="submit"
+            class="bouton-connexion"
+            [disabled]="registerForm.invalid || isLoading">
+            <span class="indicateur-chargement" *ngIf="isLoading"></span>
+            <span class="texte-bouton">
+              {{ isLoading ? 'Création en cours...' : 'Créer le compte' }}
+            </span>
+          </button>
+        </form>
+
+        <!-- Actions secondaires -->
+        <div class="actions-secondaires">
+          <div class="separateur-ou">
+            <span>ou</span>
+          </div>
+          
+          <a routerLink="/auth/login" class="lien-mot-de-passe-oublie">
+            <mat-icon class="icone-lien">login</mat-icon>
+            Déjà un compte ? Se connecter
+          </a>
+        </div>
+      </div>
+
+      <!-- Informations système -->
+      <div class="informations-systeme">
+        <p class="texte-info">Nouveau compte utilisateur - Système TNB</p>
+        <p class="numero-version">Version 1.0.0</p>
+      </div>
     </div>
   </div>
+</div>
