@@ -1,30 +1,47 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsIn } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+export enum UserRole {
+  ADMIN = 'Admin',
+  AGENT_FISCAL = 'AgentFiscal',
+  TECHNICIEN_SIG = 'TechnicienSIG',
+  LECTEUR = 'Lecteur'
+}
 
 export class RegisterDto {
-  @IsNotEmpty({ message: 'Le nom est requis' })
+  @ApiProperty({ example: 'john.doe' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(3)
+  username: string;
+
+  @ApiProperty({ example: 'password123' })
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  @ApiProperty({ example: 'john.doe@commune-oujda.ma' })
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'DUPONT' })
+  @IsNotEmpty()
   @IsString()
   nom: string;
 
-  @IsNotEmpty({ message: 'Le nom d\'utilisateur est requis' })
+  @ApiProperty({ example: 'Jean', required: false })
+  @IsOptional()
   @IsString()
-  @MinLength(3, { message: 'Le nom d\'utilisateur doit contenir au moins 3 caractères' })
-  username: string;
+  prenom?: string;
 
-  @IsEmail({}, { message: 'Format email invalide' })
-  email: string;
-
-  @IsNotEmpty({ message: 'Le mot de passe est requis' })
-  @IsString()
-  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
-  password: string;
-
-  @IsNotEmpty({ message: 'Le profil est requis' })
-  @IsIn(['Admin', 'AgentFiscal', 'TechnicienSIG', 'Lecteur'], { 
-    message: 'Profil invalide' 
-  })
-  profil: string;
-
+  @ApiProperty({ example: '+212661234567', required: false })
   @IsOptional()
   @IsString()
   telephone?: string;
+
+  @ApiProperty({ enum: UserRole, example: UserRole.LECTEUR })
+  @IsEnum(UserRole)
+  profil: UserRole;
 }

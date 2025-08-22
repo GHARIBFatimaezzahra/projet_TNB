@@ -1,11 +1,30 @@
-// src/auth/auth.service.ts
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
-import { UserProfil } from '../user/user.enums';
+import { UserService } from '../user/user.service';
+import { User } from '../user/entities/user.entity';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+
+export interface JwtPayload {
+  sub: number;
+  username: string;
+  profil: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    nom: string;
+    prenom: string;
+    profil: string;
+  };
+}
 
 @Injectable()
 export class AuthService {
@@ -14,70 +33,56 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+  async validateUser(username: string, password: string): Promise<User | null> {
+    const user = await this.userService.findByUsername(username);
+
+    if (user && await bcrypt.compare(password, user.password)) {
+      await this.userService.updateLastAccess(user.id);
+      return user;
+    }
+    return null;
+  }
+
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
+    const user = await this.validateUser(loginDto.username, loginDto.password);
     
-    // Convert string to UserProfil enum with validation
-    const profil = this.validateAndConvertProfil(dto.profil);
-    
-    const user = await this.userService.create({
-      username: dto.username,
-      email: dto.email,
-      password: hashedPassword,
-      profil: profil,
-      estActif: true, // Set new users as active by default
+    if (!user) {
+      throw new UnauthorizedException('Identifiants incorrects');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      username: user.username,
+      profil: user.profil,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        nom: user.nom,
+        prenom: user.prenom,
+        profil: user.profil,
+      },
+    };
+  }
+
+  async register(registerDto: RegisterDto): Promise<LoginResponse> {
+    const user = await this.userService.create(registerDto);
+
+    return this.login({
+      username: user.username,
+      password: registerDto.password,
     });
-
-    const payload = {
-      username: user.username,
-      sub: user.id,
-      profil: user.profil,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        profil: user.profil,
-      },
-    };
   }
 
-  async login(dto: LoginDto) {
-    const user = await this.userService.findByUsername(dto.username);
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
+  async findById(id: number): Promise<User | null> {
+    try {
+      return await this.userService.findOne(id);
+    } catch {
+      return null;
     }
-
-    const payload = {
-      username: user.username,
-      sub: user.id,
-      profil: user.profil,
-    };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        profil: user.profil,
-      },
-    };
-  }
-
-  async validateUser(payload: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.userService.findOne(payload.sub);
-  }
-
-  private validateAndConvertProfil(profilString: string): UserProfil {
-    // Check if the string value exists in the enum
-    if (Object.values(UserProfil).includes(profilString as UserProfil)) {
-      return profilString as UserProfil;
-    }
-    
-    throw new BadRequestException(`Invalid profil value: ${profilString}`);
   }
 }

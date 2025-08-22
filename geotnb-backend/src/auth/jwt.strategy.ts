@@ -1,19 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { AuthService, JwtPayload } from './auth.service';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(config: ConfigService) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET'),
+      secretOrKey: jwtSecret,
     });
+    
+    // Log après super() pour éviter l'erreur TypeScript
+    this.logger.log(`🔑 JWT_SECRET configuré: ${jwtSecret ? 'OUI' : 'NON'}`);
   }
 
-  async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username, role: payload.role };
+  async validate(payload: JwtPayload): Promise<User> {
+    this.logger.log(`🔍 Validation JWT pour l'utilisateur ID: ${payload.sub}`);
+    
+    const user = await this.authService.findById(payload.sub);
+    
+    if (!user) {
+      this.logger.error(`❌ Utilisateur introuvable pour ID: ${payload.sub}`);
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
+
+    this.logger.log(`✅ Utilisateur validé: ${user.username}`);
+    return user;
   }
 }

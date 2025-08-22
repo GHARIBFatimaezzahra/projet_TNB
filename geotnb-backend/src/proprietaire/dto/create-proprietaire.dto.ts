@@ -1,20 +1,71 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { 
+  IsNotEmpty, 
+  IsString, 
+  IsOptional, 
+  IsEnum, 
+  IsBoolean,
+  IsEmail,
+  Matches,
+  MinLength,
+  MaxLength
+} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+export enum NatureProprietaire {
+  PHYSIQUE = 'Physique',
+  MORALE = 'Morale'
+}
 
 export class CreateProprietaireDto {
-  @IsString()
+  @ApiProperty({ example: 'BENNANI' })
   @IsNotEmpty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(255)
   nom: string;
 
-  @IsEnum(['Physique', 'Morale'])
-  nature: 'Physique' | 'Morale';
-
+  @ApiProperty({ example: 'Mohamed', required: false })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  cin_ou_rc: string;
+  @MaxLength(100)
+  prenom?: string;
 
-  @IsString()
-  adresse: string;
+  @ApiProperty({ enum: NatureProprietaire, example: NatureProprietaire.PHYSIQUE })
+  @IsEnum(NatureProprietaire)
+  nature: NatureProprietaire;
 
+  @ApiProperty({ 
+    example: 'AB123456',
+    description: 'CIN pour personne physique ou RC pour personne morale'
+  })
+  @IsOptional()
   @IsString()
-  telephone: string;
+  @MaxLength(100)
+  cinOuRc?: string;
+
+  @ApiProperty({ 
+    example: 'Rue Mohammed V, Quartier Al Qods, Oujda',
+    required: false 
+  })
+  @IsOptional()
+  @IsString()
+  adresse?: string;
+
+  @ApiProperty({ example: '+212661234567', required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(\+212|0)[5-7][0-9]{8}$/, {
+    message: 'Le numéro de téléphone doit être au format marocain valide'
+  })
+  telephone?: string;
+
+  @ApiProperty({ example: 'mohamed.bennani@email.com', required: false })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  estActif?: boolean;
 }

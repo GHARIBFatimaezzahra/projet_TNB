@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { CreateParcelleDto } from './create-parcelle.dto';
 
 export class UpdateParcelleDto extends PartialType(CreateParcelleDto) {}
