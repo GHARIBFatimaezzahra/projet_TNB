@@ -1,0 +1,11 @@
+<mat-chip 
+  [ngClass]="getBadgeClass()"
+  [style.background-color]="getBadgeColor()"
+  [style.color]="getTextColor()">
+  
+  <mat-icon *ngIf="showIcon" matChipAvatar class="badge-icon">
+    {{ getIcon() }}
+  </mat-icon>
+  
+  <span class="badge-text">{{ getDisplayText() }}</span>
+</mat-chip>

@@ -1,0 +1,82 @@
+/*
+<mat-toolbar color="primary" class="app-header">
+  <div class="header-left">
+    <button 
+      mat-icon-button 
+      (click)="onToggleSidenav()"
+      matTooltip="Menu"
+      class="sidenav-toggle">
+      <mat-icon>menu</mat-icon>
+    </button>
+    
+    <div class="app-logo" routerLink="/dashboard">
+      <mat-icon class="logo-icon">map</mat-icon>
+      <span class="app-name">GeoTNB</span>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <!-- Breadcrumb sera inséré ici par le layout principal -->
+    <ng-content select="[slot=breadcrumb]"></ng-content>
+  </div>
+
+  <div class="header-right">
+    <!-- Bouton notifications -->
+    <button 
+      mat-icon-button 
+      [matBadge]="notificationCount" 
+      [matBadgeHidden]="notificationCount === 0"
+      matBadgeColor="warn"
+      matBadgeSize="small"
+      (click)="onNotifications()"
+      matTooltip="Notifications">
+      <mat-icon>notifications</mat-icon>
+    </button>
+
+    <!-- Menu utilisateur -->
+    <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-trigger">
+      <div class="user-avatar">
+        {{ getUserInitials() }}
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ getUserDisplayName() }}</span>
+        <span class="user-role">{{ getRoleDisplayName() }}</span>
+      </div>
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+
+    <mat-menu #userMenu="matMenu" class="user-dropdown">
+      <div class="user-menu-header">
+        <div class="user-avatar-large">
+          {{ getUserInitials() }}
+        </div>
+        <div class="user-details">
+          <div class="user-name">{{ getUserDisplayName() }}</div>
+          <div class="user-email">{{ currentUser?.email }}</div>
+          <div class="user-role">{{ getRoleDisplayName() }}</div>
+        </div>
+      </div>
+      
+      <mat-divider></mat-divider>
+      
+      <button mat-menu-item (click)="onProfile()">
+        <mat-icon>person</mat-icon>
+        <span>Mon profil</span>
+      </button>
+      
+      <button mat-menu-item routerLink="/administration/users" 
+              *ngIf="currentUser?.profil === 'Admin'">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>Administration</span>
+      </button>
+      
+      <mat-divider></mat-divider>
+      
+      <button mat-menu-item (click)="onLogout()">
+        <mat-icon>logout</mat-icon>
+        <span>Se déconnecter</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>
+*/

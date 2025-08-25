@@ -1,0 +1,46 @@
+<mat-form-field class="search-field" [appearance]="appearance">
+    <mat-label>{{ placeholder }}</mat-label>
+    <input 
+      matInput
+      [formControl]="searchControl"
+      [matAutocomplete]="auto"
+      (keyup.enter)="onEnterPressed()"
+      [placeholder]="placeholder">
+    
+    <button *ngIf="searchControl.value && showClearButton" 
+            matSuffix 
+            mat-icon-button 
+            (click)="clearSearch()"
+            type="button"
+            matTooltip="Effacer">
+      <mat-icon>clear</mat-icon>
+    </button>
+    
+    <button *ngIf="showSearchButton" 
+            matSuffix 
+            mat-icon-button 
+            (click)="onEnterPressed()"
+            type="button"
+            matTooltip="Rechercher">
+      <mat-icon>search</mat-icon>
+    </button>
+  </mat-form-field>
+  
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSuggestionSelected($event)">
+    <mat-option *ngFor="let suggestion of filteredSuggestions | async" [value]="suggestion.value">
+      <div class="suggestion-content">
+        <mat-icon *ngIf="suggestion.icon" class="suggestion-icon">{{ suggestion.icon }}</mat-icon>
+        <div class="suggestion-text">
+          <span class="suggestion-label">{{ suggestion.label }}</span>
+          <small *ngIf="suggestion.category" class="suggestion-category">{{ suggestion.category }}</small>
+        </div>
+      </div>
+    </mat-option>
+    
+    <mat-option *ngIf="showNoResults && (filteredSuggestions | async)?.length === 0" disabled>
+      <div class="no-results">
+        <mat-icon>search_off</mat-icon>
+        <span>Aucun résultat trouvé</span>
+      </div>
+    </mat-option>
+  </mat-autocomplete>

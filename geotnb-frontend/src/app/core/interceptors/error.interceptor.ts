@@ -1,57 +1,90 @@
-import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { NotificationService } from '../services/notification.service';
 import { Router } from '@angular/router';
-import { NotificationService } from '../services/notification/notification.service';
-import { ApiErrorHandlerService } from '../services/api/api-error-handler.service';
 
-export const errorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
-  const router = inject(Router);
-  const notificationService = inject(NotificationService);
-  const errorHandler = inject(ApiErrorHandlerService);
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+  constructor(
+    private notification: NotificationService,
+    private router: Router
+  ) {}
 
-  return next(req).pipe(
-    catchError((error: HttpErrorResponse) => {
-      // Gérer les erreurs spécifiques
-      switch (error.status) {
-        case 401:
-          // Token expiré ou invalide - rediriger vers login
-          router.navigate(['/auth/login']);
-          break;
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    return next.handle(request).pipe(
+      catchError((error: HttpErrorResponse) => {
+        let errorMessage = 'Une erreur est survenue';
         
-        case 403:
-          // Accès interdit - rediriger vers page d'erreur
-          router.navigate(['/unauthorized']);
-          break;
-        
-        case 404:
-          // Ressource non trouvée - ne pas rediriger automatiquement
-          break;
-        
-        case 0:
-          // Problème de réseau
-          notificationService.error(
-            'Impossible de se connecter au serveur. Vérifiez votre connexion internet.',
-            'Erreur de connexion'
-          );
-          break;
-        
-        case 500:
-        case 502:
-        case 503:
-          // Erreurs serveur
-          notificationService.error(
-            'Le serveur rencontre des difficultés. Veuillez réessayer plus tard.',
-            'Erreur serveur'
-          );
-          break;
-      }
+        if (error.error instanceof ErrorEvent) {
+          // Erreur côté client
+          errorMessage = `Erreur: ${error.error.message}`;
+        } else {
+          // Erreur côté serveur
+          errorMessage = error.error?.message || error.message || errorMessage;
+          
+          switch (error.status) {
+            case 400:
+              this.handleBadRequest(error);
+              break;
+            case 401:
+              this.handleUnauthorized(error);
+              break;
+            case 403:
+              this.handleForbidden(error);
+              break;
+            case 404:
+              this.handleNotFound(error);
+              break;
+            case 409:
+              this.handleConflict(error);
+              break;
+            case 500:
+              this.handleServerError(error);
+              break;
+            default:
+              this.handleGenericError(error);
+          }
+        }
 
-      // Traiter l'erreur avec le service dédié
-      const apiError = errorHandler.handleError(error, false); // Pas de notification car déjà gérée ci-dessus
-      
-      // Retourner l'erreur formatée
-      return throwError(() => apiError);
-    })
-  );
-};
+        console.error('HTTP Error:', error);
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  private handleBadRequest(error: HttpErrorResponse): void {
+    const message = error.error?.message || 'Requête incorrecte';
+    this.notification.showError(message);
+  }
+
+  private handleUnauthorized(error: HttpErrorResponse): void {
+    // La déconnexion est gérée par l'intercepteur d'authentification
+    this.notification.showError('Session expirée. Veuillez vous reconnecter.');
+  }
+
+  private handleForbidden(error: HttpErrorResponse): void {
+    this.notification.showError('Accès refusé. Droits insuffisants.');
+    this.router.navigate(['/access-denied']);
+  }
+
+  private handleNotFound(error: HttpErrorResponse): void {
+    const message = error.error?.message || 'Ressource non trouvée';
+    this.notification.showError(message);
+  }
+
+  private handleConflict(error: HttpErrorResponse): void {
+    const message = error.error?.message || 'Conflit de données';
+    this.notification.showError(message);
+  }
+
+  private handleServerError(error: HttpErrorResponse): void {
+    this.notification.showError('Erreur serveur. Veuillez réessayer plus tard.');
+  }
+
+  private handleGenericError(error: HttpErrorResponse): void {
+    const message = error.error?.message || 'Une erreur inattendue est survenue';
+    this.notification.showError(message);
+  }
+}

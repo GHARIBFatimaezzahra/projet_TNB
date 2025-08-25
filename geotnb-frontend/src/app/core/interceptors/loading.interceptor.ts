@@ -1,73 +1,37 @@
-import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
-import { finalize } from 'rxjs/operators';
-import { LoadingService } from '../services/loading/loading.service';
+import { Injectable } from '@angular/core';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { Observable, finalize } from 'rxjs';
+import { ApiService } from '../services/api.service';
 
-export const loadingInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
-  const loadingService = inject(LoadingService);
-  
-  // Ne pas afficher le loading pour certaines requêtes
-  if (shouldSkipLoading(req)) {
-    return next(req);
-  }
+@Injectable()
+export class LoadingInterceptor implements HttpInterceptor {
+  private activeRequests = 0;
 
-  // Démarrer le loading
-  const loadingMessage = getLoadingMessage(req);
-  loadingService.show(loadingMessage);
+  constructor(private apiService: ApiService) {}
 
-  return next(req).pipe(
-    finalize(() => {
-      // Arrêter le loading à la fin de la requête
-      loadingService.hide();
-    })
-  );
-};
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Ignorer les requêtes de monitoring
+    if (request.url.includes('health') || request.url.includes('ping')) {
+      return next.handle(request);
+    }
 
-function shouldSkipLoading(req: HttpRequest<unknown>): boolean {
-  // Headers personnalisés pour contrôler le loading
-  if (req.headers.has('X-Skip-Loading')) {
-    return true;
-  }
+    this.activeRequests++;
+    if (this.activeRequests === 1) {
+      this.apiService.isLoading$.subscribe(isLoading => {
+        if (!isLoading) {
+          // Déclencher le loading via le service API
+          (this.apiService as any).startLoading();
+        }
+      });
+    }
 
-  // Ne pas afficher le loading pour certains endpoints
-  const skipEndpoints = [
-    '/auth/verify',
-    '/auth/refresh',
-    '/dashboard/stats', // Requêtes fréquentes
-    '/notifications'
-  ];
-  
-  return skipEndpoints.some(endpoint => req.url.includes(endpoint));
-}
-
-function getLoadingMessage(req: HttpRequest<unknown>): string {
-  // Messages personnalisés selon l'endpoint
-  if (req.url.includes('/upload')) {
-    return 'Téléchargement en cours...';
-  }
-  
-  if (req.url.includes('/export')) {
-    return 'Génération du fichier...';
-  }
-  
-  if (req.url.includes('/import')) {
-    return 'Import des données...';
-  }
-  
-  if (req.url.includes('/generate')) {
-    return 'Génération en cours...';
-  }
-
-  // Message par méthode HTTP
-  switch (req.method) {
-    case 'POST':
-      return 'Création en cours...';
-    case 'PUT':
-    case 'PATCH':
-      return 'Mise à jour en cours...';
-    case 'DELETE':
-      return 'Suppression en cours...';
-    default:
-      return 'Chargement en cours...';
+    return next.handle(request).pipe(
+      finalize(() => {
+        this.activeRequests--;
+        if (this.activeRequests === 0) {
+          (this.apiService as any).stopLoading();
+        }
+      })
+    );
   }
 }

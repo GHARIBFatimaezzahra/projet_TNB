@@ -1,0 +1,251 @@
+.data-table-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  
+    &.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+  }
+  
+  .table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+  
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+  
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  
+    .global-filter {
+      width: 300px;
+      
+      ::ng-deep .mat-form-field-wrapper {
+        padding-bottom: 0;
+      }
+    }
+  }
+  
+  .loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+  }
+  
+  .table-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+  
+    &.sticky-header {
+      .mat-header-row {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: white;
+      }
+    }
+  }
+  
+  .data-table {
+    width: 100%;
+    background: white;
+  
+    &.alternating-rows {
+      .mat-row:nth-child(even) {
+        background-color: #fafafa;
+      }
+    }
+  
+    &.hover-effect {
+      .mat-row:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  
+    .mat-header-cell {
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #e0e0e0;
+      padding: 16px 12px;
+  
+      &.sticky-start {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: white;
+        border-right: 1px solid #e0e0e0;
+      }
+  
+      &.sticky-end {
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        background: white;
+        border-left: 1px solid #e0e0e0;
+      }
+    }
+  
+    .mat-cell {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+  
+      &.sticky-start {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: inherit;
+        border-right: 1px solid #e0e0e0;
+      }
+  
+      &.sticky-end {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        background: inherit;
+        border-left: 1px solid #e0e0e0;
+      }
+    }
+  
+    .select-column {
+      width: 48px;
+      text-align: center;
+    }
+  
+    .index-column {
+      width: 60px;
+      text-align: center;
+      font-weight: 500;
+      color: #666;
+    }
+  
+    .actions-column {
+      width: auto;
+      text-align: center;
+    }
+  
+    .action-buttons {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .boolean-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  
+    .mat-row {
+      transition: background-color 0.2s ease;
+  
+      &.selected-row {
+        background-color: rgba(63, 81, 181, 0.1) !important;
+      }
+  
+      &.alternate-row {
+        background-color: #fafafa;
+      }
+  
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  }
+  
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: #666;
+  
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+  
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+  
+  .column-menu {
+    padding: 16px;
+    max-width: 250px;
+  
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+  
+    .column-checkbox {
+      display: block;
+      margin-bottom: 8px;
+    }
+  }
+  
+  // Dense mode
+  .dense {
+    .mat-header-cell,
+    .mat-cell {
+      padding: 8px 12px;
+    }
+  }
+  
+  // Responsive
+  @media (max-width: 768px) {
+    .table-toolbar {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+  
+      .toolbar-left,
+      .toolbar-right {
+        justify-content: center;
+      }
+  
+      .global-filter {
+        width: 100%;
+      }
+    }
+  
+    .data-table {
+      .mat-header-cell,
+      .mat-cell {
+        padding: 8px;
+        font-size: 12px;
+      }
+  
+      .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+      }
+    }
+  }

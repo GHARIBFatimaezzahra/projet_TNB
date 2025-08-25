@@ -14,5 +14,5 @@ export enum UserRoles {
 // Helpers pour les combinaisons courantes
 export const AdminOnly = () => Roles('Admin');
 export const AgentFiscalOrAdmin = () => Roles('Admin', 'AgentFiscal');
-export const TechnicienSIGOrAdmin = () => Roles('Admin', 'TechnicienSIG'); // Ajout manquant
+export const TechnicienSIGOrAdmin = () => Roles('Admin', 'TechnicienSIG');
 export const AllRoles = () => Roles('Admin', 'AgentFiscal', 'TechnicienSIG', 'Lecteur');

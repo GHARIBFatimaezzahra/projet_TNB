@@ -1,0 +1,67 @@
+<div class="confirmation-dialog" [ngClass]="getDialogClass()">
+    <!-- En-tête du dialogue -->
+    <div class="dialog-header">
+      <div class="dialog-title-section">
+        <div *ngIf="data.showIcon" class="dialog-icon" [ngClass]="getIconClass()">
+          <mat-icon>{{ getDialogIcon() }}</mat-icon>
+        </div>
+        <h2 mat-dialog-title class="dialog-title">{{ data.title }}</h2>
+      </div>
+      
+      <button mat-icon-button 
+              class="close-button" 
+              (click)="onClose()"
+              matTooltip="Fermer">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  
+    <!-- Contenu du dialogue -->
+    <mat-dialog-content class="dialog-content">
+      <div class="message-container">
+        <div class="main-message">
+          <p *ngIf="!data.allowHtml" class="message-text">{{ data.message }}</p>
+          <div *ngIf="data.allowHtml" 
+               class="message-html" 
+               [innerHTML]="data.message">
+          </div>
+        </div>
+        
+        <!-- Détails supplémentaires -->
+        <div *ngIf="data.details && data.showDetails" class="details-section">
+          <div class="details-content">
+            <mat-icon class="details-icon">info_outline</mat-icon>
+            <p class="details-text">{{ data.details }}</p>
+          </div>
+        </div>
+        
+        <!-- Bouton pour afficher/masquer les détails -->
+        <button *ngIf="data.details && !data.showDetails" 
+                mat-text-button 
+                class="toggle-details-btn"
+                (click)="data.showDetails = !data.showDetails">
+          <mat-icon>{{ data.showDetails ? 'expand_less' : 'expand_more' }}</mat-icon>
+          {{ data.showDetails ? 'Masquer' : 'Afficher' }} les détails
+        </button>
+      </div>
+    </mat-dialog-content>
+  
+    <!-- Actions du dialogue -->
+    <mat-dialog-actions class="dialog-actions">
+      <div class="actions-container">
+        <button mat-button 
+                class="cancel-button"
+                (click)="onCancel()">
+          {{ data.cancelText }}
+        </button>
+        
+        <button mat-raised-button 
+                [color]="getConfirmButtonColor()"
+                class="confirm-button"
+                (click)="onConfirm()"
+                cdkFocusInitial>
+          {{ data.confirmText }}
+        </button>
+      </div>
+    </mat-dialog-actions>
+  </div>

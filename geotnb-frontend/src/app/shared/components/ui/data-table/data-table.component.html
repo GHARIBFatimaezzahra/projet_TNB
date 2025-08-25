@@ -1,0 +1,190 @@
+<div class="data-table-container" [class.loading]="loading">
+  <!-- Barre d'outils -->
+  <div class="table-toolbar" *ngIf="config.showFilter || config.showColumnToggle || config.showExport">
+    <div class="toolbar-left">
+      <!-- Filtre global -->
+      <mat-form-field *ngIf="config.showFilter" appearance="outline" class="global-filter">
+        <mat-label>Rechercher</mat-label>
+        <input matInput 
+               [(ngModel)]="globalFilter" 
+               (input)="onGlobalFilterChange($event.target?.value || '')"
+               placeholder="Filtrer les résultats...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+    
+    <div class="toolbar-right">
+      <!-- Toggle colonnes -->
+      <button *ngIf="config.showColumnToggle" 
+              mat-icon-button 
+              [matMenuTriggerFor]="columnMenu"
+              matTooltip="Colonnes">
+        <mat-icon>view_column</mat-icon>
+      </button>
+      
+      <!-- Export -->
+      <button *ngIf="config.showExport" 
+              mat-icon-button 
+              [matMenuTriggerFor]="exportMenu"
+              matTooltip="Exporter">
+        <mat-icon>download</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre de progression -->
+  <mat-progress-bar *ngIf="loading" mode="indeterminate" class="loading-bar"></mat-progress-bar>
+
+  <!-- Table -->
+  <div class="table-wrapper" 
+       [class.sticky-header]="config.stickyHeader"
+       [class.dense]="config.dense">
+    
+    <table mat-table 
+           [dataSource]="dataSource" 
+           matSort 
+           (matSortChange)="onSortChange($event)"
+           class="data-table"
+           [class.alternating-rows]="config.alternatingRows"
+           [class.hover-effect]="config.hoverEffect">
+
+      <!-- Colonne sélection -->
+      <ng-container matColumnDef="select" *ngIf="config.selectable">
+        <th mat-header-cell *matHeaderCellDef class="select-column">
+          <mat-checkbox *ngIf="config.multiSelect"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()"
+                        (change)="toggleAllRows()">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row" class="select-column">
+          <mat-checkbox [checked]="selection.isSelected(row)"
+                        (change)="toggleRow(row)">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+
+      <!-- Colonne index -->
+      <ng-container matColumnDef="index" *ngIf="config.showRowIndex">
+        <th mat-header-cell *matHeaderCellDef class="index-column">#</th>
+        <td mat-cell *matCellDef="let row; let i = index" class="index-column">{{ i + 1 }}</td>
+      </ng-container>
+
+      <!-- Colonnes dynamiques -->
+      <ng-container *ngFor="let column of columns" [matColumnDef]="column.key">
+        <!-- ✅ CORRECTION 1: Utilisation conditionnelle de mat-sort-header -->
+        <th mat-header-cell 
+            *matHeaderCellDef 
+            [mat-sort-header]="isColumnSortable(column) && column.key ? column.key : ''"
+            [style.width]="column.width"
+            [style.min-width]="column.minWidth"
+            [style.max-width]="column.maxWidth"
+            [style.text-align]="column.align || 'left'"
+            [class.sticky-start]="column.sticky === 'start'"
+            [class.sticky-end]="column.sticky === 'end'">
+          {{ column.label }}
+        </th>
+        
+        <td mat-cell 
+            *matCellDef="let row" 
+            [style.text-align]="column.align || 'left'"
+            [class.sticky-start]="column.sticky === 'start'"
+            [class.sticky-end]="column.sticky === 'end'">
+          
+          <!-- Template personnalisé -->
+          <ng-container *ngIf="column.template">
+            <ng-container *ngTemplateOutlet="column.template; context: { $implicit: row, value: getColumnValue(row, column) }">
+            </ng-container>
+          </ng-container>
+          
+          <!-- ✅ CORRECTION 2: Type badge avec casting correct et parenthèses fermées -->
+          <app-status-badge *ngIf="column.type === 'badge'" 
+                           [status]="getColumnValue(row, column)"
+                           [type]="getBadgeType(column)">
+          </app-status-badge>
+          
+          <!-- Booléen -->
+          <mat-icon *ngIf="column.type === 'boolean'" 
+                    [color]="getColumnValue(row, column) ? 'primary' : ''"
+                    class="boolean-icon">
+            {{ getColumnValue(row, column) ? 'check_circle' : 'cancel' }}
+          </mat-icon>
+          
+          <!-- ✅ CORRECTION 3: Remplacement de dynamicPipe par formatValue -->
+          <span *ngIf="!column.template && column.type !== 'badge' && column.type !== 'boolean'">
+            {{ formatValue(getColumnValue(row, column), column) }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Colonne actions -->
+      <ng-container matColumnDef="actions" *ngIf="config.showRowActions">
+        <th mat-header-cell *matHeaderCellDef class="actions-column">Actions</th>
+        <td mat-cell *matCellDef="let row" class="actions-column">
+          <div class="action-buttons">
+            <button *ngFor="let action of actions"
+                    mat-icon-button
+                    [color]="action.color || 'primary'"
+                    [disabled]="isActionDisabled(action, row)"
+                    [style.display]="isActionVisible(action, row) ? 'inline-block' : 'none'"
+                    [matTooltip]="action.tooltip || action.label"
+                    (click)="onActionClick(action.key, row, $event)">
+              <mat-icon>{{ action.icon }}</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Header -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: config.stickyHeader"></tr>
+      
+      <!-- ✅ CORRECTION 4: trackBy correctement placé -->
+      <tr mat-row 
+          *matRowDef="let row; columns: displayedColumns; let i = index; trackBy: trackByFn"
+          [class]="getRowClass(row, i)"
+          (click)="onRowClick(row, $event)"
+          (dblclick)="onRowDoubleClick(row)"
+          [style.cursor]="rowClick.observed ? 'pointer' : 'default'">
+      </tr>
+    </table>
+  </div>
+
+  <!-- Aucune donnée -->
+  <div *ngIf="!loading && dataSource.data.length === 0" class="no-data">
+    <mat-icon>inbox</mat-icon>
+    <p>{{ noDataMessage }}</p>
+  </div>
+
+  <!-- Pagination -->
+  <mat-paginator *ngIf="config.showPaginator && dataSource.data.length > 0"
+                 #paginator
+                 [length]="totalCount"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="pageSizeOptions"
+                 [showFirstLastButtons]="true"
+                 (page)="onPageChange($event)">
+  </mat-paginator>
+
+  <!-- Menu colonnes -->
+  <mat-menu #columnMenu="matMenu">
+    <div class="column-menu">
+      <h4>Afficher les colonnes</h4>
+      <mat-checkbox *ngFor="let column of columns"
+                    [checked]="visibleColumns.includes(column.key)"
+                    (change)="toggleColumn(column.key)"
+                    class="column-checkbox">
+        {{ column.label }}
+      </mat-checkbox>
+    </div>
+  </mat-menu>
+
+  <!-- Menu export -->
+  <mat-menu #exportMenu="matMenu">
+    <button *ngFor="let format of config.exportFormats" 
+            mat-menu-item 
+            (click)="onExport(format)">
+      <mat-icon>{{ format === 'csv' ? 'table_view' : format === 'excel' ? 'grid_on' : 'picture_as_pdf' }}</mat-icon>
+      <span>{{ format.toUpperCase() }}</span>
+    </button>
+  </mat-menu>
+</div>

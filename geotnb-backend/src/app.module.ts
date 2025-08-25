@@ -3,6 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
+
+// Guards
 import { JwtAuthGuard } from './common/guards/auth.guard';
 
 // Modules métier
@@ -27,6 +32,9 @@ import { databaseConfig } from './config/database.config';
 // Interceptors globaux
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
+// Strategies
+import { JwtStrategy } from './auth/jwt.strategy';
+
 @Module({
   imports: [
     // Configuration globale
@@ -34,6 +42,22 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
       load: [databaseConfig],
+    }),
+
+    // Passport pour l'authentification JWT
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+
+    // JWT Module global
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'fallback-secret-key',
+        signOptions: { 
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '24h'
+        },
+      }),
+      inject: [ConfigService],
+      global: true, // Rend JwtModule disponible globalement
     }),
 
     // Rate limiting
@@ -98,10 +122,16 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
   providers: [
     AppService,
     
+    // JWT Strategy (IMPORTANT : doit être déclaré ici pour être global)
+    JwtStrategy,
+    
+    // Reflector pour les décorateurs
+    Reflector,
+    
     // Guards globaux
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // ← AJOUTÉ : Vérification JWT globale
+      useClass: JwtAuthGuard, // ← Vérification JWT globale avec exclusions
     },
     {
       provide: APP_GUARD,
@@ -113,6 +143,10 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor, // Audit trail automatique
     },
+  ],
+  exports: [
+    JwtModule, // Exporte JwtModule pour les autres modules
+    PassportModule,
   ],
 })
 export class AppModule {}

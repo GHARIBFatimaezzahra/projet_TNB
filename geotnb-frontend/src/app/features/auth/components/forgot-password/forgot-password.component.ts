@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/services/auth/auth.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 
 @Component({
@@ -294,13 +294,13 @@ export class ForgotPasswordComponent {
 
       const email = this.forgotPasswordForm.value.email;
 
-      this.authService.forgotPassword({ email }).subscribe({
+      this.authService.forgotPassword(email).subscribe({
         next: () => {
           this.isLoading.set(false);
           this.emailSent.set(true);
           this.sentToEmail.set(email);
         },
-        error: (error) => {
+        error: (error: any) => {
           this.isLoading.set(false);
           this.errorMessage.set(
             error.error?.message || 
@@ -314,16 +314,14 @@ export class ForgotPasswordComponent {
   resendEmail(): void {
     const email = this.sentToEmail();
     if (email) {
-      this.authService.forgotPassword({ email }).subscribe({
+      this.authService.forgotPassword(email).subscribe({
         next: () => {
           this.notificationService.showSuccess(
-            'Email renvoyé',
             'Un nouveau lien de réinitialisation a été envoyé'
           );
         },
         error: () => {
           this.notificationService.showError(
-            'Erreur',
             'Impossible de renvoyer l\'email'
           );
         }

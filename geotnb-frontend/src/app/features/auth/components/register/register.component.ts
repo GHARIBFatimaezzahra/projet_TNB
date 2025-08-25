@@ -5,8 +5,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router'; // ← AJOUTEZ CECI
 
-import { AuthFeatureService } from '../../services/auth-feature.service';
-import { NotificationService } from '../../../../core/services/notification/notification.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { RegisterRequest, UserRole } from '../../models/auth-feature.model';
 
 interface UserRoleInfo {
@@ -33,7 +33,7 @@ interface UserRoleInfo {
 })
 export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthFeatureService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
 
@@ -156,7 +156,7 @@ export class RegisterComponent {
       
       // Simulation pour test
       setTimeout(() => {
-        this.notificationService.success('Compte créé avec succès !');
+        this.notificationService.showSuccess('Compte créé avec succès !');
         this.router.navigate(['/auth/login']);
         this.isLoading = false;
       }, 2000);

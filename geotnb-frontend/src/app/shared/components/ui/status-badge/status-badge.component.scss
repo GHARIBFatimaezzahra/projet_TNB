@@ -1,0 +1,192 @@
+mat-chip {
+    font-weight: 500;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge-icon {
+      margin-right: 4px !important;
+      margin-left: 0 !important;
+    }
+    
+    .badge-text {
+      font-size: inherit;
+      line-height: 1;
+    }
+    
+    // Tailles
+    &.badge-small {
+      font-size: 11px;
+      padding: 2px 8px;
+      min-height: 20px;
+      
+      .badge-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+    
+    &.badge-medium {
+      font-size: 12px;
+      padding: 4px 12px;
+      min-height: 24px;
+      
+      .badge-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    
+    &.badge-large {
+      font-size: 14px;
+      padding: 6px 16px;
+      min-height: 32px;
+      
+      .badge-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+    
+    // Styles par type de validation
+    &.badge-validation-brouillon {
+      background-color: #fff3e0 !important;
+      color: #ef6c00 !important;
+      border-color: #ffb74d;
+    }
+  
+    &.badge-validation-valide {
+      background-color: #e3f2fd !important;
+      color: #1976d2 !important;
+      border-color: #64b5f6;
+    }
+  
+    &.badge-validation-publie {
+      background-color: #e8f5e8 !important;
+      color: #2e7d32 !important;
+      border-color: #81c784;
+    }
+  
+    &.badge-validation-archive {
+      background-color: #f5f5f5 !important;
+      color: #616161 !important;
+      border-color: #bdbdbd;
+    }
+    
+    // Styles par type d'occupation
+    &.badge-occupation-nu {
+      background-color: #fffde7 !important;
+      color: #f57f17 !important;
+      border-color: #fff176;
+    }
+    
+    &.badge-occupation-construit {
+      background-color: #ffebee !important;
+      color: #c62828 !important;
+      border-color: #ef5350;
+    }
+    
+    &.badge-occupation-en_construction {
+      background-color: #fff3e0 !important;
+      color: #ef6c00 !important;
+      border-color: #ffb74d;
+    }
+    
+    &.badge-occupation-partiellement_construit {
+      background-color: #fbe9e7 !important;
+      color: #d84315 !important;
+      border-color: #ff8a65;
+    }
+    
+    // Styles par type de paiement
+    &.badge-payment-enattente {
+      background-color: #fff3e0 !important;
+      color: #ef6c00 !important;
+      border-color: #ffb74d;
+    }
+    
+    &.badge-payment-paye {
+      background-color: #e8f5e8 !important;
+      color: #2e7d32 !important;
+      border-color: #81c784;
+    }
+    
+    &.badge-payment-retard {
+      background-color: #ffebee !important;
+      color: #c62828 !important;
+      border-color: #ef5350;
+    }
+    
+    &.badge-payment-annule {
+      background-color: #f5f5f5 !important;
+      color: #616161 !important;
+      border-color: #bdbdbd;
+    }
+  }
+  
+  // Animation pour les badges actifs
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(63, 81, 181, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(63, 81, 181, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(63, 81, 181, 0);
+    }
+  }
+  
+  .badge-active {
+    animation: pulse 2s infinite;
+  }
+  
+  // Mode sombre (si nécessaire)
+  .dark-theme {
+    mat-chip {
+      &.badge-validation-brouillon {
+        background-color: #3e2723 !important;
+        color: #ffb74d !important;
+      }
+  
+      &.badge-validation-valide {
+        background-color: #1a237e !important;
+        color: #64b5f6 !important;
+      }
+  
+      &.badge-validation-publie {
+        background-color: #1b5e20 !important;
+        color: #81c784 !important;
+      }
+  
+      &.badge-validation-archive {
+        background-color: #424242 !important;
+        color: #bdbdbd !important;
+      }
+    }
+  }
+  
+  // Responsive
+  @media (max-width: 768px) {
+    mat-chip {
+      &.badge-medium {
+        font-size: 11px;
+        padding: 3px 10px;
+        min-height: 22px;
+      }
+      
+      &.badge-large {
+        font-size: 12px;
+        padding: 4px 12px;
+        min-height: 28px;
+      }
+    }
+  }

@@ -1,0 +1,34 @@
+<footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-left">
+        <div class="app-info">
+          <span class="app-name">GeoTNB</span>
+          <span class="app-version">v{{ version }}</span>
+        </div>
+        <div class="copyright">
+          © {{ currentYear }} Commune d'Oujda - Tous droits réservés
+        </div>
+      </div>
+  
+      <div class="footer-center">
+        <div class="system-status">
+          <mat-icon class="status-icon online">fiber_manual_record</mat-icon>
+          <span>Système opérationnel</span>
+        </div>
+      </div>
+  
+      <div class="footer-right">
+        <button mat-icon-button 
+                matTooltip="Documentation"
+                (click)="openDocumentation()">
+          <mat-icon>help</mat-icon>
+        </button>
+        
+        <button mat-icon-button 
+                matTooltip="Support technique"
+                (click)="openSupport()">
+          <mat-icon>support</mat-icon>
+        </button>
+      </div>
+    </div>
+  </footer>

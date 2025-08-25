@@ -34,7 +34,7 @@ export class ParcelleController {
   constructor(private readonly parcelleService: ParcelleService) {}
  
   @Post()
-  @TechnicienSIGOrAdmin()
+  @Roles('Admin')
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Créer une nouvelle parcelle' })
   @ApiResponse({ status: 201, description: 'Parcelle créée avec succès' })

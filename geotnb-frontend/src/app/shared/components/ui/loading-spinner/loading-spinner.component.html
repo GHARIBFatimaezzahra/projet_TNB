@@ -1,0 +1,30 @@
+<div class="loading-container" [ngClass]="containerClass">
+  <div *ngIf="type === 'spinner'" class="spinner-wrapper">
+    <mat-progress-spinner 
+      [mode]="getSpinnerMode()"
+      [value]="progress"
+      [diameter]="size"
+      [strokeWidth]="strokeWidth"
+      [color]="color">
+    </mat-progress-spinner>
+    <div *ngIf="message" class="loading-message">{{ message }}</div>
+  </div>
+
+  <div *ngIf="type === 'bar'" class="bar-wrapper">
+    <div *ngIf="message" class="loading-message">{{ message }}</div>
+    <mat-progress-bar 
+      [mode]="mode"
+      [value]="progress"
+      [bufferValue]="bufferValue"
+      [color]="color">
+    </mat-progress-bar>
+    <div *ngIf="showPercent && progress !== undefined" class="progress-text">
+      {{ progress.toFixed(0) }}%
+    </div>
+  </div>
+
+  <div *ngIf="type === 'dots'" class="dots-wrapper">
+    <div class="dot-flashing"></div>
+    <div *ngIf="message" class="loading-message">{{ message }}</div>
+  </div>
+</div>

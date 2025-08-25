@@ -1,64 +1,52 @@
-import { inject } from '@angular/core';
-import { Router, type CanActivateFn, type ActivatedRouteSnapshot } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import { AuthService } from '../services/auth/auth.service';
-import { NotificationService } from '../services/notification/notification.service';
-import { UserRole } from '../models/auth/user.model';
+import { AuthService } from '../services/auth.service';
 
-export const rolesGuard = (allowedRoles: UserRole[]): CanActivateFn => {
-  return (route: ActivatedRouteSnapshot) => {
-    const authService = inject(AuthService);
-    const router = inject(Router);
-    const notificationService = inject(NotificationService);
+@Injectable({
+  providedIn: 'root'
+})
+export class RolesGuard implements CanActivate {
+  constructor(private authService: AuthService, private router: Router) {}
 
-    return authService.currentUser$.pipe(
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    const requiredRoles = route.data['roles'] as string[];
+    
+    if (!requiredRoles || requiredRoles.length === 0) {
+        return true;
+    }
+
+    return this.authService.currentUser$.pipe(
       take(1),
       map(user => {
-        // Vérifier si l'utilisateur est connecté
         if (!user) {
-          notificationService.error('Vous devez être connecté.', 'Accès refusé');
-          router.navigate(['/auth/login']);
-          return false;
+          return this.router.createUrlTree(['/auth/login'], {
+            queryParams: { returnUrl: state.url }
+          });
         }
 
-        // Vérifier si l'utilisateur a le bon rôle
-        if (allowedRoles.includes(user.profil)) {
-          return true;
-        } else {
-          notificationService.error(
-            'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.',
-            'Accès refusé'
-          );
-          router.navigate(['/unauthorized']);
-          return false;
+        const hasRequiredRole = requiredRoles.some(role => 
+          this.authService.hasRole(role)
+        );
+
+        if (hasRequiredRole) {
+        return true;
         }
+
+        // Redirection vers la page d'accès refusé
+        return this.router.createUrlTree(['/access-denied']);
       })
     );
-  };
-};
+  }
 
-// Guards prédéfinis pour les rôles communs
-export const adminGuard: CanActivateFn = rolesGuard([UserRole.ADMIN]);
-
-export const fiscalGuard: CanActivateFn = rolesGuard([
-  UserRole.ADMIN, 
-  UserRole.AGENT_FISCAL
-]);
-
-export const sigGuard: CanActivateFn = rolesGuard([
-  UserRole.ADMIN, 
-  UserRole.TECHNICIEN_SIG
-]);
-
-export const readOnlyGuard: CanActivateFn = rolesGuard([
-  UserRole.ADMIN, 
-  UserRole.AGENT_FISCAL, 
-  UserRole.TECHNICIEN_SIG, 
-  UserRole.LECTEUR
-]);
-
-export const writeAccessGuard: CanActivateFn = rolesGuard([
-  UserRole.ADMIN, 
-  UserRole.AGENT_FISCAL, 
-  UserRole.TECHNICIEN_SIG
-]);
+  canActivateChild(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return this.canActivate(route, state);
+  }
+}

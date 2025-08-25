@@ -10,8 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatListModule } from '@angular/material/list';
 
-import { AuthFeatureService } from '../../../services/auth-feature.service';
-import { NotificationService } from '../../../../../core/services/notification/notification.service';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { NotificationService } from '../../../../../core/services/notification.service';
 import { ChangePasswordRequest } from '../../../models/auth-feature.model';
 
 @Component({
@@ -33,7 +33,7 @@ import { ChangePasswordRequest } from '../../../models/auth-feature.model';
 })
 export class ChangePasswordComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthFeatureService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
 
@@ -113,12 +113,12 @@ export class ChangePasswordComponent {
       this.isLoading = true;
       const passwordData: ChangePasswordRequest = this.changePasswordForm.value;
 
-      this.authService.changePassword(passwordData).subscribe({
+      this.authService.changePassword(passwordData.currentPassword, passwordData.newPassword).subscribe({
         next: (response) => {
-          this.notificationService.success('Mot de passe modifié avec succès !');
+          this.notificationService.showSuccess('Mot de passe modifié avec succès !');
           this.router.navigate(['/auth/profile']);
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Erreur lors du changement de mot de passe:', error);
           let errorMessage = 'Erreur lors du changement de mot de passe';
           
@@ -128,7 +128,7 @@ export class ChangePasswordComponent {
             errorMessage = error.error.message;
           }
           
-          this.notificationService.error(errorMessage);
+          this.notificationService.showError(errorMessage);
           this.isLoading = false;
         },
         complete: () => {
