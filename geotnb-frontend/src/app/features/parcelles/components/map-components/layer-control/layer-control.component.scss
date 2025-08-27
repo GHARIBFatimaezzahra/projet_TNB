@@ -1,0 +1,392 @@
+// =====================================================
+// STYLES CONTRÔLE COUCHES - GESTION LAYERS
+// =====================================================
+
+.layer-control-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
+  max-width: 300px;
+  overflow: hidden;
+
+  // En-tête
+  .layer-control-header {
+    padding: 0.75rem 1rem;
+    background: var(--mdc-theme-primary);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--mdc-theme-primary-dark, #1976D2);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      .header-title {
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+
+      .layer-count {
+        font-size: 0.8rem;
+        opacity: 0.9;
+      }
+
+      mat-icon {
+        font-size: 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+
+    .expand-icon {
+      transition: transform 0.2s ease;
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+
+      &.expanded {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  // Contenu des couches
+  .layer-control-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+
+    &.expanded {
+      max-height: 500px;
+    }
+  }
+
+  // Section de couches
+  .layer-section {
+    padding: 0.75rem 0;
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--mdc-theme-text-secondary-on-background);
+
+      mat-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+        color: var(--mdc-theme-text-hint-on-background);
+      }
+    }
+
+    .layer-list {
+      .layer-item {
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--mdc-theme-surface-variant);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: rgba(0, 0, 0, 0.04);
+        }
+
+        // Contrôle visibilité
+        .layer-visibility {
+          margin-bottom: 0.5rem;
+
+          mat-checkbox {
+            width: 100%;
+
+            ::ng-deep .mdc-checkbox {
+              padding: 0;
+            }
+
+            ::ng-deep .mdc-form-field {
+              width: 100%;
+            }
+
+            .layer-info {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              width: 100%;
+              padding-left: 0.5rem;
+
+              .layer-icon {
+                font-size: 1rem;
+                width: 1rem;
+                height: 1rem;
+                color: var(--mdc-theme-text-secondary-on-background);
+              }
+
+              .layer-name {
+                font-size: 0.875rem;
+                font-weight: 400;
+                color: var(--mdc-theme-text-primary-on-background);
+                flex: 1;
+              }
+            }
+          }
+        }
+
+        // Contrôle opacité
+        .layer-opacity {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-left: 2rem;
+          margin-top: 0.25rem;
+
+          mat-slider {
+            flex: 1;
+            
+            ::ng-deep .mdc-slider {
+              height: 20px;
+            }
+
+            ::ng-deep .mdc-slider__track {
+              height: 4px;
+            }
+
+            ::ng-deep .mdc-slider__thumb {
+              width: 16px;
+              height: 16px;
+            }
+          }
+
+          .opacity-label {
+            font-size: 0.75rem;
+            color: var(--mdc-theme-text-secondary-on-background);
+            min-width: 2.5rem;
+            text-align: right;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+
+  // Actions rapides
+  .layer-actions {
+    padding: 0.75rem 1rem;
+    background: var(--mdc-theme-surface-variant);
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+      flex: 1;
+      font-size: 0.8rem;
+      height: 32px;
+      min-height: 32px;
+
+      mat-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.25rem;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+      }
+    }
+  }
+
+  // Message aucune couche
+  .no-layers-message {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--mdc-theme-text-secondary-on-background);
+
+    mat-icon {
+      font-size: 2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+    }
+  }
+
+  // Séparateur
+  mat-divider {
+    margin: 0.5rem 0;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .layer-control-container {
+    min-width: 200px;
+    max-width: 250px;
+
+    .layer-section {
+      .layer-list {
+        .layer-item {
+          .layer-opacity {
+            margin-left: 1rem;
+
+            .opacity-label {
+              min-width: 2rem;
+            }
+          }
+        }
+      }
+    }
+
+    .layer-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Mode compact
+.compact {
+  .layer-control-container {
+    min-width: 180px;
+
+    .layer-control-header {
+      padding: 0.5rem 0.75rem;
+
+      .header-content {
+        .header-title {
+          font-size: 0.8rem;
+        }
+
+        .layer-count {
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    .layer-section {
+      padding: 0.5rem 0;
+
+      .section-header {
+        padding: 0 0.75rem 0.25rem 0.75rem;
+        font-size: 0.8rem;
+      }
+
+      .layer-list {
+        .layer-item {
+          padding: 0.25rem 0.75rem;
+
+          .layer-visibility {
+            margin-bottom: 0.25rem;
+
+            .layer-info {
+              .layer-name {
+                font-size: 0.8rem;
+              }
+            }
+          }
+
+          .layer-opacity {
+            margin-left: 1.5rem;
+            margin-top: 0.125rem;
+
+            .opacity-label {
+              font-size: 0.7rem;
+              min-width: 2rem;
+            }
+          }
+        }
+      }
+    }
+
+    .layer-actions {
+      padding: 0.5rem 0.75rem;
+
+      button {
+        font-size: 0.75rem;
+        height: 28px;
+        min-height: 28px;
+      }
+    }
+  }
+}
+
+// Animation d'expansion
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+
+.layer-control-content.expanded {
+  animation: expandIn 0.3s ease-out;
+}
+
+// États de survol
+.layer-item {
+  transition: background-color 0.2s ease;
+}
+
+// Indicateurs d'état
+.layer-item {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background-color 0.2s ease;
+  }
+
+  &.active::before {
+    background: var(--mdc-theme-primary);
+  }
+
+  &.loading::before {
+    background: var(--mdc-theme-secondary);
+    animation: pulse 1.5s infinite;
+  }
+
+  &.error::before {
+    background: #f44336;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

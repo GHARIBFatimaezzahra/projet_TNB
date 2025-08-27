@@ -1,0 +1,223 @@
+<!-- =====================================================
+     TEMPLATE ONGLET GÉNÉRAL - INFORMATIONS DE BASE
+     ===================================================== -->
+
+<div class="general-tab-container" [formGroup]="formGroup">
+  
+  <!-- Section Identification -->
+  <mat-card class="section-card identification-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>badge</mat-icon>
+        Identification de la Parcelle
+      </mat-card-title>
+      <mat-card-subtitle>
+        Informations d'identification unique de la parcelle
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <!-- Référence Foncière -->
+      <div class="reference-field-container">
+        <mat-form-field appearance="outline" class="reference-field">
+          <mat-label>Référence Foncière *</mat-label>
+          <input matInput 
+                 formControlName="reference_fonciere" 
+                 placeholder="Ex: TF-123456"
+                 [readonly]="isViewMode">
+          <mat-icon matSuffix 
+                    [class.checking]="checkingReference"
+                    [class.exists]="referenceExists"
+                    [class.available]="!referenceExists && !checkingReference">
+            {{ checkingReference ? 'hourglass_empty' : (referenceExists ? 'error' : 'check_circle') }}
+          </mat-icon>
+          <mat-error *ngIf="formGroup.get('reference_fonciere')?.hasError('required')">
+            Référence foncière requise
+          </mat-error>
+          <mat-error *ngIf="formGroup.get('reference_fonciere')?.hasError('referenceExists')">
+            Cette référence existe déjà
+          </mat-error>
+          <mat-error *ngIf="formGroup.get('reference_fonciere')?.hasError('referenceFonciere')">
+            Format invalide (Ex: TF-123456)
+          </mat-error>
+        </mat-form-field>
+        
+        <button mat-icon-button 
+                type="button"
+                (click)="generateReference()"
+                [disabled]="isViewMode || !formGroup.get('statut_foncier')?.value"
+                matTooltip="Générer automatiquement"
+                class="generate-btn">
+          <mat-icon>auto_fix_high</mat-icon>
+        </button>
+      </div>
+
+      <!-- Statut Foncier -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Statut Foncier *</mat-label>
+        <mat-select formControlName="statut_foncier" [disabled]="isViewMode">
+          <mat-option *ngFor="let option of statutFoncierOptions" [value]="option.value">
+            <div class="select-option">
+              <div class="option-main">
+                <mat-icon class="option-icon">{{ getStatutFoncierIcon(option.value) }}</mat-icon>
+                <span class="option-label">{{ option.label }}</span>
+              </div>
+              <div class="option-description">{{ option.description }}</div>
+            </div>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="formGroup.get('statut_foncier')?.hasError('required')">
+          Statut foncier requis
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Affichage du statut sélectionné -->
+      <div class="status-display" *ngIf="formGroup.get('statut_foncier')?.value">
+        <mat-chip-set>
+          <mat-chip [color]="getStatutFoncierColor(formGroup.get('statut_foncier')?.value)" selected>
+            <mat-icon matChipAvatar>{{ getStatutFoncierIcon(formGroup.get('statut_foncier')?.value) }}</mat-icon>
+            {{ formGroup.get('statut_foncier')?.value }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section Occupation -->
+  <mat-card class="section-card occupation-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>home</mat-icon>
+        État d'Occupation
+      </mat-card-title>
+      <mat-card-subtitle>
+        Statut actuel de l'occupation du terrain
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <!-- Statut d'Occupation -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Statut d'Occupation *</mat-label>
+        <mat-select formControlName="statut_occupation" [disabled]="isViewMode">
+          <mat-option *ngFor="let option of statutOccupationOptions" [value]="option.value">
+            <div class="select-option">
+              <div class="option-main">
+                <mat-icon class="option-icon">{{ getStatutOccupationIcon(option.value) }}</mat-icon>
+                <span class="option-label">{{ option.label }}</span>
+              </div>
+              <div class="option-description">{{ option.description }}</div>
+            </div>
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="formGroup.get('statut_occupation')?.hasError('required')">
+          Statut d'occupation requis
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Affichage du statut d'occupation -->
+      <div class="occupation-display" *ngIf="formGroup.get('statut_occupation')?.value">
+        <div class="occupation-card">
+          <mat-icon class="occupation-icon">{{ getStatutOccupationIcon(formGroup.get('statut_occupation')?.value) }}</mat-icon>
+          <div class="occupation-info">
+            <h4>{{ formGroup.get('statut_occupation')?.value }}</h4>
+            <p>{{ getStatutOccupationDescription(formGroup.get('statut_occupation')?.value) }}</p>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section Zonage -->
+  <mat-card class="section-card zonage-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>map</mat-icon>
+        Zonage Urbanistique
+      </mat-card-title>
+      <mat-card-subtitle>
+        Classification selon le plan d'urbanisme
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="zonage-fields">
+        <!-- Code Zone -->
+        <mat-form-field appearance="outline" class="zonage-field">
+          <mat-label>Code Zone *</mat-label>
+          <input matInput 
+                 formControlName="zonage" 
+                 placeholder="Ex: R+4, I1, V"
+                 [readonly]="isViewMode">
+          <mat-icon matSuffix>location_city</mat-icon>
+          <mat-error *ngIf="formGroup.get('zonage')?.hasError('required')">
+            Code zone requis
+          </mat-error>
+          <mat-error *ngIf="formGroup.get('zonage')?.hasError('codeZone')">
+            Format de code zone invalide
+          </mat-error>
+          <mat-hint>Code selon le plan d'aménagement</mat-hint>
+        </mat-form-field>
+
+        <!-- Catégorie Fiscale -->
+        <mat-form-field appearance="outline" class="category-field">
+          <mat-label>Catégorie Fiscale</mat-label>
+          <input matInput 
+                 formControlName="categorie_fiscale" 
+                 placeholder="Ex: Résidentiel, Industriel"
+                 [readonly]="isViewMode">
+          <mat-icon matSuffix>category</mat-icon>
+          <mat-hint>Classification pour la taxation</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Info zone -->
+      <div class="zone-info" *ngIf="formGroup.get('zonage')?.value">
+        <div class="info-item">
+          <mat-icon class="info-icon">info</mat-icon>
+          <span class="info-text">
+            Zone <strong>{{ formGroup.get('zonage')?.value }}</strong> 
+            <span *ngIf="formGroup.get('categorie_fiscale')?.value">
+              - {{ formGroup.get('categorie_fiscale')?.value }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Validation Summary -->
+  <div class="validation-summary" *ngIf="!canEdit">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-header">
+          <mat-icon class="summary-icon">check_circle</mat-icon>
+          <h3>Résumé des Informations Générales</h3>
+        </div>
+        
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label>Référence:</label>
+            <span class="value">{{ formGroup.get('reference_fonciere')?.value || 'Non définie' }}</span>
+          </div>
+          
+          <div class="summary-item">
+            <label>Statut Foncier:</label>
+            <span class="value">{{ formGroup.get('statut_foncier')?.value || 'Non défini' }}</span>
+          </div>
+          
+          <div class="summary-item">
+            <label>Occupation:</label>
+            <span class="value">{{ formGroup.get('statut_occupation')?.value || 'Non définie' }}</span>
+          </div>
+          
+          <div class="summary-item">
+            <label>Zone:</label>
+            <span class="value">{{ formGroup.get('zonage')?.value || 'Non définie' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

@@ -1,0 +1,375 @@
+<!-- =====================================================
+     TEMPLATE ONGLET PROPRIÉTAIRES - GESTION INDIVISION
+     ===================================================== -->
+
+<div class="proprietaires-tab-container" [formGroup]="formGroup">
+
+  <!-- Barre d'outils -->
+  <mat-card class="toolbar-card">
+    <mat-card-content class="toolbar-content">
+      
+      <!-- Actions principales -->
+      <div class="main-actions">
+        <button mat-raised-button
+                color="primary"
+                (click)="addProprietaire()"
+                [disabled]="!canAddProprietaire"
+                matTooltip="Ajouter un propriétaire">
+          <mat-icon>person_add</mat-icon>
+          Ajouter Propriétaire
+        </button>
+
+        <button mat-button
+                (click)="redistributeEqually()"
+                [disabled]="isViewMode || proprietairesFormArray.length === 0"
+                matTooltip="Redistribuer équitablement">
+          <mat-icon>balance</mat-icon>
+          Redistribuer
+        </button>
+
+        <button mat-button
+                (click)="normalizeQuoteParts()"
+                [disabled]="isViewMode || totalQuotePart === 0"
+                matTooltip="Normaliser les quote-parts">
+          <mat-icon>tune</mat-icon>
+          Normaliser
+        </button>
+      </div>
+
+      <mat-divider [vertical]="true"></mat-divider>
+
+      <!-- Actions secondaires -->
+      <div class="secondary-actions">
+        <button mat-icon-button
+                (click)="importFromExistingParcelle()"
+                [disabled]="isViewMode"
+                matTooltip="Importer d'une autre parcelle">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+
+        <button mat-icon-button
+                (click)="exportProprietaires()"
+                matTooltip="Exporter les propriétaires">
+          <mat-icon>download</mat-icon>
+        </button>
+
+        <button mat-icon-button
+                (click)="openProprietaireDialog()"
+                [disabled]="isViewMode"
+                matTooltip="Recherche avancée">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+
+      <!-- Indicateur validation -->
+      <div class="validation-indicator" 
+           [ngClass]="{
+             'valid': isQuotePartValid,
+             'invalid': !isQuotePartValid
+           }">
+        <mat-icon>{{ isQuotePartValid ? 'check_circle' : 'error' }}</mat-icon>
+        <span class="validation-text">{{ getValidationMessage() }}</span>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des propriétaires -->
+  <mat-card class="proprietaires-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>group</mat-icon>
+        Propriétaires ({{ proprietairesFormArray.length }})
+      </mat-card-title>
+      <mat-card-subtitle>
+        Total quote-parts: {{ (totalQuotePart * 100).toFixed(2) }}%
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      
+      <!-- Message si aucun propriétaire -->
+      <div class="no-proprietaires" *ngIf="proprietairesFormArray.length === 0">
+        <mat-icon>person_off</mat-icon>
+        <p>Aucun propriétaire défini</p>
+        <button mat-raised-button color="primary" (click)="addProprietaire()">
+          <mat-icon>person_add</mat-icon>
+          Ajouter le premier propriétaire
+        </button>
+      </div>
+
+      <!-- Table des propriétaires -->
+      <div class="proprietaires-table" *ngIf="proprietairesFormArray.length > 0" formArrayName="proprietaires">
+        
+        <div *ngFor="let proprietaireForm of proprietairesFormArray.controls; let i = index" 
+             class="proprietaire-row" 
+             [formGroupName]="i">
+          
+          <mat-card class="proprietaire-card">
+            <mat-card-content class="proprietaire-content">
+              
+              <!-- En-tête propriétaire -->
+              <div class="proprietaire-header">
+                <div class="proprietaire-info">
+                  <h4 class="proprietaire-name">
+                    {{ getProprietaireDisplayName(proprietaireForm) || 'Nouveau propriétaire' }}
+                  </h4>
+                  <mat-chip-set>
+                    <mat-chip [color]="proprietaireForm.get('nature')?.value === 'Physique' ? 'primary' : 'accent'">
+                      {{ proprietaireForm.get('nature')?.value }}
+                    </mat-chip>
+                    <mat-chip *ngIf="proprietaireForm.get('est_actif')?.value" color="primary">
+                      Actif
+                    </mat-chip>
+                  </mat-chip-set>
+                </div>
+                
+                <div class="proprietaire-actions">
+                  <button mat-icon-button
+                          (click)="openProprietaireDialog(i)"
+                          [disabled]="isViewMode"
+                          matTooltip="Modifier">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  
+                  <button mat-icon-button
+                          color="warn"
+                          (click)="removeProprietaire(i)"
+                          [disabled]="!canRemoveProprietaire"
+                          matTooltip="Supprimer">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Formulaire propriétaire -->
+              <div class="proprietaire-form">
+                
+                <!-- Ligne 1: Informations personnelles -->
+                <div class="form-row">
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>Nom *</mat-label>
+                    <input matInput 
+                           formControlName="nom"
+                           [readonly]="isViewMode"
+                           placeholder="Nom de famille">
+                    <mat-error *ngIf="proprietaireForm.get('nom')?.hasError('required')">
+                      Le nom est requis
+                    </mat-error>
+                    <mat-error *ngIf="proprietaireForm.get('nom')?.hasError('minlength')">
+                      Le nom doit contenir au moins 2 caractères
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>Prénom</mat-label>
+                    <input matInput 
+                           formControlName="prenom"
+                           [readonly]="isViewMode"
+                           placeholder="Prénom">
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-small">
+                    <mat-label>Nature *</mat-label>
+                    <mat-select formControlName="nature" [disabled]="isViewMode">
+                      <mat-option *ngFor="let nature of naturesProprietaire" [value]="nature">
+                        {{ nature }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <!-- Ligne 2: Identification et contact -->
+                <div class="form-row">
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>{{ proprietaireForm.get('nature')?.value === 'Physique' ? 'CIN' : 'RC' }} *</mat-label>
+                    <input matInput 
+                           formControlName="cin_ou_rc"
+                           [readonly]="isViewMode"
+                           [placeholder]="proprietaireForm.get('nature')?.value === 'Physique' ? 'CIN (ex: AB123456)' : 'RC (ex: 12345678)'">
+                    <mat-error *ngIf="proprietaireForm.get('cin_ou_rc')?.hasError('required')">
+                      {{ proprietaireForm.get('nature')?.value === 'Physique' ? 'CIN' : 'RC' }} requis
+                    </mat-error>
+                    <mat-error *ngIf="proprietaireForm.get('cin_ou_rc')?.hasError('invalidCin')">
+                      Format CIN invalide
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>Téléphone</mat-label>
+                    <input matInput 
+                           formControlName="telephone"
+                           [readonly]="isViewMode"
+                           placeholder="06XXXXXXXX">
+                    <mat-error *ngIf="proprietaireForm.get('telephone')?.hasError('invalidMoroccanPhone')">
+                      Format téléphone invalide
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>Email</mat-label>
+                    <input matInput 
+                           formControlName="email"
+                           [readonly]="isViewMode"
+                           placeholder="email@exemple.com">
+                    <mat-error *ngIf="proprietaireForm.get('email')?.hasError('email')">
+                      Format email invalide
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <!-- Ligne 3: Adresse -->
+                <div class="form-row">
+                  <mat-form-field class="form-field-full">
+                    <mat-label>Adresse</mat-label>
+                    <textarea matInput 
+                              formControlName="adresse"
+                              [readonly]="isViewMode"
+                              rows="2"
+                              placeholder="Adresse complète">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+
+                <!-- Ligne 4: Quote-part et montant -->
+                <div class="form-row quote-part-row">
+                  <mat-form-field class="form-field-small">
+                    <mat-label>Quote-part *</mat-label>
+                    <input matInput 
+                           type="number"
+                           formControlName="quote_part"
+                           [readonly]="isViewMode"
+                           step="0.01"
+                           min="0.01"
+                           max="1"
+                           placeholder="0.50">
+                    <mat-hint>{{ getQuotePartPercentage(proprietaireForm.get('quote_part')?.value || 0) }}</mat-hint>
+                    <mat-error *ngIf="proprietaireForm.get('quote_part')?.hasError('required')">
+                      Quote-part requise
+                    </mat-error>
+                    <mat-error *ngIf="proprietaireForm.get('quote_part')?.hasError('min')">
+                      Minimum 0.01
+                    </mat-error>
+                    <mat-error *ngIf="proprietaireForm.get('quote_part')?.hasError('max')">
+                      Maximum 1.0
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-medium">
+                    <mat-label>Montant TNB individuel</mat-label>
+                    <input matInput 
+                           type="number"
+                           formControlName="montant_individuel"
+                           readonly
+                           placeholder="0.00">
+                    <span matSuffix>DH</span>
+                  </mat-form-field>
+
+                  <!-- Dates de validité -->
+                  <mat-form-field class="form-field-small">
+                    <mat-label>Date début</mat-label>
+                    <input matInput 
+                           [matDatepicker]="debutPicker"
+                           formControlName="date_debut"
+                           [readonly]="isViewMode">
+                    <mat-datepicker-toggle matIconSuffix [for]="debutPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #debutPicker></mat-datepicker>
+                  </mat-form-field>
+
+                  <mat-form-field class="form-field-small">
+                    <mat-label>Date fin</mat-label>
+                    <input matInput 
+                           [matDatepicker]="finPicker"
+                           formControlName="date_fin"
+                           [readonly]="isViewMode">
+                    <mat-datepicker-toggle matIconSuffix [for]="finPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #finPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+
+                <!-- Ligne 5: Options -->
+                <div class="form-row options-row">
+                  <mat-checkbox formControlName="est_actif" [disabled]="isViewMode">
+                    Propriétaire actif
+                  </mat-checkbox>
+                </div>
+
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Résumé et validation -->
+  <mat-card class="summary-card" *ngIf="proprietairesFormArray.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>assessment</mat-icon>
+        Résumé de l'indivision
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="summary-grid">
+        
+        <div class="summary-item">
+          <span class="summary-label">Nombre de propriétaires :</span>
+          <span class="summary-value">{{ proprietairesFormArray.length }}</span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Total quote-parts :</span>
+          <span class="summary-value" 
+                [ngClass]="{
+                  'valid': isQuotePartValid,
+                  'invalid': !isQuotePartValid
+                }">
+            {{ (totalQuotePart * 100).toFixed(2) }}%
+          </span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Montant total TNB :</span>
+          <span class="summary-value">
+            {{ (formGroup.get('montant_total_tnb')?.value || 0).toFixed(2) }} DH
+          </span>
+        </div>
+
+        <div class="summary-item">
+          <span class="summary-label">Quote-part moyenne :</span>
+          <span class="summary-value">
+            {{ proprietairesFormArray.length > 0 ? ((1 / proprietairesFormArray.length) * 100).toFixed(2) : 0 }}%
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Messages de validation -->
+      <div class="validation-messages" *ngIf="!isQuotePartValid">
+        <mat-icon color="warn">warning</mat-icon>
+        <div class="messages">
+          <p class="validation-message error">
+            {{ getValidationMessage() }}
+          </p>
+          <p class="validation-help">
+            Utilisez les boutons "Redistribuer" ou "Normaliser" pour corriger automatiquement.
+          </p>
+        </div>
+      </div>
+
+      <div class="validation-messages valid" *ngIf="isQuotePartValid">
+        <mat-icon color="primary">check_circle</mat-icon>
+        <div class="messages">
+          <p class="validation-message success">
+            Les quote-parts sont valides et totalisent exactement 100%.
+          </p>
+        </div>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+</div>

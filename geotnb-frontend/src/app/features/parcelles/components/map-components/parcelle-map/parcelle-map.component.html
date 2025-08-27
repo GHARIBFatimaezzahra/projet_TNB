@@ -1,0 +1,208 @@
+<!-- =====================================================
+     TEMPLATE CARTE PARCELLE - VISUALISATION SIG
+     ===================================================== -->
+
+<div class="parcelle-map-container" [style.height]="height" [style.width]="width">
+  
+  <!-- Contrôles de la carte -->
+  <div class="map-controls" *ngIf="showControls">
+    
+    <!-- Contrôles principaux -->
+    <div class="main-controls">
+      <button mat-icon-button
+              (click)="centerMap()"
+              matTooltip="Centrer la carte">
+        <mat-icon>my_location</mat-icon>
+      </button>
+
+      <button mat-icon-button
+              (click)="zoomToAllParcelles()"
+              [disabled]="parcelles.length === 0"
+              matTooltip="Voir toutes les parcelles">
+        <mat-icon>zoom_out_map</mat-icon>
+      </button>
+
+      <button mat-icon-button
+              (click)="refreshMap()"
+              matTooltip="Actualiser">
+        <mat-icon>refresh</mat-icon>
+      </button>
+
+      <button mat-icon-button
+              (click)="toggleFullscreen()"
+              matTooltip="Plein écran">
+        <mat-icon>fullscreen</mat-icon>
+      </button>
+
+      <button mat-icon-button
+              [matMenuTriggerFor]="exportMenu"
+              matTooltip="Exporter">
+        <mat-icon>download</mat-icon>
+      </button>
+
+      <!-- Menu d'export -->
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportMap()">
+          <mat-icon>image</mat-icon>
+          <span>Exporter comme image</span>
+        </button>
+        <button mat-menu-item>
+          <mat-icon>description</mat-icon>
+          <span>Exporter en PDF</span>
+        </button>
+      </mat-menu>
+    </div>
+
+    <!-- Contrôle des couches -->
+    <div class="layer-controls">
+      <app-layer-control
+        [baseLayers]="baseLayers"
+        [overlayLayers]="overlayLayers"
+        (layerToggle)="toggleLayer($event)"
+        (opacityChange)="setLayerOpacity($event.layerId, $event.opacity)">
+      </app-layer-control>
+    </div>
+
+    <!-- Outils de dessin -->
+    <div class="drawing-controls" *ngIf="canDraw">
+      <app-drawing-tools
+        [enabled]="isDrawingMode"
+        [selectedTool]="selectedTool"
+        (toolSelect)="enableDrawing($event)"
+        (drawingDisable)="disableDrawing()">
+      </app-drawing-tools>
+    </div>
+
+  </div>
+
+  <!-- Conteneur de la carte -->
+  <div class="map-wrapper">
+    <div #mapContainer class="map-container"></div>
+    
+    <!-- Overlay de chargement -->
+    <div class="map-loading" *ngIf="isLoading">
+      <div class="loading-content">
+        <mat-icon>map</mat-icon>
+        <p>Chargement de la carte...</p>
+      </div>
+    </div>
+
+    <!-- Overlay mode dessin -->
+    <div class="drawing-overlay" *ngIf="isDrawingMode">
+      <div class="drawing-info">
+        <mat-icon>edit</mat-icon>
+        <span>Mode dessin actif - {{ selectedTool }}</span>
+        <button mat-icon-button (click)="disableDrawing()" matTooltip="Arrêter le dessin">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informations parcelle sélectionnée -->
+  <div class="selected-parcelle-info" *ngIf="selectedParcelle">
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>location_on</mat-icon>
+          {{ selectedParcelle.reference_fonciere }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ selectedParcelle.etat_validation }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="parcelle-details">
+          <div class="detail-item">
+            <span class="label">Surface totale:</span>
+            <span class="value">{{ selectedParcelle.surface_totale | number:'1.0-2' }} m²</span>
+          </div>
+          
+          <div class="detail-item">
+            <span class="label">Surface imposable:</span>
+            <span class="value">{{ selectedParcelle.surface_imposable | number:'1.0-2' }} m²</span>
+          </div>
+          
+          <div class="detail-item">
+            <span class="label">Zonage:</span>
+            <span class="value">{{ selectedParcelle.zonage }}</span>
+          </div>
+          
+          <div class="detail-item">
+            <span class="label">Statut foncier:</span>
+            <span class="value">{{ selectedParcelle.statut_foncier }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+      
+      <mat-card-actions>
+        <button mat-button (click)="zoomToParcelle(selectedParcelle)">
+          <mat-icon>zoom_in</mat-icon>
+          Zoomer
+        </button>
+        <button mat-button>
+          <mat-icon>info</mat-icon>
+          Détails
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <!-- Statistiques de la carte -->
+  <div class="map-stats" *ngIf="showControls && mapLoaded">
+    <div class="stats-content">
+      <div class="stat-item">
+        <mat-icon>layers</mat-icon>
+        <span>{{ mapStats.totalParcelles }} parcelles</span>
+      </div>
+      
+      <div class="stat-item" *ngIf="mapStats.visibleParcelles !== mapStats.totalParcelles">
+        <mat-icon>visibility</mat-icon>
+        <span>{{ mapStats.visibleParcelles }} visibles</span>
+      </div>
+      
+      <div class="stat-item" *ngIf="selectedParcelle">
+        <mat-icon>radio_button_checked</mat-icon>
+        <span>1 sélectionnée</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Légende -->
+  <div class="map-legend" *ngIf="showControls && parcelles.length > 0">
+    <mat-card class="legend-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>palette</mat-icon>
+          Légende
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-color brouillon"></div>
+            <span>Brouillon</span>
+          </div>
+          
+          <div class="legend-item">
+            <div class="legend-color valide"></div>
+            <span>Validé</span>
+          </div>
+          
+          <div class="legend-item">
+            <div class="legend-color publie"></div>
+            <span>Publié</span>
+          </div>
+          
+          <div class="legend-item">
+            <div class="legend-color archive"></div>
+            <span>Archivé</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

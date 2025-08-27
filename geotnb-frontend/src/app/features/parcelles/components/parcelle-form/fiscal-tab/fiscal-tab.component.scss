@@ -1,0 +1,553 @@
+// =====================================================
+// STYLES ONGLET FISCAL - DESIGN MODERNE
+// =====================================================
+
+.fiscal-tab-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  // ===================================================
+  // CARTES DE SECTION
+  // ===================================================
+  .section-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    mat-card-header {
+      background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+      padding: 20px 24px;
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 500;
+        color: #2c3e50;
+        margin: 0;
+        
+        mat-icon {
+          margin-right: 12px;
+          color: #e67e22;
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+      
+      mat-card-subtitle {
+        margin-top: 4px;
+        color: #6c757d;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+    }
+    
+    mat-card-content {
+      padding: 24px !important;
+    }
+    
+    // Cartes spécialisées
+    &.surfaces-section {
+      border-left: 4px solid #3498db;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #ebf3ff, #d6e9ff);
+      }
+    }
+    
+    &.calculation-section {
+      border-left: 4px solid #e67e22;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #fef5e7, #fdebd0);
+      }
+    }
+    
+    &.exoneration-section {
+      border-left: 4px solid #9b59b6;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #f4ecf7, #e8daef);
+      }
+    }
+  }
+
+  // ===================================================
+  // SECTION SURFACES
+  // ===================================================
+  .surfaces-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+    
+    .surface-field {
+      mat-icon[matSuffix] {
+        color: #3498db;
+      }
+    }
+  }
+  
+  .surface-indicator {
+    background: linear-gradient(45deg, #e8f4fd, #ffffff);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #d6e9ff;
+    
+    .indicator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      .indicator-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+      }
+      
+      .indicator-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #3498db;
+      }
+    }
+    
+    mat-progress-bar {
+      height: 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .indicator-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6c757d;
+    }
+  }
+
+  // ===================================================
+  // SECTION CALCUL
+  // ===================================================
+  .calculation-controls {
+    margin-bottom: 24px;
+    text-align: center;
+    
+    button {
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+  
+  .calculation-results {
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+      
+      .result-item {
+        background: linear-gradient(45deg, #f8f9fa, #ffffff);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s ease;
+        
+        &:hover {
+          transform: translateY(-2px);
+        }
+        
+        &.total-item {
+          background: linear-gradient(45deg, #e8f5e8, #f0f8f0);
+          border-color: #c3e6c3;
+          
+          &.exonerated {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border-color: #ffeaa7;
+          }
+        }
+        
+        .result-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+          font-size: 13px;
+          color: #6c757d;
+          
+          mat-icon {
+            margin-right: 6px;
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+        
+        .result-value {
+          font-size: 16px;
+          font-weight: 600;
+          
+          &.tarif {
+            color: #e67e22;
+          }
+          
+          &.surface {
+            color: #3498db;
+          }
+          
+          &.total {
+            color: #27ae60;
+            font-size: 20px;
+            
+            &.exonerated {
+              color: #f39c12;
+              text-decoration: line-through;
+            }
+            
+            .exoneration-icon {
+              margin-left: 8px;
+              color: #e74c3c;
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+            }
+          }
+        }
+      }
+    }
+    
+    .calculation-progress {
+      margin-top: 16px;
+    }
+  }
+
+  // ===================================================
+  // SECTION EXONÉRATION
+  // ===================================================
+  .exoneration-toggle {
+    margin-bottom: 20px;
+    
+    .exoneration-checkbox {
+      .checkbox-label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        
+        strong {
+          color: #2c3e50;
+          font-size: 15px;
+        }
+        
+        small {
+          color: #6c757d;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+  
+  .section-divider {
+    margin: 20px 0;
+  }
+  
+  .exoneration-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+    
+    .duration-option {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .duration-label {
+        font-weight: 500;
+        color: #2c3e50;
+      }
+      
+      .duration-description {
+        font-size: 12px;
+        color: #6c757d;
+      }
+    }
+  }
+  
+  .exoneration-status {
+    .status-card {
+      border-radius: 8px;
+      padding: 20px;
+      border: 2px solid;
+      
+      &.active {
+        background: linear-gradient(45deg, #e8f5e8, #f0f8f0);
+        border-color: #27ae60;
+        
+        .status-icon {
+          color: #27ae60;
+        }
+        
+        .status-title {
+          color: #2e7d32;
+        }
+      }
+      
+      &.expired {
+        background: linear-gradient(45deg, #ffebee, #fce4ec);
+        border-color: #e74c3c;
+        
+        .status-icon {
+          color: #e74c3c;
+        }
+        
+        .status-title {
+          color: #c62828;
+        }
+      }
+      
+      .status-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        
+        .status-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+          margin-right: 12px;
+        }
+        
+        .status-title {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 500;
+        }
+      }
+      
+      .status-details {
+        p {
+          margin: 0 0 8px 0;
+          font-size: 14px;
+          line-height: 1.4;
+          
+          &.status-message {
+            color: #6c757d;
+            font-size: 13px;
+          }
+          
+          strong {
+            color: #2c3e50;
+          }
+        }
+      }
+    }
+  }
+
+  // ===================================================
+  // RÉSUMÉ FISCAL
+  // ===================================================
+  .fiscal-summary {
+    .summary-card {
+      background: linear-gradient(45deg, #f8f9fa, #ffffff);
+      border: 2px solid #e9ecef;
+      
+      .summary-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        
+        .summary-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+          margin-right: 16px;
+          color: #e67e22;
+        }
+        
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 500;
+          color: #2c3e50;
+        }
+      }
+      
+      .summary-content {
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 0;
+          border-bottom: 1px solid #f1f2f6;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          &.total-row {
+            background: rgba(39, 174, 96, 0.1);
+            margin: 16px -20px 0 -20px;
+            padding: 16px 20px;
+            border-bottom: none;
+            
+            .summary-value.total.exonerated {
+              color: #f39c12;
+              text-decoration: line-through;
+            }
+          }
+          
+          .summary-label {
+            color: #6c757d;
+            font-size: 14px;
+          }
+          
+          .summary-value {
+            font-weight: 600;
+            color: #2c3e50;
+            
+            &.total {
+              color: #27ae60;
+              font-size: 18px;
+            }
+            
+            &.status {
+              display: flex;
+              align-items: center;
+              
+              &.exonerated {
+                color: #e67e22;
+                
+                mat-icon {
+                  margin-right: 4px;
+                  font-size: 16px;
+                  width: 16px;
+                  height: 16px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ===================================================
+  // RESPONSIVE
+  // ===================================================
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 20px;
+    
+    .surfaces-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .calculation-results {
+      .results-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
+    
+    .exoneration-form {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .section-card {
+      mat-card-header {
+        padding: 16px 20px;
+      }
+      
+      mat-card-content {
+        padding: 20px !important;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    
+    .surface-indicator {
+      padding: 16px;
+      
+      .indicator-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+    }
+    
+    .summary-content {
+      .summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        
+        &.total-row {
+          margin: 16px -16px 0 -16px;
+          padding: 16px;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================
+// ANIMATIONS
+// ===================================================
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fiscal-tab-container {
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.calculation-results {
+  .result-item {
+    animation: bounceIn 0.6s ease-out;
+    
+    &:nth-child(2) { animation-delay: 0.1s; }
+    &:nth-child(3) { animation-delay: 0.2s; }
+  }
+}

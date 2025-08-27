@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { AppConfig } from '../../../../core/config/app.config';
+// Configuration supprimée - utilisation de couleurs par défaut
 
 @Component({
   selector: 'app-status-badge',
@@ -28,8 +28,24 @@ export class StatusBadgeComponent {
       return this.customColor;
     }
 
-    const colors = AppConfig.statusColors[this.type as keyof typeof AppConfig.statusColors];
-    return colors?.[this.status as keyof typeof colors] || '#666';
+    // Couleurs par défaut pour les différents statuts
+    const defaultColors: { [key: string]: { [key: string]: string } } = {
+      parcelle: {
+        'brouillon': '#ff9800',
+        'valide': '#4caf50',
+        'publie': '#2196f3',
+        'archive': '#9e9e9e'
+      },
+      workflow: {
+        'en_cours': '#ff9800',
+        'termine': '#4caf50',
+        'suspendu': '#f44336',
+        'annule': '#9e9e9e'
+      }
+    };
+    
+    const colors = defaultColors[this.type] || {};
+    return colors[this.status] || '#666';
   }
 
   getTextColor(): string {

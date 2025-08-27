@@ -1,0 +1,276 @@
+<!-- ===================================================== -->
+<!-- COMPOSANT WORKFLOW STEPPER -->
+<!-- ===================================================== -->
+
+<div class="workflow-stepper" [class.compact]="compact" [class.vertical]="orientation === 'vertical'">
+  
+  <!-- En-tête avec état actuel -->
+  <div class="workflow-header" *ngIf="showDetails && parcelle">
+    <div class="current-state">
+      <div class="state-info">
+        <div class="state-badge">
+          <mat-icon [color]="currentStateColor">{{ currentStateIcon }}</mat-icon>
+          <span class="state-label" [style.color]="currentStateColor === 'primary' ? '#1976d2' : 
+                                                   currentStateColor === 'accent' ? '#303f9f' : 
+                                                   currentStateColor === 'warn' ? '#f57c00' : '#666'">
+            {{ parcelle.etat_validation }}
+          </span>
+        </div>
+        <p class="state-description">{{ currentStateLabel }}</p>
+      </div>
+      
+      <div class="progress-info" *ngIf="showProgress">
+        <div class="progress-text">
+          <span class="progress-label">Progression</span>
+          <span class="progress-value">{{ progressPercentage }}%</span>
+        </div>
+        <mat-progress-bar [value]="workflowProgress" 
+                         [color]="currentStateColor" 
+                         mode="determinate">
+        </mat-progress-bar>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stepper principal -->
+  <div class="stepper-container">
+    <mat-stepper [orientation]="orientation" 
+                [linear]="false"
+                [selectedIndex]="currentStepIndex"
+                class="workflow-stepper-main">
+      
+      <mat-step *ngFor="let step of workflowSteps; let i = index" 
+               [completed]="step.status === 'completed'"
+               [hasError]="step.status === 'disabled'"
+               [editable]="step.canAccess"
+               [optional]="step.id === 'archive'">
+        
+        <!-- En-tête de l'étape -->
+        <ng-template matStepLabel>
+          <div class="step-label" [class.disabled]="!step.canAccess">
+            <mat-icon [color]="getStepStatusColor(step.status)" 
+                     [matBadge]="step.status === 'current' ? '●' : ''"
+                     matBadgeColor="accent"
+                     matBadgeSize="small"
+                     [matBadgeHidden]="step.status !== 'current'">
+              {{ step.icon }}
+            </mat-icon>
+            <span class="label-text">{{ step.label }}</span>
+          </div>
+        </ng-template>
+
+        <!-- Contenu de l'étape -->
+        <div class="step-content">
+          <div class="step-header">
+            <h3>{{ step.label }}</h3>
+            <mat-chip [color]="getStepStatusColor(step.status)">
+              <mat-icon matChipAvatar>{{ getStepStatusIcon(step.status) }}</mat-icon>
+              {{ step.status | titlecase }}
+            </mat-chip>
+          </div>
+
+          <p class="step-description">{{ step.description }}</p>
+
+          <!-- Informations détaillées -->
+          <div class="step-details" *ngIf="showDetails">
+            <div class="detail-section">
+              <h4>
+                <mat-icon>schedule</mat-icon>
+                Durée estimée
+              </h4>
+              <span class="duration">{{ formatDuration(step.estimatedDuration || 'Non définie') }}</span>
+            </div>
+
+            <div class="detail-section" *ngIf="step.requiredRole && step.requiredRole.length > 0">
+              <h4>
+                <mat-icon>admin_panel_settings</mat-icon>
+                Rôles requis
+              </h4>
+              <div class="roles-list">
+                <mat-chip *ngFor="let role of step.requiredRole" 
+                         [color]="hasRequiredRole([role]) ? 'primary' : 'basic'"
+                         class="role-chip">
+                  {{ role }}
+                </mat-chip>
+              </div>
+            </div>
+
+            <div class="detail-section" *ngIf="step.validationRules && step.validationRules.length > 0">
+              <h4>
+                <mat-icon>checklist</mat-icon>
+                Critères de validation
+              </h4>
+              <ul class="validation-rules">
+                <li *ngFor="let rule of step.validationRules">
+                  <mat-icon>check_circle_outline</mat-icon>
+                  {{ rule }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Actions disponibles pour cette étape -->
+          <div class="step-actions" *ngIf="i === currentStepIndex && availableActions.length > 0 && showActions">
+            <mat-divider></mat-divider>
+            <h4>
+              <mat-icon>settings</mat-icon>
+              Actions disponibles
+            </h4>
+            <div class="actions-grid">
+              <button *ngFor="let action of availableActions" 
+                     mat-raised-button 
+                     [color]="action.color"
+                     [disabled]="!hasRequiredRole(action.requiredRole)"
+                     (click)="onActionClick(action)"
+                     [matTooltip]="action.description"
+                     class="action-button">
+                <mat-icon>{{ action.icon }}</mat-icon>
+                {{ action.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  </div>
+
+  <!-- Navigation compacte (pour mode compact) -->
+  <div class="compact-navigation" *ngIf="compact">
+    <button mat-icon-button 
+           [disabled]="!canGoPrevious"
+           (click)="goToPrevious()"
+           matTooltip="Étape précédente">
+      <mat-icon>navigate_before</mat-icon>
+    </button>
+
+    <div class="step-indicator">
+      <span class="current-step">{{ currentStepIndex + 1 }}</span>
+      <span class="separator">/</span>
+      <span class="total-steps">{{ workflowSteps.length }}</span>
+    </div>
+
+    <button mat-icon-button 
+           [disabled]="!canGoNext"
+           (click)="goToNext()"
+           matTooltip="Étape suivante">
+      <mat-icon>navigate_next</mat-icon>
+    </button>
+  </div>
+
+  <!-- Résumé des étapes (vue d'ensemble) -->
+  <div class="steps-overview" *ngIf="!compact && showDetails">
+    <mat-card class="overview-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>timeline</mat-icon>
+          Vue d'ensemble du workflow
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="overview-grid">
+          <div *ngFor="let step of workflowSteps; let i = index" 
+               class="overview-step"
+               [class.active]="i === currentStepIndex"
+               [class.completed]="step.status === 'completed'"
+               [class.disabled]="!step.canAccess"
+               (click)="onStepClick(step, i)">
+            
+            <div class="step-icon-wrapper">
+              <mat-icon [color]="getStepStatusColor(step.status)">{{ step.icon }}</mat-icon>
+              <div class="step-connector" *ngIf="i < workflowSteps.length - 1"></div>
+            </div>
+            
+            <div class="step-info">
+              <h5>{{ step.label }}</h5>
+              <p>{{ step.description }}</p>
+              <div class="step-meta">
+                <mat-chip [color]="getStepStatusColor(step.status)" class="status-chip">
+                  {{ step.status | titlecase }}
+                </mat-chip>
+                <span class="duration" *ngIf="step.estimatedDuration">
+                  {{ formatDuration(step.estimatedDuration) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Actions globales -->
+  <div class="global-actions" *ngIf="showActions && !compact">
+    <mat-card class="actions-card">
+      <mat-card-content>
+        <div class="actions-header">
+          <h4>
+            <mat-icon>settings</mat-icon>
+            Actions disponibles
+          </h4>
+          <mat-chip [color]="currentStateColor">
+            État actuel : {{ parcelle?.etat_validation }}
+          </mat-chip>
+        </div>
+
+        <div class="actions-list" *ngIf="availableActions.length > 0; else noActions">
+          <button *ngFor="let action of availableActions" 
+                 mat-raised-button 
+                 [color]="action.color"
+                 [disabled]="!hasRequiredRole(action.requiredRole)"
+                 (click)="onActionClick(action)"
+                 class="global-action-button">
+            <mat-icon>{{ action.icon }}</mat-icon>
+            <div class="action-content">
+              <span class="action-label">{{ action.label }}</span>
+              <span class="action-description">{{ action.description }}</span>
+            </div>
+          </button>
+        </div>
+
+        <ng-template #noActions>
+          <div class="no-actions">
+            <mat-icon color="disabled">info_outline</mat-icon>
+            <p>Aucune action disponible pour l'état actuel ou vos permissions.</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Légende des statuts -->
+  <div class="status-legend" *ngIf="showDetails && !compact">
+    <mat-card class="legend-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>help_outline</mat-icon>
+          Légende des statuts
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="legend-grid">
+          <div class="legend-item">
+            <mat-icon color="primary">check_circle</mat-icon>
+            <span><strong>Terminé</strong> - Étape complétée avec succès</span>
+          </div>
+          
+          <div class="legend-item">
+            <mat-icon color="accent">radio_button_checked</mat-icon>
+            <span><strong>En cours</strong> - Étape actuellement active</span>
+          </div>
+          
+          <div class="legend-item">
+            <mat-icon>radio_button_unchecked</mat-icon>
+            <span><strong>En attente</strong> - Étape pas encore commencée</span>
+          </div>
+          
+          <div class="legend-item">
+            <mat-icon>block</mat-icon>
+            <span><strong>Désactivé</strong> - Étape non accessible</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

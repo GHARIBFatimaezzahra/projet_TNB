@@ -1,0 +1,437 @@
+<!-- ===================================================== -->
+<!-- COMPOSANT VALIDATION PANEL -->
+<!-- ===================================================== -->
+
+<div class="validation-panel">
+  
+  <!-- En-tête avec score de validation -->
+  <mat-card class="validation-header-card" *ngIf="validationResult">
+    <mat-card-content>
+      <div class="validation-score">
+        <div class="score-display">
+          <div class="score-circle" [style.background]="'conic-gradient(#4caf50 0deg ' + (validationScore * 3.6) + 'deg, #e0e0e0 ' + (validationScore * 3.6) + 'deg 360deg)'">
+            <div class="score-inner">
+              <span class="score-value">{{ validationScore }}%</span>
+              <span class="score-label">Qualité</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="score-details">
+          <h3>Validation de la Parcelle</h3>
+          <p class="score-description">
+            {{ validationResult.validCriteria }}/{{ validationResult.totalCriteria }} critères validés
+          </p>
+          
+          <div class="status-indicators">
+            <div class="indicator valid" *ngIf="validationResult.validCriteria > 0">
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ validationResult.validCriteria }} Validés</span>
+            </div>
+            
+            <div class="indicator warning" *ngIf="validationResult.warnings.length > 0">
+              <mat-icon>warning</mat-icon>
+              <span>{{ validationResult.warnings.length }} Avertissements</span>
+            </div>
+            
+            <div class="indicator error" *ngIf="validationResult.errors.length > 0">
+              <mat-icon>error</mat-icon>
+              <span>{{ validationResult.errors.length }} Erreurs</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="validation-actions">
+          <button mat-raised-button color="primary" (click)="runValidation()" [disabled]="isValidating">
+            <mat-spinner diameter="20" *ngIf="isValidating"></mat-spinner>
+            <mat-icon *ngIf="!isValidating">refresh</mat-icon>
+            {{ isValidating ? 'Validation...' : 'Re-valider' }}
+          </button>
+          
+          <div class="validation-status" [class.valid]="validationResult.isValid" [class.invalid]="!validationResult.isValid">
+            <mat-icon>{{ validationResult.isValid ? 'verified' : 'error_outline' }}</mat-icon>
+            <span>{{ validationResult.isValid ? 'Prêt pour validation' : 'Corrections requises' }}</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Bouton de validation initial -->
+  <mat-card class="initial-validation-card" *ngIf="!validationResult">
+    <mat-card-content>
+      <div class="initial-validation">
+        <mat-icon color="primary">assignment_turned_in</mat-icon>
+        <h3>Lancer la Validation</h3>
+        <p>Vérifiez la qualité et la complétude des données de la parcelle</p>
+        <button mat-raised-button color="primary" (click)="runValidation()" [disabled]="isValidating">
+          <mat-spinner diameter="20" *ngIf="isValidating"></mat-spinner>
+          <mat-icon *ngIf="!isValidating">play_arrow</mat-icon>
+          {{ isValidating ? 'Validation en cours...' : 'Commencer la validation' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Onglets de contenu -->
+  <mat-tab-group class="validation-tabs" *ngIf="validationResult">
+    
+    <!-- Onglet Critères de validation -->
+    <mat-tab label="Critères de Validation">
+      <div class="tab-content">
+        
+        <!-- Critères obligatoires -->
+        <mat-card class="criteria-section">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon color="warn">priority_high</mat-icon>
+              Critères Obligatoires
+            </mat-card-title>
+            <mat-card-subtitle>Ces critères doivent être validés</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="criteria-list">
+              <div *ngFor="let criteria of criteriaByCategoryMandatory" 
+                   class="criteria-item"
+                   [class.valid]="criteria.status === 'valid'"
+                   [class.invalid]="criteria.status === 'invalid'"
+                   [class.warning]="criteria.status === 'warning'"
+                   [class.pending]="criteria.status === 'pending'">
+                
+                <div class="criteria-header" (click)="toggleCriteriaStatus(criteria)">
+                  <div class="criteria-info">
+                    <mat-icon [color]="getCriteriaColor(criteria.status)">
+                      {{ getCriteriaIcon(criteria.status) }}
+                    </mat-icon>
+                    <div class="criteria-text">
+                      <h4>{{ criteria.label }}</h4>
+                      <p>{{ criteria.description }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="criteria-status">
+                    <mat-chip [color]="getCriteriaColor(criteria.status)">
+                      {{ criteria.status | titlecase }}
+                    </mat-chip>
+                  </div>
+                </div>
+                
+                <div class="criteria-details" *ngIf="criteria.details">
+                  <mat-icon>info_outline</mat-icon>
+                  <span>{{ criteria.details }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Critères recommandés -->
+        <mat-card class="criteria-section">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon color="accent">recommend</mat-icon>
+              Critères Recommandés
+            </mat-card-title>
+            <mat-card-subtitle>Ces critères améliorent la qualité</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="criteria-list">
+              <div *ngFor="let criteria of criteriaByCategoryRecommended" 
+                   class="criteria-item"
+                   [class.valid]="criteria.status === 'valid'"
+                   [class.invalid]="criteria.status === 'invalid'"
+                   [class.warning]="criteria.status === 'warning'"
+                   [class.pending]="criteria.status === 'pending'">
+                
+                <div class="criteria-header" (click)="toggleCriteriaStatus(criteria)">
+                  <div class="criteria-info">
+                    <mat-icon [color]="getCriteriaColor(criteria.status)">
+                      {{ getCriteriaIcon(criteria.status) }}
+                    </mat-icon>
+                    <div class="criteria-text">
+                      <h4>{{ criteria.label }}</h4>
+                      <p>{{ criteria.description }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="criteria-status">
+                    <mat-chip [color]="getCriteriaColor(criteria.status)">
+                      {{ criteria.status | titlecase }}
+                    </mat-chip>
+                  </div>
+                </div>
+                
+                <div class="criteria-details" *ngIf="criteria.details">
+                  <mat-icon>info_outline</mat-icon>
+                  <span>{{ criteria.details }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Critères optionnels -->
+        <mat-card class="criteria-section">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>check_box_outline_blank</mat-icon>
+              Critères Optionnels
+            </mat-card-title>
+            <mat-card-subtitle>Ces critères sont facultatifs</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="criteria-list">
+              <div *ngFor="let criteria of criteriaByCategoryOptional" 
+                   class="criteria-item"
+                   [class.valid]="criteria.status === 'valid'"
+                   [class.invalid]="criteria.status === 'invalid'"
+                   [class.warning]="criteria.status === 'warning'"
+                   [class.pending]="criteria.status === 'pending'">
+                
+                <div class="criteria-header" (click)="toggleCriteriaStatus(criteria)">
+                  <div class="criteria-info">
+                    <mat-icon [color]="getCriteriaColor(criteria.status)">
+                      {{ getCriteriaIcon(criteria.status) }}
+                    </mat-icon>
+                    <div class="criteria-text">
+                      <h4>{{ criteria.label }}</h4>
+                      <p>{{ criteria.description }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="criteria-status">
+                    <mat-chip [color]="getCriteriaColor(criteria.status)">
+                      {{ criteria.status | titlecase }}
+                    </mat-chip>
+                  </div>
+                </div>
+                
+                <div class="criteria-details" *ngIf="criteria.details">
+                  <mat-icon>info_outline</mat-icon>
+                  <span>{{ criteria.details }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Recommandations -->
+        <mat-card class="recommendations-section" *ngIf="validationResult.recommendations.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon color="accent">lightbulb</mat-icon>
+              Recommandations
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <ul class="recommendations-list">
+              <li *ngFor="let recommendation of validationResult.recommendations">
+                <mat-icon>arrow_forward</mat-icon>
+                {{ recommendation }}
+              </li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Onglet Actions de workflow -->
+    <mat-tab label="Actions de Workflow">
+      <div class="tab-content">
+        
+        <!-- Formulaire d'action -->
+        <mat-card class="action-form-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>settings</mat-icon>
+              Exécuter une Action
+            </mat-card-title>
+            <mat-card-subtitle>État actuel : {{ parcelle?.etat_validation }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <form [formGroup]="actionForm" class="action-form">
+              
+              <!-- Sélection de l'action -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Action à exécuter</mat-label>
+                <mat-select formControlName="action">
+                  <mat-option *ngFor="let action of availableActionsForCurrentState" [value]="action.id">
+                    <div class="action-option">
+                      <mat-icon [style.color]="action.color === 'primary' ? '#1976d2' : 
+                                             action.color === 'accent' ? '#303f9f' : 
+                                             action.color === 'warn' ? '#f57c00' : '#666'">
+                        {{ action.icon }}
+                      </mat-icon>
+                      <div class="action-text">
+                        <span class="action-label">{{ action.label }}</span>
+                        <small class="action-description">{{ action.description }}</small>
+                      </div>
+                    </div>
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Configuration spécifique à l'action -->
+              <div class="action-config" *ngIf="selectedActionConfig">
+                
+                <!-- Commentaire -->
+                <mat-form-field appearance="outline" class="full-width" 
+                               *ngIf="selectedActionConfig.requiresComment || selectedActionConfig.id === 'reject'">
+                  <mat-label>{{ selectedActionConfig.requiresComment ? 'Commentaire (obligatoire)' : 'Commentaire' }}</mat-label>
+                  <textarea matInput formControlName="comment" rows="3" 
+                           placeholder="Saisissez votre commentaire..."></textarea>
+                  <mat-error>Un commentaire est requis pour cette action</mat-error>
+                </mat-form-field>
+
+                <!-- Raison (pour rejet/archivage) -->
+                <mat-form-field appearance="outline" class="full-width" 
+                               *ngIf="selectedActionConfig.id === 'reject' || selectedActionConfig.id === 'archive'">
+                  <mat-label>Raison</mat-label>
+                  <mat-select formControlName="reason">
+                    <mat-option value="incomplete_data">Données incomplètes</mat-option>
+                    <mat-option value="invalid_geometry">Géométrie invalide</mat-option>
+                    <mat-option value="missing_documents">Documents manquants</mat-option>
+                    <mat-option value="calculation_error">Erreur de calcul</mat-option>
+                    <mat-option value="regulatory_issue">Non-conformité réglementaire</mat-option>
+                    <mat-option value="other">Autre</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <!-- Date programmée -->
+                <mat-form-field appearance="outline" class="full-width" 
+                               *ngIf="selectedActionConfig.id === 'publish'">
+                  <mat-label>Date de publication (optionnel)</mat-label>
+                  <input matInput [matDatepicker]="schedulePicker" formControlName="scheduledDate">
+                  <mat-datepicker-toggle matIconSuffix [for]="schedulePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #schedulePicker></mat-datepicker>
+                </mat-form-field>
+
+                <!-- Options -->
+                <div class="action-options">
+                  <mat-checkbox formControlName="notifyUsers">
+                    <mat-icon>notifications</mat-icon>
+                    Notifier les utilisateurs concernés
+                  </mat-checkbox>
+                  
+                  <mat-checkbox formControlName="generateDocument" 
+                               *ngIf="selectedActionConfig.id === 'publish'">
+                    <mat-icon>description</mat-icon>
+                    Générer les documents officiels
+                  </mat-checkbox>
+                </div>
+              </div>
+
+              <!-- Actions du formulaire -->
+              <div class="form-actions">
+                <button mat-button type="button" (click)="resetForm()">
+                  <mat-icon>clear</mat-icon>
+                  Annuler
+                </button>
+                
+                <button mat-raised-button 
+                       [color]="selectedActionConfig?.color || 'primary'"
+                       (click)="executeAction()" 
+                       [disabled]="!actionForm.valid || isExecutingAction || 
+                                  (selectedActionConfig?.requiresValidation && !validationResult?.isValid)">
+                  <mat-spinner diameter="20" *ngIf="isExecutingAction"></mat-spinner>
+                  <mat-icon *ngIf="!isExecutingAction">{{ selectedActionConfig?.icon || 'send' }}</mat-icon>
+                  {{ isExecutingAction ? 'Exécution...' : (selectedActionConfig?.label || 'Exécuter') }}
+                </button>
+              </div>
+
+              <!-- Avertissement validation -->
+              <div class="validation-warning" 
+                   *ngIf="selectedActionConfig?.requiresValidation && !validationResult?.isValid">
+                <mat-icon color="warn">warning</mat-icon>
+                <span>Cette action nécessite une validation réussie. Corrigez les erreurs avant de continuer.</span>
+              </div>
+            </form>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Actions disponibles (vue rapide) -->
+        <mat-card class="quick-actions-card" *ngIf="availableActionsForCurrentState.length > 0">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>flash_on</mat-icon>
+              Actions Rapides
+            </mat-card-title>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="quick-actions-grid">
+              <button *ngFor="let action of availableActionsForCurrentState" 
+                     mat-raised-button 
+                     [color]="action.color"
+                     (click)="actionForm.patchValue({action: action.id})"
+                     class="quick-action-button"
+                     [matTooltip]="action.description">
+                <mat-icon>{{ action.icon }}</mat-icon>
+                <span>{{ action.label }}</span>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Onglet Historique -->
+    <mat-tab label="Historique" *ngIf="showActionHistory">
+      <div class="tab-content">
+        
+        <mat-card class="history-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>history</mat-icon>
+              Historique des Actions
+            </mat-card-title>
+            <mat-card-subtitle>{{ actionHistory.length }} action(s) enregistrée(s)</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="history-timeline" *ngIf="actionHistory.length > 0; else noHistory">
+              <div *ngFor="let action of actionHistory; let i = index" class="timeline-item">
+                <div class="timeline-marker">
+                  <mat-icon [color]="i === 0 ? 'primary' : 'basic'">
+                    {{ getActionIcon(action.action) }}
+                  </mat-icon>
+                </div>
+                
+                <div class="timeline-content">
+                  <div class="action-header">
+                    <h4>{{ action.action | titlecase }}</h4>
+                    <mat-chip color="primary" class="date-chip">
+                      {{ action.date_heure | date:'dd/MM/yyyy HH:mm' }}
+                    </mat-chip>
+                  </div>
+                  
+                  <p class="action-details">{{ action.details }}</p>
+                  
+                  <div class="action-meta">
+                    <div class="user-info">
+                      <mat-icon>person</mat-icon>
+                      <span>Utilisateur ID: {{ action.utilisateur_id }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noHistory>
+              <div class="no-history">
+                <mat-icon color="disabled">history_edu</mat-icon>
+                <h3>Aucun historique</h3>
+                <p>Les actions effectuées sur cette parcelle apparaîtront ici.</p>
+              </div>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

@@ -1,141 +1,246 @@
-<div class="conteneur-connexion">
-  <div class="carte-connexion-wrapper">
-    <div class="carte-connexion">
-      <!-- En-tête -->
-      <div class="en-tete-connexion">
-        <div class="conteneur-logo">
-          <mat-icon class="icone-geo">person_add</mat-icon>
-        </div>
-        <h1 class="titre-application">Créer un compte</h1>
-        <p class="sous-titre-application">Géoportail TNB - Commune d'Oujda</p>
+<!-- =====================================================
+     INTERFACE D'INSCRIPTION - EXACTEMENT COMME L'EXEMPLE
+     ===================================================== -->
+
+<div class="register-container">
+  <!-- Partie gauche - Branding -->
+  <div class="left-section">
+    <div class="brand-container">
+      <!-- Logo TNB -->
+      <div class="logo-circle">
+        <span class="logo-text">TNB</span>
       </div>
+      
+      <!-- Titre -->
+      <h1 class="main-title">Nouveau Compte</h1>
+      
+      <!-- Description -->
+      <p class="description">
+        Créez votre compte pour accéder au<br>
+        système de gestion TNB. L'activation<br>
+        sera effectuée par un administrateur.
+      </p>
+    </div>
+  </div>
 
-      <!-- Contenu principal -->
-      <div class="contenu-connexion">
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="formulaire-connexion" novalidate>
-          
-          <!-- Type d'utilisateur -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Type d'utilisateur</label>
-            <select formControlName="profil" class="champ-saisie" (change)="onUserTypeChange($any($event.target).value)">
-              <option value="" disabled>Sélectionnez votre profil</option>
-              <option *ngFor="let role of userRoles" [value]="role.value">
-                {{ role.label }} - {{ role.description }}
-              </option>
-            </select>
-            <div class="message-erreur" *ngIf="profil?.invalid && profil?.touched">
-              <span>Veuillez sélectionner un type d'utilisateur</span>
+  <!-- Partie droite - Formulaire d'inscription -->
+  <div class="right-section">
+    <div class="form-container">
+      <!-- Titre du formulaire -->
+      <h2 class="form-title">Créer un compte</h2>
+      <p class="form-subtitle">Remplissez les informations ci-dessous</p>
+
+      <!-- Formulaire -->
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+        
+        <!-- Ligne 1: Nom et Prénom -->
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="nom" class="form-label">Nom *</label>
+            <div class="input-container">
+              <input 
+                type="text" 
+                id="nom"
+                formControlName="nom"
+                placeholder="Votre nom"
+                class="form-input">
+            </div>
+            <div class="error-message" *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched">
+              {{ getFieldError('nom') }}
             </div>
           </div>
 
-          <!-- Nom d'utilisateur -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Nom d'utilisateur</label>
+          <div class="form-group half">
+            <label for="prenom" class="form-label">Prénom *</label>
+            <div class="input-container">
+              <input 
+                type="text" 
+                id="prenom"
+                formControlName="prenom"
+                placeholder="Votre prénom"
+                class="form-input">
+            </div>
+            <div class="error-message" *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched">
+              {{ getFieldError('prenom') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Nom d'utilisateur -->
+        <div class="form-group">
+          <label for="username" class="form-label">Nom d'utilisateur *</label>
+          <div class="input-container">
+            <div class="input-icon-box">
+              <mat-icon class="input-icon">person</mat-icon>
+            </div>
             <input 
-              type="text"
-              formControlName="username" 
-              class="champ-saisie"
-              autocomplete="username"
-              placeholder="Saisissez un nom d'utilisateur unique">
-            <div class="message-erreur" *ngIf="username?.invalid && username?.touched">
-              <span *ngIf="username?.hasError('required')">Le nom d'utilisateur est requis</span>
-              <span *ngIf="username?.hasError('minlength')">Minimum 3 caractères requis</span>
-            </div>
+              type="text" 
+              id="username"
+              formControlName="username"
+              placeholder="Nom d'utilisateur unique"
+              class="form-input">
           </div>
+          <div class="error-message" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+            {{ getFieldError('username') }}
+          </div>
+        </div>
 
-          <!-- Email -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Adresse email</label>
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label">Email professionnel *</label>
+          <div class="input-container">
+            <div class="input-icon-box">
+              <mat-icon class="input-icon">email</mat-icon>
+            </div>
             <input 
-              type="email"
-              formControlName="email" 
-              class="champ-saisie"
-              autocomplete="email"
-              placeholder="nom@commune-oujda.ma">
-            <div class="message-erreur" *ngIf="email?.invalid && email?.touched">
-              <span *ngIf="email?.hasError('required')">L'adresse email est requise</span>
-              <span *ngIf="email?.hasError('email')">Format d'email invalide</span>
+              type="email" 
+              id="email"
+              formControlName="email"
+              placeholder="votre.email@commune-oujda.ma"
+              class="form-input">
+          </div>
+          <div class="error-message" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+
+        <!-- Téléphone -->
+        <div class="form-group">
+          <label for="telephone" class="form-label">Téléphone</label>
+          <div class="input-container">
+            <div class="input-icon-box">
+              <span class="country-flag">🇲🇦</span>
+            </div>
+            <input 
+              type="tel" 
+              id="telephone"
+              formControlName="telephone"
+              placeholder="+212 6XX XX XX XX"
+              class="form-input">
+          </div>
+          <div class="error-message" *ngIf="registerForm.get('telephone')?.invalid && registerForm.get('telephone')?.touched">
+            {{ getFieldError('telephone') }}
+          </div>
+        </div>
+
+        <!-- Profil demandé -->
+        <div class="form-group">
+          <label class="form-label">Profil demandé *</label>
+          <div class="profile-selection">
+            <div class="profile-grid">
+              <label 
+                class="profile-option"
+                [class.selected]="registerForm.get('profil')?.value === 'AgentFiscal'"
+                *ngFor="let role of userRoles">
+                <input 
+                  type="radio" 
+                  name="profil"
+                  [value]="role.value"
+                  formControlName="profil">
+                <div class="profile-content">
+                  <mat-icon class="profile-icon">{{role.icon}}</mat-icon>
+                  <span class="profile-title">{{role.label}}</span>
+                  <span class="profile-desc">{{role.description}}</span>
+                </div>
+              </label>
             </div>
           </div>
+          <div class="error-message" *ngIf="registerForm.get('profil')?.invalid && registerForm.get('profil')?.touched">
+            {{ getFieldError('profil') }}
+          </div>
+        </div>
 
-          <!-- Mot de passe -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Mot de passe</label>
-            <div class="conteneur-mot-de-passe">
+        <!-- Ligne mots de passe -->
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="password" class="form-label">Mot de passe *</label>
+            <div class="input-container">
+              <div class="input-icon-box">
+                <mat-icon class="input-icon">lock</mat-icon>
+              </div>
               <input 
                 [type]="hidePassword ? 'password' : 'text'"
+                id="password"
                 formControlName="password"
-                class="champ-saisie"
-                autocomplete="new-password"
-                placeholder="Créez un mot de passe sécurisé">
-              <button 
-                type="button"
-                class="bouton-visibilite" 
-                (click)="togglePasswordVisibility()">
-                {{ hidePassword ? '👁️' : '🔒' }}
-              </button>
+                placeholder="Mot de passe"
+                class="form-input">
+              <div class="password-toggle-box" (click)="togglePasswordVisibility()">
+                <mat-icon class="password-toggle-icon">
+                  {{hidePassword ? 'visibility_off' : 'visibility'}}
+                </mat-icon>
+              </div>
             </div>
-            <div class="message-erreur" *ngIf="password?.invalid && password?.touched">
-              <span *ngIf="password?.hasError('required')">Le mot de passe est requis</span>
-              <span *ngIf="password?.hasError('minlength')">Minimum 8 caractères requis</span>
+            <div class="error-message" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+              {{ getFieldError('password') }}
             </div>
           </div>
 
-          <!-- Confirmation mot de passe -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Confirmer le mot de passe</label>
-            <div class="conteneur-mot-de-passe">
+          <div class="form-group half">
+            <label for="confirmPassword" class="form-label">Confirmer *</label>
+            <div class="input-container">
+              <div class="input-icon-box">
+                <mat-icon class="input-icon">lock</mat-icon>
+              </div>
               <input 
                 [type]="hideConfirmPassword ? 'password' : 'text'"
+                id="confirmPassword"
                 formControlName="confirmPassword"
-                class="champ-saisie"
-                autocomplete="new-password"
-                placeholder="Répétez le mot de passe">
-              <button 
-                type="button"
-                class="bouton-visibilite" 
-                (click)="toggleConfirmPasswordVisibility()">
-                {{ hideConfirmPassword ? '👁️' : '🔒' }}
-              </button>
+                placeholder="Confirmer"
+                class="form-input">
+              <div class="password-toggle-box" (click)="toggleConfirmPasswordVisibility()">
+                <mat-icon class="password-toggle-icon">
+                  {{hideConfirmPassword ? 'visibility_off' : 'visibility'}}
+                </mat-icon>
+              </div>
             </div>
-            <div class="message-erreur" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
-              <span *ngIf="confirmPassword?.hasError('required')">La confirmation est requise</span>
-            </div>
-            <div class="message-erreur" *ngIf="registerForm?.hasError('passwordMismatch') && confirmPassword?.touched">
-              <span>Les mots de passe ne correspondent pas</span>
+            <div class="error-message" *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+              {{ getFieldError('confirmPassword') }}
             </div>
           </div>
-
-          <!-- Bouton de création -->
-          <button 
-            type="submit"
-            class="bouton-connexion"
-            [disabled]="registerForm.invalid || isLoading">
-            <span class="indicateur-chargement" *ngIf="isLoading"></span>
-            <span class="texte-bouton">
-              {{ isLoading ? 'Création en cours...' : 'Créer le compte' }}
-            </span>
-          </button>
-        </form>
-
-        <!-- Actions secondaires -->
-        <div class="actions-secondaires">
-          <div class="separateur-ou">
-            <span>ou</span>
-          </div>
-          
-          <a routerLink="/auth/login" class="lien-mot-de-passe-oublie">
-            <mat-icon class="icone-lien">login</mat-icon>
-            Déjà un compte ? Se connecter
-          </a>
         </div>
-      </div>
 
-      <!-- Informations système -->
-      <div class="informations-systeme">
-        <p class="texte-info">Nouveau compte utilisateur - Système TNB</p>
-        <p class="numero-version">Version 1.0.0</p>
-      </div>
+        <!-- Force du mot de passe -->
+        <div class="password-strength" *ngIf="registerForm.get('password')?.value">
+          <div class="strength-label">Force du mot de passe:</div>
+          <div class="strength-bar">
+            <div class="strength-fill" [class]="getPasswordStrength()"></div>
+          </div>
+          <div class="strength-text">{{ getPasswordStrengthText() }}</div>
+        </div>
+
+        <!-- Conditions d'utilisation -->
+        <div class="form-group">
+          <label class="checkbox-container">
+            <input type="checkbox" formControlName="acceptTerms">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">
+              J'accepte les 
+              <a href="#" class="terms-link">conditions d'utilisation</a> 
+              et la 
+              <a href="#" class="terms-link">politique de confidentialité</a>
+            </span>
+          </label>
+          <div class="error-message" *ngIf="registerForm.get('acceptTerms')?.invalid && registerForm.get('acceptTerms')?.touched">
+            Vous devez accepter les conditions d'utilisation
+          </div>
+        </div>
+
+        <!-- Bouton de création -->
+        <button 
+          type="submit" 
+          class="register-button"
+          [disabled]="registerForm.invalid || loading">
+          <mat-spinner *ngIf="loading" diameter="20" class="button-spinner"></mat-spinner>
+          <span *ngIf="!loading">Créer le compte</span>
+          <span *ngIf="loading">Création...</span>
+        </button>
+
+        <!-- Lien de connexion -->
+        <div class="login-link">
+          <span>Déjà un compte ? </span>
+          <a routerLink="/auth/login">Se connecter</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>

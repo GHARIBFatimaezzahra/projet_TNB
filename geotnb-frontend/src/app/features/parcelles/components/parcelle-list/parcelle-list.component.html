@@ -1,0 +1,370 @@
+<!-- =====================================================
+     LISTE DES PARCELLES - TABLE AVANCÉE MODERNE
+     ===================================================== -->
+
+<div class="parcelles-container">
+  
+  <!-- Header avec titre et actions -->
+  <div class="parcelles-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <mat-icon class="title-icon">list</mat-icon>
+        Gestion des Parcelles
+        <span class="parcelles-count">({{totalParcelles}})</span>
+      </h1>
+      <p class="page-subtitle">Gérez et consultez toutes les parcelles du système</p>
+    </div>
+    
+    <div class="header-actions">
+      <button mat-stroked-button 
+              class="action-btn"
+              (click)="onExportExcel()"
+              [disabled]="loading$ | async">
+        <mat-icon>download</mat-icon>
+        <span>Exporter Excel</span>
+      </button>
+      
+      <button mat-raised-button 
+              color="accent" 
+              class="action-btn new-parcelle-btn"
+              routerLink="/parcelles/new">
+        <mat-icon>add</mat-icon>
+        <span>Nouvelle Parcelle</span>
+      </button>
+      
+
+    </div>
+  </div>
+
+  <!-- Barre de recherche et filtres -->
+  <mat-card class="search-filter-card">
+    <div class="search-section">
+      
+      <!-- Recherche principale -->
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Rechercher par référence, propriétaire...</mat-label>
+        <input matInput 
+               [(ngModel)]="searchTerm"
+               (ngModelChange)="onSearch()"
+               placeholder="TF-123456, Ahmed ALAMI..."
+               autocomplete="off">
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <button mat-icon-button 
+                matSuffix 
+                *ngIf="searchTerm"
+                (click)="clearSearch()"
+                aria-label="Effacer">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <!-- Filtres rapides -->
+      <div class="quick-filters">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Tous les statuts</mat-label>
+          <mat-select [(value)]="selectedStatus" (selectionChange)="onFilterChange()">
+            <mat-option value="">Tous les statuts</mat-option>
+            <mat-option value="BROUILLON">Brouillon</mat-option>
+            <mat-option value="VALIDE">Validé</mat-option>
+            <mat-option value="PUBLIE">Publié</mat-option>
+            <mat-option value="ARCHIVE">Archivé</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Toutes les zones</mat-label>
+          <mat-select [(value)]="selectedZone" (selectionChange)="onFilterChange()">
+            <mat-option value="">Toutes les zones</mat-option>
+            <mat-option value="R+4">R+4 - Résidentiel 4 étages</mat-option>
+            <mat-option value="R+2">R+2 - Résidentiel 2 étages</mat-option>
+            <mat-option value="COM">Commercial</mat-option>
+            <mat-option value="IND">Industriel</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button 
+                class="filter-btn"
+                (click)="onAdvancedFilters()"
+                [class.active]="hasActiveFilters">
+          <mat-icon>tune</mat-icon>
+          <span>Filtrer</span>
+          <mat-icon class="filter-indicator" *ngIf="hasActiveFilters">fiber_manual_record</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Indicateurs de résultats -->
+    <div class="results-info" *ngIf="!(loading$ | async)">
+      <div class="results-count">
+        <mat-icon class="info-icon">info</mat-icon>
+        <span>Affichage {{startIndex}}-{{endIndex}} de {{totalParcelles}} résultats</span>
+      </div>
+      
+      <div class="view-options">
+        <mat-button-toggle-group [(value)]="viewMode" (change)="onViewModeChange($event)">
+          <mat-button-toggle value="table">
+            <mat-icon>view_list</mat-icon>
+          </mat-button-toggle>
+          <mat-button-toggle value="cards">
+            <mat-icon>view_module</mat-icon>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Table des parcelles -->
+  <mat-card class="table-card" *ngIf="viewMode === 'table'">
+    
+    <!-- Loading spinner -->
+    <div class="loading-container" *ngIf="loading$ | async">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Chargement des parcelles...</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container" *ngIf="!(loading$ | async)">
+      <table mat-table 
+             [dataSource]="dataSource" 
+             matSort
+             (matSortChange)="onSortChange($event)"
+             class="parcelles-table">
+
+        <!-- Colonne Référence -->
+        <ng-container matColumnDef="reference_fonciere">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="reference-col">
+            RÉFÉRENCE
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="reference-cell">
+            <div class="reference-info">
+              <span class="reference-code">{{parcelle.reference_fonciere}}</span>
+              <span class="reference-type" 
+                    [class]="getReferenceTypeClass(parcelle.reference_fonciere)">
+                {{getReferenceType(parcelle.reference_fonciere)}}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Propriétaire(s) -->
+        <ng-container matColumnDef="proprietaires">
+          <th mat-header-cell *matHeaderCellDef class="proprietaire-col">
+            PROPRIÉTAIRE(S)
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="proprietaire-cell">
+            <div class="proprietaire-info">
+              <span class="proprietaire-name">{{getProprietairePrincipal(parcelle)}}</span>
+              <span class="proprietaire-count" *ngIf="getProprietairesCount(parcelle) > 1">
+                et {{getProprietairesCount(parcelle) - 1}} autre(s)
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Surface -->
+        <ng-container matColumnDef="surface_totale">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="surface-col">
+            SURFACE (M²)
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="surface-cell">
+            <div class="surface-info">
+              <span class="surface-value">{{parcelle.surface_totale}}</span>
+              <span class="surface-imposable">
+                Imp: {{parcelle.surface_imposable}} m²
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Zone -->
+        <ng-container matColumnDef="zonage">
+          <th mat-header-cell *matHeaderCellDef class="zone-col">
+            ZONE
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="zone-cell">
+            <mat-chip-set>
+              <mat-chip [class]="getZoneClass(parcelle.zonage)" selected>
+                {{parcelle.zonage}}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Montant TNB -->
+        <ng-container matColumnDef="montant_total_tnb">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="montant-col">
+            MONTANT TNB
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="montant-cell">
+            <div class="montant-info">
+              <span class="montant-value">{{parcelle.montant_total_tnb}} MAD</span>
+              <span class="montant-status" 
+                    [class]="getPaymentStatusClass(parcelle)">
+                {{getPaymentStatus(parcelle)}}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Colonne État -->
+        <ng-container matColumnDef="etat_validation">
+          <th mat-header-cell *matHeaderCellDef class="etat-col">
+            ÉTAT
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="etat-cell">
+            <div class="status-badge" [class]="getStatusClass(parcelle.etat_validation)">
+              <mat-icon class="status-icon">{{getStatusIcon(parcelle.etat_validation)}}</mat-icon>
+              <span>{{getStatusLabel(parcelle.etat_validation)}}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">
+            ACTIONS
+          </th>
+          <td mat-cell *matCellDef="let parcelle" class="actions-cell">
+            <div class="actions-buttons">
+              <button mat-icon-button 
+                      class="action-btn view"
+                      [routerLink]="['/parcelles', parcelle.id]"
+                      matTooltip="Voir les détails">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      class="action-btn edit"
+                      [routerLink]="['/parcelles', parcelle.id, 'edit']"
+                      *ngIf="canEditParcelle(parcelle)"
+                      matTooltip="Modifier">
+                <mat-icon>edit</mat-icon>
+              </button>
+              
+              <button mat-icon-button 
+                      class="action-btn more"
+                      [matMenuTriggerFor]="actionsMenu"
+                      matTooltip="Plus d'actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              
+              <!-- Menu contextuel -->
+              <mat-menu #actionsMenu="matMenu" class="actions-menu">
+                <button mat-menu-item 
+                        (click)="onDuplicate(parcelle)"
+                        *ngIf="canCreateParcelle()">
+                  <mat-icon>content_copy</mat-icon>
+                  <span>Dupliquer</span>
+                </button>
+                
+                <button mat-menu-item 
+                        (click)="onValidate(parcelle)"
+                        *ngIf="canValidateParcelle(parcelle)">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Valider</span>
+                </button>
+                
+                <button mat-menu-item 
+                        (click)="onPublish(parcelle)"
+                        *ngIf="canPublishParcelle(parcelle)">
+                  <mat-icon>publish</mat-icon>
+                  <span>Publier</span>
+                </button>
+                
+                <button mat-menu-item 
+                        (click)="onArchive(parcelle)"
+                        *ngIf="canArchiveParcelle(parcelle)">
+                  <mat-icon>archive</mat-icon>
+                  <span>Archiver</span>
+                </button>
+                
+                <mat-divider *ngIf="canDeleteParcelle(parcelle)"></mat-divider>
+                
+                <button mat-menu-item 
+                        (click)="onDelete(parcelle)"
+                        *ngIf="canDeleteParcelle(parcelle)"
+                        class="delete-action">
+                  <mat-icon>delete</mat-icon>
+                  <span>Supprimer</span>
+                </button>
+              </mat-menu>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Header et lignes -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row 
+            *matRowDef="let row; columns: displayedColumns;"
+            class="parcelle-row"
+            [class.selected]="selectedParcelle?.id === row.id"
+            (click)="onRowClick(row)"></tr>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <mat-paginator 
+      [length]="totalParcelles"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      [showFirstLastButtons]="true"
+      (page)="onPageChange($event)"
+      class="parcelles-paginator">
+    </mat-paginator>
+  </mat-card>
+
+  <!-- Vue en cartes (alternative) -->
+  <div class="cards-view" *ngIf="viewMode === 'cards'">
+    <div class="parcelles-grid">
+      <mat-card class="parcelle-card" 
+                *ngFor="let parcelle of dataSource.data" 
+                (click)="onRowClick(parcelle)">
+        <mat-card-header>
+          <div class="card-header-content">
+            <div class="reference-section">
+              <span class="reference-code">{{parcelle.reference_fonciere}}</span>
+              <div class="status-badge small" [class]="getStatusClass(parcelle.etat_validation)">
+                {{getStatusLabel(parcelle.etat_validation)}}
+              </div>
+            </div>
+          </div>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="card-content">
+            <div class="info-row">
+              <mat-icon class="info-icon">person</mat-icon>
+              <span>{{getProprietairePrincipal(parcelle)}}</span>
+            </div>
+            <div class="info-row">
+              <mat-icon class="info-icon">straighten</mat-icon>
+              <span>{{parcelle.surface_totale}} m²</span>
+            </div>
+            <div class="info-row">
+              <mat-icon class="info-icon">location_on</mat-icon>
+              <span>{{parcelle.zonage}}</span>
+            </div>
+            <div class="info-row">
+              <mat-icon class="info-icon">monetization_on</mat-icon>
+              <span>{{parcelle.montant_total_tnb}} MAD</span>
+            </div>
+          </div>
+        </mat-card-content>
+        
+        <mat-card-actions>
+          <button mat-button [routerLink]="['/parcelles', parcelle.id]">
+            <mat-icon>visibility</mat-icon>
+            Voir
+          </button>
+          <button mat-button 
+                  [routerLink]="['/parcelles', parcelle.id, 'edit']"
+                  *ngIf="canEditParcelle(parcelle)">
+            <mat-icon>edit</mat-icon>
+            Modifier
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+
+</div>

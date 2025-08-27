@@ -1,0 +1,251 @@
+<!-- =====================================================
+     TEMPLATE OUTILS DE DESSIN - ÉDITION GÉOMÉTRIQUE
+     ===================================================== -->
+
+<div class="drawing-tools-container" [class.compact]="compact" [class.enabled]="enabled">
+  
+  <!-- Mode normal -->
+  <div class="tools-panel" *ngIf="!compact">
+    
+    <!-- En-tête -->
+    <div class="tools-header">
+      <div class="header-content">
+        <mat-icon>edit</mat-icon>
+        <span>Outils de dessin</span>
+      </div>
+      
+      <button mat-icon-button
+              (click)="disableDrawing()"
+              [disabled]="!enabled"
+              matTooltip="Désactiver le dessin">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Outils de formes -->
+    <div class="tool-section">
+      <div class="section-title">
+        <mat-icon>crop_free</mat-icon>
+        <span>Formes</span>
+      </div>
+      
+      <div class="tool-group">
+        <button *ngFor="let tool of shapeTools"
+                mat-icon-button
+                [class.selected]="isToolSelected(tool.id)"
+                [disabled]="!isToolEnabled(tool.id)"
+                [matTooltip]="getTooltipText(tool)"
+                (click)="selectTool(tool.id)">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Outils d'édition -->
+    <div class="tool-section">
+      <div class="section-title">
+        <mat-icon>edit_location</mat-icon>
+        <span>Édition</span>
+      </div>
+      
+      <div class="tool-group">
+        <button *ngFor="let tool of editTools"
+                mat-icon-button
+                [class.selected]="isToolSelected(tool.id)"
+                [disabled]="!isToolEnabled(tool.id)"
+                [matTooltip]="getTooltipText(tool)"
+                (click)="selectTool(tool.id)">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Outils de mesure -->
+    <div class="tool-section">
+      <div class="section-title">
+        <mat-icon>straighten</mat-icon>
+        <span>Mesure</span>
+      </div>
+      
+      <div class="tool-group">
+        <button *ngFor="let tool of measureTools"
+                mat-icon-button
+                [class.selected]="isToolSelected(tool.id)"
+                [disabled]="!isToolEnabled(tool.id)"
+                [matTooltip]="getTooltipText(tool)"
+                (click)="selectTool(tool.id)">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Utilitaires -->
+    <div class="tool-section">
+      <div class="section-title">
+        <mat-icon>build</mat-icon>
+        <span>Utilitaires</span>
+      </div>
+      
+      <div class="tool-group">
+        <button *ngFor="let tool of utilityTools"
+                mat-icon-button
+                [class.selected]="isToolSelected(tool.id) || (tool.id === 'snap' && snapEnabled)"
+                [matTooltip]="getTooltipText(tool)"
+                (click)="selectTool(tool.id)">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Actions -->
+    <div class="tool-section">
+      <div class="section-title">
+        <mat-icon>history</mat-icon>
+        <span>Actions</span>
+      </div>
+      
+      <div class="action-buttons">
+        <button mat-stroked-button
+                (click)="undoLastAction()"
+                [disabled]="!enabled"
+                matTooltip="Annuler (Ctrl+Z)">
+          <mat-icon>undo</mat-icon>
+          Annuler
+        </button>
+        
+        <button mat-stroked-button
+                (click)="redoLastAction()"
+                [disabled]="!enabled"
+                matTooltip="Refaire (Ctrl+Y)">
+          <mat-icon>redo</mat-icon>
+          Refaire
+        </button>
+        
+        <button mat-stroked-button
+                color="warn"
+                (click)="clearAll()"
+                [disabled]="!enabled"
+                matTooltip="Tout effacer">
+          <mat-icon>clear_all</mat-icon>
+          Effacer
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Mode compact -->
+  <div class="tools-compact" *ngIf="compact">
+    
+    <!-- Outils principaux -->
+    <div class="compact-tools">
+      <mat-button-toggle-group [value]="selectedTool" (change)="selectTool($event.value)">
+        <mat-button-toggle *ngFor="let tool of shapeTools.slice(0, 4)"
+                          [value]="tool.id"
+                          [disabled]="!isToolEnabled(tool.id)"
+                          [matTooltip]="getTooltipText(tool)">
+          <mat-icon>{{ tool.icon }}</mat-icon>
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <!-- Menu pour plus d'outils -->
+      <button mat-icon-button
+              [matMenuTriggerFor]="moreToolsMenu"
+              matTooltip="Plus d'outils">
+        <mat-icon>more_horiz</mat-icon>
+      </button>
+
+      <!-- Menu d'outils supplémentaires -->
+      <mat-menu #moreToolsMenu="matMenu">
+        <div class="menu-section">
+          <div class="menu-section-title">Édition</div>
+          <button *ngFor="let tool of editTools"
+                  mat-menu-item
+                  [disabled]="!isToolEnabled(tool.id)"
+                  (click)="selectTool(tool.id)">
+            <mat-icon>{{ tool.icon }}</mat-icon>
+            <span>{{ tool.name }}</span>
+          </button>
+        </div>
+        
+        <mat-divider></mat-divider>
+        
+        <div class="menu-section">
+          <div class="menu-section-title">Mesure</div>
+          <button *ngFor="let tool of measureTools"
+                  mat-menu-item
+                  [disabled]="!isToolEnabled(tool.id)"
+                  (click)="selectTool(tool.id)">
+            <mat-icon>{{ tool.icon }}</mat-icon>
+            <span>{{ tool.name }}</span>
+          </button>
+        </div>
+        
+        <mat-divider></mat-divider>
+        
+        <div class="menu-section">
+          <div class="menu-section-title">Actions</div>
+          <button mat-menu-item (click)="undoLastAction()" [disabled]="!enabled">
+            <mat-icon>undo</mat-icon>
+            <span>Annuler</span>
+          </button>
+          <button mat-menu-item (click)="redoLastAction()" [disabled]="!enabled">
+            <mat-icon>redo</mat-icon>
+            <span>Refaire</span>
+          </button>
+          <button mat-menu-item (click)="clearAll()" [disabled]="!enabled">
+            <mat-icon>clear_all</mat-icon>
+            <span>Tout effacer</span>
+          </button>
+        </div>
+      </mat-menu>
+
+      <!-- Bouton fermer -->
+      <button mat-icon-button
+              (click)="disableDrawing()"
+              [disabled]="!enabled"
+              matTooltip="Fermer les outils">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Indicateur d'état -->
+  <div class="tool-status" *ngIf="hasSelectedTool || snapEnabled || measurementMode">
+    <div class="status-items">
+      
+      <div class="status-item" *ngIf="hasSelectedTool">
+        <mat-icon>{{ getSelectedToolIcon() }}</mat-icon>
+        <span>{{ getSelectedToolName() }} actif</span>
+      </div>
+      
+      <div class="status-item" *ngIf="snapEnabled">
+        <mat-icon>grid_on</mat-icon>
+        <span>Accrochage activé</span>
+      </div>
+      
+      <div class="status-item" *ngIf="measurementMode">
+        <mat-icon>straighten</mat-icon>
+        <span>Mode mesure</span>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Message si désactivé -->
+  <div class="disabled-message" *ngIf="!enabled">
+    <mat-icon>edit_off</mat-icon>
+    <p>Outils de dessin désactivés</p>
+    <small>Activez le mode dessin pour utiliser ces outils</small>
+  </div>
+
+</div>

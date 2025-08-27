@@ -1,0 +1,504 @@
+// =====================================================
+// STYLES COMPOSANT DÉTAIL PARCELLE
+// =====================================================
+
+.parcelle-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  min-height: 100vh;
+
+  // En-tête
+  .header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    .title-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1976d2;
+
+        mat-icon {
+          font-size: 2rem;
+          width: 2rem;
+          height: 2rem;
+        }
+      }
+
+      .status-badge {
+        mat-chip {
+          font-size: 0.9rem;
+          padding: 8px 16px;
+          font-weight: 500;
+
+          mat-icon {
+            font-size: 1.1rem;
+            width: 1.1rem;
+            height: 1.1rem;
+          }
+        }
+      }
+    }
+
+    .quick-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+
+      .info-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        mat-icon {
+          font-size: 1.5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+          color: #1976d2;
+        }
+
+        .info-content {
+          display: flex;
+          flex-direction: column;
+
+          .label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+          }
+
+          .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+          }
+        }
+      }
+    }
+
+    .main-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 1.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+        }
+      }
+    }
+  }
+
+  // Chargement
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    text-align: center;
+
+    mat-spinner {
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: #666;
+      font-size: 1rem;
+      margin: 0;
+    }
+  }
+
+  // Contenu principal
+  .content {
+    flex: 1;
+
+    .mat-mdc-tab-group {
+      .mat-mdc-tab-header {
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .mat-mdc-tab-body-wrapper {
+        .tab-content {
+          padding: 24px;
+          min-height: 400px;
+
+          // Spinner de chargement dans les onglets
+          .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+          }
+
+          // En-têtes de section
+          .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+
+            h3 {
+              margin: 0;
+              font-size: 1.3rem;
+              font-weight: 500;
+              color: #333;
+            }
+
+            mat-chip {
+              font-size: 0.8rem;
+            }
+
+            button {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            }
+          }
+
+          // Messages "pas de données"
+          .no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            text-align: center;
+            color: #666;
+
+            mat-icon {
+              font-size: 3rem;
+              width: 3rem;
+              height: 3rem;
+              margin-bottom: 16px;
+              opacity: 0.5;
+            }
+
+            p {
+              margin: 0;
+              font-size: 1rem;
+            }
+          }
+        }
+
+        // Onglet Général
+        .general-tab {
+          .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+
+            .info-section {
+              background: #f8f9fa;
+              border-radius: 8px;
+              padding: 20px;
+              border-left: 4px solid #1976d2;
+
+              h3 {
+                margin: 0 0 16px 0;
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #1976d2;
+              }
+
+              .info-list {
+                .info-item {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  padding: 8px 0;
+                  border-bottom: 1px solid #e0e0e0;
+
+                  &:last-child {
+                    border-bottom: none;
+                  }
+
+                  .label {
+                    font-weight: 500;
+                    color: #666;
+                    font-size: 0.9rem;
+                  }
+
+                  .value {
+                    font-weight: 600;
+                    color: #333;
+                    text-align: right;
+
+                    mat-chip {
+                      font-size: 0.75rem;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Onglet Cartographie
+        .map-tab {
+          padding: 0;
+
+          app-parcelle-map {
+            display: block;
+            height: 600px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+        }
+
+        // Tables communes
+        .proprietaires-table,
+        .fiches-table,
+        .documents-table,
+        .journal-table {
+          width: 100%;
+          background: white;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+          .mat-mdc-header-cell {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+          }
+
+          .mat-mdc-cell {
+            border-bottom: 1px solid #f0f0f0;
+          }
+
+          .mat-mdc-row {
+            &:hover {
+              background-color: #f8f9fa;
+            }
+
+            &:nth-child(even) {
+              background-color: #fafafa;
+            }
+          }
+
+          // Cellules spécifiques
+          .file-info,
+          .action-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+              font-size: 1.2rem;
+              width: 1.2rem;
+              height: 1.2rem;
+              color: #666;
+            }
+          }
+        }
+
+        // Onglet Fiscal
+        .fiscal-tab {
+          .fiches-section {
+            margin-top: 32px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Actions de suppression
+.delete-action {
+  color: #f44336 !important;
+
+  mat-icon {
+    color: #f44336 !important;
+  }
+}
+
+// Responsive
+@media (max-width: 1200px) {
+  .parcelle-detail {
+    .header {
+      .quick-info {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+    }
+
+    .content .tab-content .general-tab .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .parcelle-detail {
+    padding: 8px;
+
+    .header {
+      padding: 16px;
+
+      .title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+
+      .quick-info {
+        grid-template-columns: 1fr;
+      }
+
+      .main-actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        button {
+          justify-content: center;
+        }
+      }
+    }
+
+    .content .tab-content {
+      padding: 16px;
+
+      .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+
+        h3 {
+          text-align: center;
+        }
+      }
+
+      // Tables responsives
+      .proprietaires-table,
+      .fiches-table,
+      .documents-table,
+      .journal-table {
+        font-size: 0.8rem;
+
+        .mat-mdc-header-cell,
+        .mat-mdc-cell {
+          padding: 8px 4px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .parcelle-detail {
+    .header {
+      .title-section h2 {
+        font-size: 1.3rem;
+
+        mat-icon {
+          font-size: 1.5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+      }
+
+      .quick-info .info-card {
+        padding: 12px;
+
+        mat-icon {
+          font-size: 1.2rem;
+          width: 1.2rem;
+          height: 1.2rem;
+        }
+
+        .info-content {
+          .label {
+            font-size: 0.7rem;
+          }
+
+          .value {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animations
+.parcelle-detail {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Améliorations visuelles
+.mat-mdc-tab {
+  &.mdc-tab--active {
+    .mdc-tab__text-label {
+      font-weight: 600;
+    }
+  }
+}
+
+.mat-mdc-chip {
+  &.mat-mdc-chip-highlighted {
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+  }
+}
+
+// Styles pour les menus
+.mat-mdc-menu-panel {
+  .mat-mdc-menu-item {
+    &.delete-action {
+      color: #f44336;
+
+      .mat-icon {
+        color: #f44336;
+      }
+
+      &:hover {
+        background-color: rgba(244, 67, 54, 0.1);
+      }
+    }
+  }
+}

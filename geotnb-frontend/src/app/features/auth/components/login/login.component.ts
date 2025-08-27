@@ -1,19 +1,25 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+// =====================================================
+// COMPOSANT LOGIN - AUTHENTIFICATION COMPLÈTE
+// =====================================================
+
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
+
+// Angular Material
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { RouterModule } from '@angular/router';
-import { AuthFeatureService } from '../../services/auth-local.service';
-import { NotificationService } from '../../../../core/services/notification/notification.service';
-import { LoadingService } from '../../../../core/services/loading/loading.service';
-import { LoginRequest } from '../../models/auth-feature.model';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+
+// Services
+import { AuthService, LoginDto } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -23,103 +29,99 @@ import { LoginRequest } from '../../models/auth-feature.model';
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressBarModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatCheckboxModule,
+    MatProgressSpinnerModule,
     MatSnackBarModule
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthFeatureService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly notificationService = inject(NotificationService);
-  private readonly loadingService = inject(LoadingService);
-
-  loginForm: FormGroup;
+export class LoginComponent implements OnInit, OnDestroy {
+  loginForm!: FormGroup;
+  loading = false;
   hidePassword = true;
-  isLoading = false;
-  returnUrl = '/dashboard';
+  returnUrl = '/';
 
-  constructor() {
-    this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
-    });
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar
+  ) {
+    // Rediriger si déjà connecté
+    if (this.authService.isAuthenticated) {
+      this.router.navigate(['/']);
+    }
   }
 
   ngOnInit(): void {
-    // Récupérer l'URL de retour si spécifiée
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-
-    // Rediriger si déjà connecté
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate([this.returnUrl]);
-    }
+    this.initializeForm();
+    this.getReturnUrl();
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // =====================================================
+  // INITIALISATION
+  // =====================================================
+
+  private initializeForm(): void {
+    this.loginForm = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      rememberMe: [false]
+    });
+  }
+
+  private getReturnUrl(): void {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+  }
+
+  // =====================================================
+  // AUTHENTIFICATION
+  // =====================================================
 
   onSubmit(): void {
-    if (this.loginForm.valid && !this.isLoading) {
-      this.isLoading = true;
-      const credentials: LoginRequest = this.loginForm.value;
+    if (this.loginForm.invalid) {
+      this.markFormGroupTouched();
+      return;
+    }
 
-      this.authService.login(credentials).subscribe({
+    this.loading = true;
+    const credentials: LoginDto = {
+      username: this.loginForm.value.username,
+      password: this.loginForm.value.password
+    };
+
+    this.authService.login(credentials)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
         next: (response) => {
-          this.notificationService.success(
-            `Bienvenue ${response.user.username} ! Connexion réussie.`
-          );
-          
-          // Redirection selon le rôle
-          this.redirectAfterLogin(response.user.profil);
+          const user = response.data?.user || response.user;
+          const userName = user?.nom || user?.username || 'Utilisateur';
+          this.showSuccess(`Bienvenue, ${userName} !`);
+          this.router.navigate(['/parcelles']);
         },
         error: (error) => {
-          console.error('Erreur de connexion:', error);
-          let errorMessage = 'Erreur de connexion. Vérifiez vos identifiants.';
-          
-          if (error.status === 401) {
-            errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect.';
-          } else if (error.status === 403) {
-            errorMessage = 'Votre compte est désactivé. Contactez l\'administrateur.';
-          } else if (error.error?.message) {
-            errorMessage = error.error.message;
-          }
-          
-          this.notificationService.error(errorMessage);
-          this.isLoading = false;
-        },
-        complete: () => {
-          this.isLoading = false;
+          this.loading = false;
+          this.showError(error.message || 'Erreur de connexion');
         }
       });
-    } else {
-      this.markFormGroupTouched();
-    }
   }
 
-  private redirectAfterLogin(userRole: string): void {
-    // Redirection intelligente selon le rôle
-    switch (userRole) {
-      case 'Admin':
-        this.router.navigate(['/dashboard']);
-        break;
-      case 'AgentFiscal':
-        this.router.navigate(['/fiches-fiscales']);
-        break;
-      case 'TechnicienSIG':
-        this.router.navigate(['/cartographie']);
-        break;
-      case 'Lecteur':
-        this.router.navigate(['/parcelles']);
-        break;
-      default:
-        this.router.navigate([this.returnUrl]);
-    }
-  }
+  // =====================================================
+  // UTILITAIRES
+  // =====================================================
 
   private markFormGroupTouched(): void {
     Object.keys(this.loginForm.controls).forEach(key => {
@@ -128,30 +130,50 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  getFieldError(fieldName: string): string | null {
+    const control = this.loginForm.get(fieldName);
+    if (!control?.errors || !control.touched) return null;
+
+    const errors = control.errors;
+    
+    if (errors['required']) {
+      switch (fieldName) {
+        case 'username': return 'Nom d\'utilisateur requis';
+        case 'password': return 'Mot de passe requis';
+        default: return 'Champ requis';
+      }
+    }
+    
+    if (errors['minlength']) {
+      switch (fieldName) {
+        case 'username': return 'Nom d\'utilisateur trop court (min 3 caractères)';
+        case 'password': return 'Mot de passe trop court (min 6 caractères)';
+        default: return 'Valeur trop courte';
+      }
+    }
+    
+    return 'Valeur invalide';
+  }
+
   togglePasswordVisibility(): void {
     this.hidePassword = !this.hidePassword;
   }
 
-  goToForgotPassword(): void {
-    this.router.navigate(['/auth/forgot-password']);
+  // =====================================================
+  // NOTIFICATIONS
+  // =====================================================
+
+  private showSuccess(message: string): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration: 3000,
+      panelClass: ['success-snackbar']
+    });
   }
 
-  // Getters pour faciliter l'accès aux contrôles du formulaire
-  get username() { return this.loginForm.get('username'); }
-  get password() { return this.loginForm.get('password'); }
-
-  // Méthodes utilitaires pour l'UI
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.loginForm.get(fieldName);
-    return !!(field && field.invalid && field.touched);
-  }
-
-  getFieldError(fieldName: string): string {
-    const field = this.loginForm.get(fieldName);
-    if (field?.errors) {
-      if (field.errors['required']) return `${fieldName} est requis`;
-      if (field.errors['minlength']) return `Minimum ${field.errors['minlength'].requiredLength} caractères`;
-    }
-    return '';
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
   }
 }

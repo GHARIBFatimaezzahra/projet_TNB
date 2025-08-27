@@ -51,6 +51,9 @@ export class DocumentJoint {
   @Column({ name: 'uploader_par', nullable: true })
   uploaderPar: number;
 
+  @Column({ name: 'auteur_ajout', nullable: true })
+  auteurAjout: string;
+
   @CreateDateColumn({ name: 'date_ajout' })
   dateAjout: Date;
 

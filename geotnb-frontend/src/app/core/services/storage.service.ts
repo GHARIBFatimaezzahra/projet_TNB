@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { AppConfig } from '../config/app.config';
+import { getConfig } from '../config/app.config';
 import { User } from '../models/database.models';
 
 @Injectable({
@@ -17,11 +17,48 @@ export class StorageService {
     });
   }
 
+  // MÉTHODES GÉNÉRIQUES AJOUTÉES POUR COMPATIBILITÉ
+  getItem(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error(`Erreur lors de la récupération de ${key}:`, error);
+      return null;
+    }
+  }
+
+  setItem(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+      this.logStorageAction('SET_ITEM', key);
+    } catch (error) {
+      console.error(`Erreur lors de la sauvegarde de ${key}:`, error);
+    }
+  }
+
+  removeItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+      this.logStorageAction('REMOVE_ITEM', key);
+    } catch (error) {
+      console.error(`Erreur lors de la suppression de ${key}:`, error);
+    }
+  }
+
+  clear(): void {
+    try {
+      localStorage.clear();
+      this.logStorageAction('CLEAR_ALL');
+    } catch (error) {
+      console.error('Erreur lors du nettoyage complet:', error);
+    }
+  }
+
   // Gestion du token JWT
   setToken(token: string): void {
     try {
-      localStorage.setItem(AppConfig.auth.tokenKey, token);
-      this.logStorageAction('SET_TOKEN', AppConfig.auth.tokenKey);
+      localStorage.setItem(getConfig().auth.tokenKey, token);
+      this.logStorageAction('SET_TOKEN', getConfig().auth.tokenKey);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du token:', error);
     }
@@ -29,7 +66,7 @@ export class StorageService {
 
   getToken(): string | null {
     try {
-      return localStorage.getItem(AppConfig.auth.tokenKey);
+      return localStorage.getItem(getConfig().auth.tokenKey);
     } catch (error) {
       console.error('Erreur lors de la récupération du token:', error);
       return null;
@@ -38,8 +75,8 @@ export class StorageService {
 
   removeToken(): void {
     try {
-      localStorage.removeItem(AppConfig.auth.tokenKey);
-      this.logStorageAction('REMOVE_TOKEN', AppConfig.auth.tokenKey);
+      localStorage.removeItem(getConfig().auth.tokenKey);
+      this.logStorageAction('REMOVE_TOKEN', getConfig().auth.tokenKey);
     } catch (error) {
       console.error('Erreur lors de la suppression du token:', error);
     }
@@ -48,8 +85,8 @@ export class StorageService {
   // Gestion du refresh token
   setRefreshToken(refreshToken: string): void {
     try {
-      localStorage.setItem(AppConfig.auth.refreshTokenKey, refreshToken);
-      this.logStorageAction('SET_REFRESH_TOKEN', AppConfig.auth.refreshTokenKey);
+      localStorage.setItem(getConfig().auth.refreshTokenKey, refreshToken);
+      this.logStorageAction('SET_REFRESH_TOKEN', getConfig().auth.refreshTokenKey);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du refresh token:', error);
     }
@@ -57,7 +94,7 @@ export class StorageService {
 
   getRefreshToken(): string | null {
     try {
-      return localStorage.getItem(AppConfig.auth.refreshTokenKey);
+      return localStorage.getItem(getConfig().auth.refreshTokenKey);
     } catch (error) {
       console.error('Erreur lors de la récupération du refresh token:', error);
       return null;
@@ -66,8 +103,8 @@ export class StorageService {
 
   removeRefreshToken(): void {
     try {
-      localStorage.removeItem(AppConfig.auth.refreshTokenKey);
-      this.logStorageAction('REMOVE_REFRESH_TOKEN', AppConfig.auth.refreshTokenKey);
+      localStorage.removeItem(getConfig().auth.refreshTokenKey);
+      this.logStorageAction('REMOVE_REFRESH_TOKEN', getConfig().auth.refreshTokenKey);
     } catch (error) {
       console.error('Erreur lors de la suppression du refresh token:', error);
     }
@@ -76,8 +113,8 @@ export class StorageService {
   // Gestion des données utilisateur
   setUser(user: User): void {
     try {
-      localStorage.setItem(AppConfig.auth.userKey, JSON.stringify(user));
-      this.logStorageAction('SET_USER', AppConfig.auth.userKey, user.username);
+      localStorage.setItem(getConfig().auth.userKey, JSON.stringify(user));
+      this.logStorageAction('SET_USER', getConfig().auth.userKey, user.username);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde utilisateur:', error);
     }
@@ -85,7 +122,7 @@ export class StorageService {
 
   getUser(): User | null {
     try {
-      const userData = localStorage.getItem(AppConfig.auth.userKey);
+      const userData = localStorage.getItem(getConfig().auth.userKey);
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
       console.error('Erreur lors de la récupération utilisateur:', error);
@@ -95,8 +132,8 @@ export class StorageService {
 
   removeUser(): void {
     try {
-      localStorage.removeItem(AppConfig.auth.userKey);
-      this.logStorageAction('REMOVE_USER', AppConfig.auth.userKey);
+      localStorage.removeItem(getConfig().auth.userKey);
+      this.logStorageAction('REMOVE_USER', getConfig().auth.userKey);
     } catch (error) {
       console.error('Erreur lors de la suppression utilisateur:', error);
     }

@@ -54,11 +54,11 @@ export class Proprietaire {
   
   // Relation avec ParcelleProprietaire (Many-to-Many via table de liaison)
   @OneToMany('ParcelleProprietaire', 'proprietaire', { cascade: true, lazy: true })
-  parcelles: any[]; // Sera remplacé par ParcelleProprietaire[]
+  parcelles: import('../../parcelle-proprietaire/entities/parcelle-proprietaire.entity').ParcelleProprietaire[];
 
   // Relation avec DocumentJoint (One-to-Many) - Documents spécifiques au propriétaire
   @OneToMany('DocumentJoint', 'proprietaire', { lazy: true })
-  documents: any[]; // Sera remplacé par DocumentJoint[]
+  documents: import('../../document-joint/entities/document-joint.entity').DocumentJoint[];
 
   // Relation avec FicheFiscale via ParcelleProprietaire
   // Les fiches fiscales sont liées aux ParcelleProprietaire pour gérer l'indivision

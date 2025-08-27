@@ -1,0 +1,315 @@
+<!-- =====================================================
+     GESTIONNAIRE DE PROPRIÉTAIRES - INTERFACE COMPLÈTE
+     ===================================================== -->
+
+<div class="proprietaire-manager-container">
+
+  <!-- En-tête avec résumé -->
+  <div class="manager-header">
+    <div class="header-content">
+      <h3 class="section-title">
+        <mat-icon class="title-icon">group</mat-icon>
+        Propriétaires de la Parcelle
+      </h3>
+      <p class="section-subtitle">Gérez les propriétaires et leurs quotes-parts</p>
+    </div>
+    
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-value">{{proprietaires.length}}</span>
+        <span class="stat-label">Propriétaires</span>
+      </div>
+      <div class="stat-item" [class]="getQuotePartClass()">
+        <span class="stat-value">{{getTotalQuotePart()}}%</span>
+        <span class="stat-label">Quote-part totale</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bouton d'ajout -->
+  <div class="actions-bar" *ngIf="!showForm">
+    <button 
+      mat-raised-button 
+      color="primary" 
+      class="add-btn"
+      (click)="addProprietaire()"
+      [disabled]="getRemainingQuotePart() <= 0">
+      <mat-icon>person_add</mat-icon>
+      <span>Ajouter un Propriétaire</span>
+    </button>
+    
+    <div class="remaining-quota" *ngIf="getRemainingQuotePart() > 0">
+      <mat-icon class="info-icon">info</mat-icon>
+      <span>{{getRemainingQuotePart()}}% restant à attribuer</span>
+    </div>
+  </div>
+
+  <!-- Formulaire d'ajout/modification -->
+  <mat-card class="proprietaire-form-card" *ngIf="showForm">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="card-icon">{{editingIndex >= 0 ? 'edit' : 'person_add'}}</mat-icon>
+        {{editingIndex >= 0 ? 'Modifier le Propriétaire' : 'Nouveau Propriétaire'}}
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="proprietaireForm" (ngSubmit)="saveProprietaire()" class="proprietaire-form">
+        
+        <!-- Première ligne : Nature et informations de base -->
+        <div class="form-row">
+          <mat-form-field class="form-field">
+            <mat-label>Nature du propriétaire</mat-label>
+            <mat-select formControlName="nature" required>
+              <mat-option *ngFor="let nature of naturesProprietaire" [value]="nature.value">
+                {{nature.label}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="proprietaireForm.get('nature')?.hasError('required')">
+              La nature est requise
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field class="form-field">
+            <mat-label>CIN / Registre de Commerce</mat-label>
+            <input 
+              matInput 
+              formControlName="cin_ou_rc"
+              placeholder="Ex: PA123456 ou RC12345"
+              required>
+            <mat-error>{{getFieldError('cin_ou_rc')}}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Deuxième ligne : Nom et prénom -->
+        <div class="form-row">
+          <mat-form-field class="form-field">
+            <mat-label>Nom</mat-label>
+            <input 
+              matInput 
+              formControlName="nom"
+              placeholder="Nom de famille ou raison sociale"
+              required>
+            <mat-error>{{getFieldError('nom')}}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field class="form-field">
+            <mat-label>Prénom</mat-label>
+            <input 
+              matInput 
+              formControlName="prenom"
+              placeholder="Prénom (optionnel pour personne morale)">
+          </mat-form-field>
+        </div>
+
+        <!-- Troisième ligne : Contact -->
+        <div class="form-row">
+          <mat-form-field class="form-field">
+            <mat-label>Téléphone</mat-label>
+            <input 
+              matInput 
+              formControlName="telephone"
+              placeholder="Ex: +212 6 12 34 56 78">
+          </mat-form-field>
+
+          <mat-form-field class="form-field">
+            <mat-label>Email</mat-label>
+            <input 
+              matInput 
+              formControlName="email"
+              type="email"
+              placeholder="email@exemple.com">
+            <mat-error>{{getFieldError('email')}}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Quatrième ligne : Adresse -->
+        <div class="form-row">
+          <mat-form-field class="form-field full-width">
+            <mat-label>Adresse</mat-label>
+            <textarea 
+              matInput 
+              formControlName="adresse"
+              placeholder="Adresse complète"
+              rows="2">
+            </textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Cinquième ligne : Quote-part et date -->
+        <div class="form-row">
+          <mat-form-field class="form-field">
+            <mat-label>Quote-part (%)</mat-label>
+            <input 
+              matInput 
+              formControlName="quote_part"
+              type="number"
+              min="0.01"
+              max="100"
+              step="0.01"
+              required>
+            <mat-hint>Maximum disponible: {{getRemainingQuotePart()}}%</mat-hint>
+            <mat-error>{{getFieldError('quote_part')}}</mat-error>
+          </mat-form-field>
+
+          <mat-form-field class="form-field">
+            <mat-label>Date de début</mat-label>
+            <input 
+              matInput 
+              formControlName="date_debut"
+              type="date"
+              required>
+            <mat-error>{{getFieldError('date_debut')}}</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="form-actions">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            [disabled]="proprietaireForm.invalid"
+            class="save-btn">
+            <mat-icon>{{editingIndex >= 0 ? 'save' : 'person_add'}}</mat-icon>
+            {{editingIndex >= 0 ? 'Modifier' : 'Ajouter'}}
+          </button>
+          
+          <button 
+            mat-button 
+            type="button"
+            (click)="cancelForm()"
+            class="cancel-btn">
+            <mat-icon>cancel</mat-icon>
+            Annuler
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des propriétaires -->
+  <mat-card class="proprietaires-list-card" *ngIf="proprietaires.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="card-icon">list</mat-icon>
+        Liste des Propriétaires
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="proprietaires" class="proprietaires-table">
+          
+          <!-- Colonne Nom/Prénom -->
+          <ng-container matColumnDef="nom_prenom">
+            <th mat-header-cell *matHeaderCellDef class="name-col">Nom et Prénom</th>
+            <td mat-cell *matCellDef="let element" class="name-cell">
+              <div class="proprietaire-info">
+                <div class="proprietaire-name">{{getNomComplet(element.proprietaire)}}</div>
+                <div class="proprietaire-meta">
+                  <mat-chip class="nature-chip" [color]="element.proprietaire.nature === 'Physique' ? 'primary' : 'accent'">
+                    {{element.proprietaire.nature === 'Physique' ? 'Personne Physique' : 'Personne Morale'}}
+                  </mat-chip>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Nature -->
+          <ng-container matColumnDef="nature">
+            <th mat-header-cell *matHeaderCellDef>Nature</th>
+            <td mat-cell *matCellDef="let element">
+              <mat-chip [color]="element.proprietaire.nature === 'Physique' ? 'primary' : 'accent'">
+                {{element.proprietaire.nature}}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne CIN/RC -->
+          <ng-container matColumnDef="cin_ou_rc">
+            <th mat-header-cell *matHeaderCellDef>CIN/RC</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="cin-rc">{{element.proprietaire.cin_ou_rc}}</span>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Quote-part -->
+          <ng-container matColumnDef="quote_part">
+            <th mat-header-cell *matHeaderCellDef class="quote-col">Quote-part</th>
+            <td mat-cell *matCellDef="let element" class="quote-cell">
+              <div class="quote-info">
+                <span class="quote-value">{{element.quote_part}}%</span>
+                <div class="quote-bar">
+                  <div class="quote-fill" [style.width.%]="element.quote_part"></div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+            <td mat-cell *matCellDef="let element; let i = index" class="actions-cell">
+              <button 
+                mat-icon-button 
+                color="primary"
+                (click)="editProprietaire(i)"
+                matTooltip="Modifier">
+                <mat-icon>edit</mat-icon>
+              </button>
+              
+              <button 
+                mat-icon-button 
+                color="warn"
+                (click)="deleteProprietaire(i)"
+                matTooltip="Supprimer">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Résumé des quotes-parts -->
+      <div class="quote-summary" [class]="getQuotePartClass()">
+        <div class="summary-content">
+          <div class="summary-text">
+            <strong>Total des quotes-parts: {{getTotalQuotePart()}}%</strong>
+            <span *ngIf="getTotalQuotePart() < 100" class="warning">
+              ({{100 - getTotalQuotePart()}}% restant)
+            </span>
+            <span *ngIf="getTotalQuotePart() > 100" class="error">
+              (Dépassement de {{getTotalQuotePart() - 100}}%)
+            </span>
+          </div>
+          
+          <div class="summary-bar">
+            <div class="total-fill" [style.width.%]="getTotalQuotePartCapped()"></div>
+            <div class="overflow-fill" 
+                 *ngIf="getTotalQuotePart() > 100"
+                 [style.width.%]="getTotalQuotePart() - 100"></div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message si aucun propriétaire -->
+  <mat-card class="empty-state-card" *ngIf="proprietaires.length === 0 && !showForm">
+    <mat-card-content>
+      <div class="empty-state">
+        <mat-icon class="empty-icon">group_off</mat-icon>
+        <h3 class="empty-title">Aucun propriétaire</h3>
+        <p class="empty-message">
+          Cette parcelle n'a pas encore de propriétaires.<br>
+          Cliquez sur "Ajouter un Propriétaire" pour commencer.
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

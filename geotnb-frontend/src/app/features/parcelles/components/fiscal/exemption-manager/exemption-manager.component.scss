@@ -1,0 +1,397 @@
+// =====================================================
+// STYLES GESTIONNAIRE D'EXONÉRATIONS TNB
+// =====================================================
+
+.exemption-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+
+  // En-tête avec résumé
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .title-section {
+      h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: #1976d2;
+
+        mat-icon {
+          font-size: 1.5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+      }
+
+      .subtitle {
+        margin: 4px 0 0 32px;
+        color: #666;
+        font-size: 0.875rem;
+      }
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+
+      .summary-card {
+        mat-card-content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px !important;
+
+          .metric {
+            display: flex;
+            flex-direction: column;
+
+            .value {
+              font-size: 1.5rem;
+              font-weight: 600;
+              line-height: 1.2;
+            }
+
+            .label {
+              font-size: 0.75rem;
+              color: #666;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+          }
+
+          mat-icon {
+            font-size: 2rem;
+            width: 2rem;
+            height: 2rem;
+            opacity: 0.7;
+          }
+        }
+
+        &.active {
+          .metric .value {
+            color: #2e7d32;
+          }
+        }
+
+        &.amount {
+          .metric .value {
+            color: #f57c00;
+          }
+        }
+
+        &.count {
+          .metric .value {
+            color: #1976d2;
+          }
+        }
+      }
+    }
+  }
+
+  // Formulaire d'ajout
+  .exemption-form-card {
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #1976d2;
+
+        mat-icon {
+          color: #4caf50;
+        }
+      }
+    }
+
+    mat-card-content {
+      padding: 24px !important;
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+
+        .form-field-full {
+          flex: 1;
+          min-width: 100%;
+        }
+
+        mat-form-field {
+          flex: 1;
+          min-width: 200px;
+        }
+      }
+
+      .exemption-type-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        mat-icon {
+          font-size: 1.2rem;
+          width: 1.2rem;
+          height: 1.2rem;
+        }
+      }
+
+      .documents-section {
+        width: 100%;
+
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+
+          h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+          }
+        }
+
+        .documents-list {
+          .document-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+
+            .document-field {
+              flex: 1;
+            }
+
+            button[mat-icon-button] {
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #e0e0e0;
+      }
+    }
+  }
+
+  // Liste des exonérations
+  .exemptions-list-card {
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        mat-chip-set {
+          margin-left: auto;
+        }
+      }
+    }
+
+    .no-exemptions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      color: #666;
+
+      mat-icon {
+        font-size: 3rem;
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 16px;
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+      }
+    }
+
+    .exemptions-table {
+      .exemptions-mat-table {
+        width: 100%;
+
+        .type-cell {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          mat-icon {
+            font-size: 1.2rem;
+            width: 1.2rem;
+            height: 1.2rem;
+          }
+        }
+
+        .periode-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .dates {
+            font-weight: 500;
+            font-size: 0.875rem;
+          }
+
+          .duration {
+            font-size: 0.75rem;
+            color: #666;
+          }
+        }
+
+        .amount {
+          font-weight: 600;
+          color: #f57c00;
+        }
+
+        .actions-cell {
+          display: flex;
+          justify-content: center;
+        }
+
+        // États des lignes
+        .mat-mdc-row {
+          &.active-exemption {
+            background-color: #e8f5e8;
+            border-left: 4px solid #4caf50;
+          }
+
+          &.expired-exemption {
+            background-color: #fafafa;
+            color: #999;
+            
+            .amount {
+              color: #999;
+            }
+          }
+
+          &:hover {
+            background-color: #f5f5f5;
+          }
+        }
+      }
+    }
+  }
+
+  // Historique
+  .history-card {
+    .history-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      color: #666;
+
+      mat-icon {
+        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
+        margin-bottom: 12px;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+// Actions de suppression
+.delete-action {
+  color: #f44336 !important;
+
+  mat-icon {
+    color: #f44336 !important;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .exemption-manager {
+    padding: 8px;
+
+    .header .summary-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .exemption-form-card mat-card-content {
+      padding: 16px !important;
+
+      .form-row {
+        flex-direction: column;
+        gap: 12px;
+
+        mat-form-field {
+          min-width: 100%;
+        }
+      }
+    }
+
+    .exemptions-table .exemptions-mat-table {
+      font-size: 0.75rem;
+
+      .periode-cell {
+        .dates {
+          font-size: 0.75rem;
+        }
+
+        .duration {
+          font-size: 0.625rem;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+.exemption-manager {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Améliorations UX
+.mat-mdc-form-field {
+  .mat-mdc-form-field-error {
+    font-size: 0.75rem;
+  }
+}
+
+.mat-mdc-chip {
+  font-size: 0.75rem;
+  
+  &.mat-mdc-chip-highlighted {
+    font-weight: 500;
+  }
+}

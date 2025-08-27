@@ -1,0 +1,325 @@
+<!-- ===================================================== -->
+<!-- RÉSUMÉ DE VALIDATION - INDIVISION -->
+<!-- ===================================================== -->
+
+<div class="validation-summary">
+  <!-- En-tête avec statut global -->
+  <div class="header">
+    <div class="status-section">
+      <div class="main-status">
+        <mat-icon [color]="getOverallStatusColor()" class="status-icon">
+          {{ getOverallStatusIcon() }}
+        </mat-icon>
+        <div class="status-text">
+          <h3 [ngClass]="{ 'success': validationSummary.isValid, 'error': hasErrors, 'warning': hasWarnings }">
+            {{ getOverallStatusLabel() }}
+          </h3>
+          <p class="completion">
+            {{ validationSummary.completionPercentage.toFixed(0) }}% des règles respectées
+          </p>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <mat-progress-bar 
+          mode="determinate" 
+          [value]="validationSummary.completionPercentage"
+          [color]="validationSummary.isValid ? 'primary' : hasErrors ? 'warn' : 'accent'">
+        </mat-progress-bar>
+      </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-section">
+      <div class="stat-card errors" *ngIf="hasErrors">
+        <mat-icon>error</mat-icon>
+        <div class="stat-content">
+          <span class="value">{{ validationSummary.totalErrors }}</span>
+          <span class="label">{{ validationSummary.totalErrors > 1 ? 'Erreurs' : 'Erreur' }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card warnings" *ngIf="hasWarnings">
+        <mat-icon>warning</mat-icon>
+        <div class="stat-content">
+          <span class="value">{{ validationSummary.totalWarnings }}</span>
+          <span class="label">{{ validationSummary.totalWarnings > 1 ? 'Avertissements' : 'Avertissement' }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card infos" *ngIf="hasInfos">
+        <mat-icon>info</mat-icon>
+        <div class="stat-content">
+          <span class="value">{{ validationSummary.totalInfos }}</span>
+          <span class="label">{{ validationSummary.totalInfos > 1 ? 'Informations' : 'Information' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résumé des quote-parts -->
+  <mat-card class="quote-parts-summary">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>pie_chart</mat-icon>
+        Résumé des Quote-Parts
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="label">Total des quote-parts</div>
+          <div class="value" [ngClass]="{ 'success': validationSummary.quoteParts.isValid, 'error': !validationSummary.quoteParts.isValid }">
+            {{ formatPercentage(validationSummary.quoteParts.total) }}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="label">Écart avec 100%</div>
+          <div class="value" [ngClass]="{ 'success': validationSummary.quoteParts.difference < 0.01, 'warning': validationSummary.quoteParts.difference >= 0.01 }">
+            {{ formatPercentage(validationSummary.quoteParts.difference) }}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="label">Propriétaires actifs</div>
+          <div class="value">
+            {{ validationSummary.proprietaires.active }} / {{ validationSummary.proprietaires.total }}
+          </div>
+        </div>
+
+        <div class="summary-item" *ngIf="validationSummary.proprietaires.inactive > 0">
+          <div class="label">Propriétaires inactifs</div>
+          <div class="value warning">
+            {{ validationSummary.proprietaires.inactive }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre de progression des quote-parts -->
+      <div class="quote-parts-progress">
+        <div class="progress-label">
+          <span>Répartition des quote-parts</span>
+          <span class="progress-value">{{ formatPercentage(validationSummary.quoteParts.total) }}</span>
+        </div>
+        <mat-progress-bar 
+          mode="determinate" 
+          [value]="validationSummary.quoteParts.total * 100"
+          [color]="validationSummary.quoteParts.isValid ? 'primary' : 'warn'">
+        </mat-progress-bar>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Actions de correction automatique -->
+  <mat-card class="auto-fix-card" *ngIf="canAutoFix">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="accent">build</mat-icon>
+        Corrections Automatiques
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="auto-fix-actions">
+        <button mat-raised-button color="primary" 
+               (click)="fixQuotePartsSum()"
+               [disabled]="validationSummary.quoteParts.isValid"
+               matTooltip="Répartir équitablement les quote-parts entre les propriétaires actifs">
+          <mat-icon>balance</mat-icon>
+          Répartition égale
+        </button>
+
+        <button mat-raised-button color="accent" 
+               (click)="activateAllProprietaires()"
+               [disabled]="validationSummary.proprietaires.inactive === 0"
+               matTooltip="Activer tous les propriétaires">
+          <mat-icon>group</mat-icon>
+          Activer tous
+        </button>
+
+        <button mat-raised-button 
+               (click)="fixNegativeQuoteParts()"
+               matTooltip="Corriger les quote-parts négatives ou nulles">
+          <mat-icon>add_circle</mat-icon>
+          Corriger quote-parts
+        </button>
+
+        <button mat-raised-button 
+               (click)="recalculateMontants()"
+               [disabled]="!parcelle?.montant_total_tnb"
+               matTooltip="Recalculer les montants individuels selon les quote-parts">
+          <mat-icon>calculate</mat-icon>
+          Recalculer montants
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Détails des règles de validation -->
+  <mat-card class="validation-rules" *ngIf="showDetails">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>rule</mat-icon>
+        Détails de la Validation
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Règles d'erreur -->
+      <mat-expansion-panel class="rules-panel errors-panel" *ngIf="errorRules.length > 0" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon color="warn">error</mat-icon>
+            Erreurs ({{ errorRules.length }})
+          </mat-panel-title>
+          <mat-panel-description>
+            Ces problèmes doivent être corrigés
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="rules-list">
+          <div *ngFor="let rule of errorRules" class="rule-item error">
+            <div class="rule-header">
+              <mat-icon [color]="getRuleStatusColor(rule)">{{ rule.icon }}</mat-icon>
+              <div class="rule-info">
+                <div class="rule-name">{{ rule.name }}</div>
+                <div class="rule-message">{{ rule.message }}</div>
+              </div>
+            </div>
+            <div class="rule-description" *ngIf="rule.details">
+              {{ rule.details }}
+            </div>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Règles d'avertissement -->
+      <mat-expansion-panel class="rules-panel warnings-panel" *ngIf="warningRules.length > 0">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon color="accent">warning</mat-icon>
+            Avertissements ({{ warningRules.length }})
+          </mat-panel-title>
+          <mat-panel-description>
+            Ces points méritent votre attention
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="rules-list">
+          <div *ngFor="let rule of warningRules" class="rule-item warning">
+            <div class="rule-header">
+              <mat-icon [color]="getRuleStatusColor(rule)">{{ rule.icon }}</mat-icon>
+              <div class="rule-info">
+                <div class="rule-name">{{ rule.name }}</div>
+                <div class="rule-message">{{ rule.message }}</div>
+              </div>
+            </div>
+            <div class="rule-description" *ngIf="rule.details">
+              {{ rule.details }}
+            </div>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Règles d'information -->
+      <mat-expansion-panel class="rules-panel infos-panel" *ngIf="infoRules.length > 0">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-icon>info</mat-icon>
+            Informations ({{ infoRules.length }})
+          </mat-panel-title>
+          <mat-panel-description>
+            Points d'information
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="rules-list">
+          <div *ngFor="let rule of infoRules" class="rule-item info">
+            <div class="rule-header">
+              <mat-icon [color]="getRuleStatusColor(rule)">{{ rule.icon }}</mat-icon>
+              <div class="rule-info">
+                <div class="rule-name">{{ rule.name }}</div>
+                <div class="rule-message">{{ rule.message }}</div>
+              </div>
+            </div>
+            <div class="rule-description" *ngIf="rule.details">
+              {{ rule.details }}
+            </div>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <!-- Toutes les règles (vue tableau) -->
+      <div class="all-rules-table" *ngIf="validationSummary.rules.length > 0">
+        <h4>Toutes les Règles</h4>
+        
+        <table mat-table [dataSource]="validationSummary.rules" class="rules-table">
+          <!-- Colonne Statut -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let rule">
+              <mat-icon [color]="getRuleStatusColor(rule)" 
+                       [matTooltip]="rule.isValid ? 'Valide' : 'Invalide'">
+                {{ getRuleStatusIcon(rule) }}
+              </mat-icon>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Règle -->
+          <ng-container matColumnDef="rule">
+            <th mat-header-cell *matHeaderCellDef>Règle</th>
+            <td mat-cell *matCellDef="let rule">
+              <div class="rule-cell">
+                <div class="rule-name">{{ rule.name }}</div>
+                <div class="rule-description">{{ rule.description }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Message -->
+          <ng-container matColumnDef="message">
+            <th mat-header-cell *matHeaderCellDef>Résultat</th>
+            <td mat-cell *matCellDef="let rule">
+              <div class="message-cell" [ngClass]="{ 'success': rule.isValid, 'error': !rule.isValid && rule.type === 'error', 'warning': !rule.isValid && rule.type === 'warning' }">
+                {{ rule.message }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let rule">
+              <button mat-icon-button *ngIf="rule.details" 
+                     [matTooltip]="rule.details">
+                <mat-icon>help</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="rulesColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: rulesColumns;" 
+              [class.valid-row]="row.isValid"
+              [class.error-row]="!row.isValid && row.type === 'error'"
+              [class.warning-row]="!row.isValid && row.type === 'warning'"
+              [class.info-row]="!row.isValid && row.type === 'info'"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message de validation réussie -->
+  <mat-card class="success-card" *ngIf="validationSummary.isValid">
+    <mat-card-content>
+      <div class="success-content">
+        <mat-icon color="primary" class="success-icon">check_circle</mat-icon>
+        <div class="success-text">
+          <h3>Validation Réussie !</h3>
+          <p>Toutes les règles de validation sont respectées. La répartition des quote-parts est correcte et peut être sauvegardée.</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

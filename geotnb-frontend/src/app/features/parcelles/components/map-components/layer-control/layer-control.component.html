@@ -1,0 +1,131 @@
+<!-- =====================================================
+     TEMPLATE CONTRÔLE COUCHES - GESTION LAYERS
+     ===================================================== -->
+
+<div class="layer-control-container">
+  
+  <!-- En-tête -->
+  <div class="layer-control-header" (click)="isExpanded = !isExpanded">
+    <div class="header-content">
+      <mat-icon>layers</mat-icon>
+      <span class="header-title">Couches</span>
+      <span class="layer-count">({{ totalVisibleLayers }})</span>
+    </div>
+    <mat-icon class="expand-icon" [class.expanded]="isExpanded">
+      expand_more
+    </mat-icon>
+  </div>
+
+  <!-- Contenu des couches -->
+  <div class="layer-control-content" [class.expanded]="isExpanded">
+    
+    <!-- Couches de base -->
+    <div class="layer-section" *ngIf="baseLayers.length > 0">
+      <div class="section-header">
+        <mat-icon>map</mat-icon>
+        <span>Cartes de base</span>
+      </div>
+      
+      <div class="layer-list">
+        <div *ngFor="let layer of baseLayers" class="layer-item">
+          
+          <!-- Contrôle visibilité -->
+          <div class="layer-visibility">
+            <mat-checkbox
+              [checked]="layer.visible"
+              (change)="toggleLayer(layer.id)"
+              [color]="'primary'">
+              <div class="layer-info">
+                <mat-icon class="layer-icon">{{ getLayerIcon(layer) }}</mat-icon>
+                <span class="layer-name">{{ layer.name }}</span>
+              </div>
+            </mat-checkbox>
+          </div>
+
+          <!-- Contrôle opacité -->
+          <div class="layer-opacity" *ngIf="layer.visible">
+            <mat-slider
+              [min]="0"
+              [max]="1"
+              [step]="0.1"
+              class="opacity-slider">
+              <input matSliderThumb 
+                     [value]="layer.opacity"
+                     (input)="onOpacityChange(layer.id, $event)">
+            </mat-slider>
+            <span class="opacity-label">{{ formatOpacity(layer.opacity) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider *ngIf="baseLayers.length > 0 && overlayLayers.length > 0"></mat-divider>
+
+    <!-- Couches de superposition -->
+    <div class="layer-section" *ngIf="overlayLayers.length > 0">
+      <div class="section-header">
+        <mat-icon>layers</mat-icon>
+        <span>Superpositions</span>
+      </div>
+      
+      <div class="layer-list">
+        <div *ngFor="let layer of overlayLayers" class="layer-item">
+          
+          <!-- Contrôle visibilité -->
+          <div class="layer-visibility">
+            <mat-checkbox
+              [checked]="layer.visible"
+              (change)="toggleLayer(layer.id)"
+              [color]="'accent'">
+              <div class="layer-info">
+                <mat-icon class="layer-icon">{{ getLayerIcon(layer) }}</mat-icon>
+                <span class="layer-name">{{ layer.name }}</span>
+              </div>
+            </mat-checkbox>
+          </div>
+
+          <!-- Contrôle opacité -->
+          <div class="layer-opacity" *ngIf="layer.visible">
+            <mat-slider
+              [min]="0"
+              [max]="1"
+              [step]="0.1"
+              class="opacity-slider">
+              <input matSliderThumb 
+                     [value]="layer.opacity"
+                     (input)="onOpacityChange(layer.id, $event)">
+            </mat-slider>
+            <span class="opacity-label">{{ formatOpacity(layer.opacity) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="layer-actions" *ngIf="baseLayers.length > 0 || overlayLayers.length > 0">
+      <button mat-button
+              (click)="toggleAllLayers(true)"
+              [disabled]="totalVisibleLayers === (baseLayers.length + overlayLayers.length)"
+              matTooltip="Afficher toutes les couches">
+        <mat-icon>visibility</mat-icon>
+        Tout afficher
+      </button>
+      
+      <button mat-button
+              (click)="toggleAllLayers(false)"
+              [disabled]="totalVisibleLayers === 0"
+              matTooltip="Masquer toutes les couches">
+        <mat-icon>visibility_off</mat-icon>
+        Tout masquer
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Message si aucune couche -->
+  <div class="no-layers-message" *ngIf="baseLayers.length === 0 && overlayLayers.length === 0">
+    <mat-icon>layers_clear</mat-icon>
+    <p>Aucune couche disponible</p>
+  </div>
+
+</div>

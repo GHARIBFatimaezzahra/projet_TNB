@@ -1,0 +1,169 @@
+<!-- =====================================================
+     LAYOUT PRINCIPAL - EXACTEMENT COMME VOS IMAGES
+     ===================================================== -->
+
+<div class="main-layout">
+  
+  <!-- SIDEBAR NAVIGATION - DESIGN SOMBRE -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    
+    <!-- Logo et branding -->
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <h1 class="brand-title">GeoTNB</h1>
+        <p class="brand-subtitle">Commune d'Oujda</p>
+      </div>
+    </div>
+
+    <!-- Menu de navigation -->
+    <nav class="sidebar-nav">
+      <ul class="nav-menu">
+        
+        <!-- Dashboard -->
+        <li class="nav-item" [class.active]="isActiveRoute('/dashboard')">
+          <a routerLink="/dashboard" class="nav-link">
+            <mat-icon class="nav-icon">dashboard</mat-icon>
+            <span class="nav-text">Dashboard</span>
+          </a>
+        </li>
+
+        <!-- Carte SIG -->
+        <li class="nav-item" [class.active]="isActiveRoute('/carte')">
+          <a routerLink="/carte" class="nav-link">
+            <mat-icon class="nav-icon">map</mat-icon>
+            <span class="nav-text">Carte SIG</span>
+          </a>
+        </li>
+
+        <!-- Parcelles -->
+        <li class="nav-item" [class.active]="isActiveRoute('/parcelles')">
+          <a routerLink="/parcelles" class="nav-link">
+            <mat-icon class="nav-icon">description</mat-icon>
+            <span class="nav-text">Parcelles</span>
+          </a>
+        </li>
+
+        <!-- Propriétaires -->
+        <li class="nav-item" [class.active]="isActiveRoute('/proprietaires')">
+          <a routerLink="/proprietaires" class="nav-link">
+            <mat-icon class="nav-icon">people</mat-icon>
+            <span class="nav-text">Propriétaires</span>
+          </a>
+        </li>
+
+        <!-- Fiches TNB -->
+        <li class="nav-item" [class.active]="isActiveRoute('/fiches-tnb')">
+          <a routerLink="/fiches-tnb" class="nav-link">
+            <mat-icon class="nav-icon">receipt</mat-icon>
+            <span class="nav-text">Fiches TNB</span>
+          </a>
+        </li>
+
+        <!-- Documents -->
+        <li class="nav-item" [class.active]="isActiveRoute('/documents')">
+          <a routerLink="/documents" class="nav-link">
+            <mat-icon class="nav-icon">folder</mat-icon>
+            <span class="nav-text">Documents</span>
+          </a>
+        </li>
+
+        <!-- Administration (visible selon le rôle) -->
+        <li class="nav-item" 
+            [class.active]="isActiveRoute('/administration')"
+            *ngIf="hasAdminAccess()">
+          <a routerLink="/administration" class="nav-link">
+            <mat-icon class="nav-icon">settings</mat-icon>
+            <span class="nav-text">Administration</span>
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+    
+    <!-- HEADER -->
+    <header class="main-header">
+      
+      <!-- Breadcrumb -->
+      <div class="breadcrumb-section">
+        <nav class="breadcrumb">
+          <span class="breadcrumb-link">Accueil</span>
+          <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+          <span class="breadcrumb-current">{{getCurrentPageTitle()}}</span>
+        </nav>
+      </div>
+
+      <!-- Actions header -->
+      <div class="header-actions">
+        
+        <!-- Profil utilisateur -->
+        <div class="user-profile">
+          <span class="user-role">{{getCurrentUserRole()}}</span>
+          <div class="user-avatar" [matMenuTriggerFor]="userMenu">
+            <span class="avatar-text">{{getUserInitials()}}</span>
+          </div>
+        </div>
+        
+        <mat-menu #userMenu="matMenu" class="user-menu">
+          <div class="user-menu-header">
+            <div class="user-avatar large">
+              <span class="avatar-text">{{getUserInitials()}}</span>
+            </div>
+            <div class="user-details">
+              <h3>{{getCurrentUser()?.nom}} {{getCurrentUser()?.prenom}}</h3>
+              <p>{{getCurrentUser()?.email}}</p>
+              <span class="user-role-badge">{{getCurrentUserRole()}}</span>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+          <button mat-menu-item>
+            <mat-icon>person</mat-icon>
+            Mon profil
+          </button>
+          <button mat-menu-item>
+            <mat-icon>settings</mat-icon>
+            Paramètres
+          </button>
+          <button mat-menu-item>
+            <mat-icon>help</mat-icon>
+            Aide
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item class="logout-btn" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Déconnexion
+          </button>
+        </mat-menu>
+
+      </div>
+    </header>
+
+    <!-- ZONE DE CONTENU PRINCIPAL -->
+    <div class="content-area">
+      <!-- Contenu projeté -->
+      <ng-content></ng-content>
+    </div>
+
+  </main>
+
+</div>
+
+<!-- NAVIGATION BOTTOM (Mobile) -->
+<nav class="bottom-nav" *ngIf="isMobile">
+  <a routerLink="/dashboard" class="bottom-nav-item" [class.active]="isActiveRoute('/dashboard')">
+    <mat-icon>dashboard</mat-icon>
+    <span>Dashboard</span>
+  </a>
+  <a routerLink="/carte" class="bottom-nav-item" [class.active]="isActiveRoute('/carte')">
+    <mat-icon>map</mat-icon>
+    <span>Carte</span>
+  </a>
+  <a routerLink="/parcelles" class="bottom-nav-item" [class.active]="isActiveRoute('/parcelles')">
+    <mat-icon>description</mat-icon>
+    <span>Parcelles</span>
+  </a>
+</nav>

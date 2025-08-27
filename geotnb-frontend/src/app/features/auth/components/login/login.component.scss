@@ -1,522 +1,425 @@
-/* === VARIABLES DE COULEURS === */
-$couleur-primaire-verte: #66BB6A;
-$couleur-primaire-bleue: #42A5F5;
-$couleur-accent: #FF7043;
-$couleur-blanche: #ffffff;
-$couleur-gris-clair: #f5f5f5;
-$couleur-gris-moyen: #9e9e9e;
-$couleur-gris-fonce: #424242;
-$couleur-texte-principal: #333333;
-$couleur-texte-secondaire: #666666;
-$couleur-bordure: #e0e0e0;
-$couleur-erreur: #f44336;
+/* =====================================================
+   STYLES LOGIN - EXACTEMENT COMME VOS IMAGES
+   ===================================================== */
 
-/* === CONTENEUR PRINCIPAL === */
-.conteneur-connexion {
+.login-container {
+  display: flex;
   min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* =====================================================
+   PARTIE GAUCHE - BRANDING
+   ===================================================== */
+
+.left-section {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  box-sizing: border-box;
-
-  // Arrière-plan avec dégradé vert-bleu amélioré
-  background: linear-gradient(135deg, $couleur-primaire-verte 0%, $couleur-primaire-bleue 50%, #5C6BC0 100%);
-  position: relative;
-
-  // Effet de particules (optionnel)
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 1px, transparent 1px),
-      radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 50px 50px, 75px 75px;
-    pointer-events: none;
-  }
-}
-
-/* === WRAPPER DE LA CARTE === */
-.carte-connexion-wrapper {
-  width: 100%;
-  max-width: 420px;
-  position: relative;
-  z-index: 1;
-}
-
-/* === CARTE DE CONNEXION === */
-.carte-connexion {
-  background: $couleur-blanche;
-  border-radius: 20px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    0 10px 20px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  
-  // Animation d'apparition améliorée
-  animation: apparition-carte 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes apparition-carte {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95) rotateX(10deg);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotateX(0deg);
-  }
-}
-
-/* === EN-TÊTE AVEC LOGO === */
-.en-tete-connexion {
-  background: linear-gradient(135deg, $couleur-primaire-verte, $couleur-primaire-bleue);
-  color: $couleur-blanche;
-  padding: 40px 30px;
+  padding: 3rem;
+  color: white;
   text-align: center;
-  position: relative;
-  overflow: hidden;
-
-  // Effet de brillance
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: brillance 3s infinite;
-  }
-
-  .conteneur-logo {
-    width: 90px;
-    height: 90px;
-    background: $couleur-blanche;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    box-shadow: 
-      0 8px 25px rgba(0, 0, 0, 0.15),
-      0 0 0 3px rgba(255, 255, 255, 0.2);
-    transition: transform 0.3s ease;
-
-    &:hover {
-      transform: scale(1.05);
-    }
-  }
-
-  .icone-geo {
-    font-size: 45px !important;
-    width: 45px !important;
-    height: 45px !important;
-    color: $couleur-primaire-verte;
-  }
-
-  .titre-application {
-    margin: 0 0 8px 0;
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1.2;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  .sous-titre-application {
-    margin: 0;
-    font-size: 1.1rem;
-    opacity: 0.95;
-    font-weight: 400;
-  }
 }
 
-@keyframes brillance {
-  0% { left: -100%; }
-  50% { left: 100%; }
-  100% { left: 100%; }
-}
-
-/* === CONTENU PRINCIPAL === */
-.contenu-connexion {
-  padding: 35px;
-}
-
-/* === FORMULAIRE === */
-.formulaire-connexion {
-  .groupe-champ {
-    margin-bottom: 25px;
-  }
-
-  .etiquette-champ {
-    display: block;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: $couleur-texte-principal;
-    margin-bottom: 10px;
-  }
-
-  .champ-saisie {
-    width: 100%;
-    padding: 20px 24px;
-    border: 2px solid $couleur-bordure;
-    border-radius: 14px;
-    font-size: 1.1rem;
-    background: $couleur-gris-clair;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
-    height: 60px;
-
-    &:focus {
-      outline: none;
-      border-color: $couleur-primaire-verte;
-      background: $couleur-blanche;
-      box-shadow: 
-        0 0 0 4px rgba(102, 187, 106, 0.15),
-        0 4px 12px rgba(102, 187, 106, 0.1);
-      transform: translateY(-1px);
-    }
-
-    &::placeholder {
-      color: $couleur-gris-moyen;
-      transition: all 0.3s ease;
-    }
-
-    &:focus::placeholder {
-      color: lighten($couleur-gris-moyen, 20%);
-    }
-  }
-
-  .conteneur-mot-de-passe {
-    position: relative;
-
-    .bouton-visibilite {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: $couleur-gris-moyen;
-      transition: all 0.3s ease;
-      padding: 10px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      width: 40px;
-      height: 40px;
-
-      &:hover {
-        color: $couleur-primaire-verte;
-        background: rgba(102, 187, 106, 0.1);
-        transform: translateY(-50%) scale(1.1);
-      }
-    }
-  }
-
-  .message-erreur {
-    color: $couleur-erreur;
-    font-size: 0.875rem;
-    margin-top: 8px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    &::before {
-      content: '⚠️';
-      font-size: 14px;
-    }
-  }
-}
-
-/* === BOUTON DE CONNEXION === */
-.bouton-connexion {
+.brand-container {
+  max-width: 450px;
   width: 100%;
-  padding: 20px;
-  background: linear-gradient(135deg, $couleur-primaire-verte, $couleur-primaire-bleue);
-  color: $couleur-blanche;
-  border: none;
-  border-radius: 14px;
-  font-size: 1.15rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 15px;
-  position: relative;
-  overflow: hidden;
+}
+
+.logo-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  box-shadow: 
-    0 6px 20px rgba(102, 187, 106, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.1);
-  height: 60px;
+  margin: 0 auto 2rem;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
 
+.logo-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 2px;
+}
+
+.main-title {
+  font-size: 4rem;
+  font-weight: 300;
+  margin: 0 0 2rem 0;
+  letter-spacing: 4px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  font-weight: 300;
+  
+  strong {
+    font-weight: 500;
+  }
+}
+
+/* =====================================================
+   PARTIE DROITE - FORMULAIRE
+   ===================================================== */
+
+.right-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 3rem;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: 400;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.form-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* =====================================================
+   FORMULAIRE - COMME VOS IMAGES
+   ===================================================== */
+
+.login-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 48px;
+  
+  &:focus-within {
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+}
+
+.input-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  flex-shrink: 0;
+}
+
+.input-icon {
+  color: #6c757d;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.form-input {
+  flex: 1;
+  padding: 0 12px;
+  border: none;
+  background: white;
+  font-size: 0.95rem;
+  color: #333;
+  outline: none;
+  
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.password-toggle-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  background: #f8f9fa;
+  border-left: 1px solid #e9ecef;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #e9ecef;
+  }
+}
+
+.password-toggle-icon {
+  color: #6c757d;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* =====================================================
+   OPTIONS DU FORMULAIRE
+   ===================================================== */
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  
+  input[type="checkbox"] {
+    display: none;
+  }
+  
+  .checkmark {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+  }
+  
+  input[type="checkbox"]:checked + .checkmark {
+    background: #4A90E2;
+    border-color: #4A90E2;
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+}
+
+.checkbox-text {
+  color: #666;
+}
+
+.forgot-link {
+  color: #4A90E2;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  
+  &:hover {
+    color: #357ABD;
+    text-decoration: underline;
+  }
+}
+
+/* =====================================================
+   BOUTONS
+   ===================================================== */
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  
   &:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 
-      0 10px 25px rgba(102, 187, 106, 0.4),
-      0 4px 10px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active:not(:disabled) {
+    background: #357ABD;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
   }
-
+  
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
   }
+}
 
-  // Effet de brillance amélioré
+.button-spinner {
+  ::ng-deep .mat-spinner circle {
+    stroke: white;
+  }
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+  
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  &:hover:not(:disabled)::before {
-    left: 100%;
-  }
-
-  .texte-bouton {
-    font-weight: 700;
-    z-index: 1;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e5e9;
   }
 }
 
-/* === INDICATEUR DE CHARGEMENT === */
-.indicateur-chargement {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid $couleur-blanche;
-  border-radius: 50%;
-  animation: rotation-chargement 1s linear infinite;
+.divider-text {
+  background: white;
+  color: #666;
+  padding: 0 1rem;
+  font-size: 0.9rem;
+  position: relative;
   z-index: 1;
 }
 
-@keyframes rotation-chargement {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* === ACTIONS SECONDAIRES AMÉLIORÉES === */
-.actions-secondaires {
-  text-align: center;
-  margin-top: 30px;
+.ldap-button {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: not-allowed;
   display: flex;
-  flex-direction: column;
-  gap: 15px;
-
-  .lien-mot-de-passe-oublie,
-  .lien-register {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 20px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    .icone-lien {
-      font-size: 18px !important;
-      width: 18px !important;
-      height: 18px !important;
-    }
-  }
-
-  .lien-mot-de-passe-oublie {
-    color: $couleur-primaire-bleue;
-    border: 2px solid rgba(66, 165, 245, 0.2);
-
-    &:hover {
-      color: $couleur-blanche;
-      background: $couleur-primaire-bleue;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(66, 165, 245, 0.3);
-    }
-  }
-
-  .lien-register {
-    color: $couleur-accent;
-    border: 2px solid rgba(255, 112, 67, 0.2);
-
-    &:hover {
-      color: $couleur-blanche;
-      background: $couleur-accent;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
-    }
-  }
-
-  .separateur-ou {
-    position: relative;
-    margin: 10px 0;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(to right, transparent, $couleur-bordure, transparent);
-    }
-
-    span {
-      background: $couleur-blanche;
-      padding: 0 15px;
-      color: $couleur-gris-moyen;
-      font-size: 0.85rem;
-      font-weight: 500;
-      position: relative;
-      z-index: 1;
-    }
-  }
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+  height: 48px;
 }
 
-/* === INFORMATIONS SYSTÈME === */
-.informations-systeme {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  padding: 25px 30px;
+.ldap-icon {
+  font-size: 18px;
+}
+
+.register-section {
   text-align: center;
-  border-top: 1px solid $couleur-bordure;
-
-  .texte-info {
-    font-size: 0.875rem;
-    color: $couleur-texte-secondaire;
-    margin: 0 0 8px 0;
-    line-height: 1.5;
-  }
-
-  .numero-version {
-    font-size: 0.8rem;
-    color: $couleur-primaire-verte;
-    font-weight: 700;
-    margin: 0;
-    padding: 4px 12px;
-    background: rgba(102, 187, 106, 0.1);
-    border-radius: 20px;
-    display: inline-block;
-  }
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-/* === RESPONSIVE AMÉLIORÉ === */
-@media (max-width: 480px) {
-  .conteneur-connexion {
-    padding: 15px;
-  }
-
-  .carte-connexion-wrapper {
-    max-width: 100%;
-  }
-
-  .en-tete-connexion {
-    padding: 30px 25px;
-
-    .conteneur-logo {
-      width: 80px;
-      height: 80px;
-    }
-
-    .icone-geo {
-      font-size: 40px !important;
-      width: 40px !important;
-      height: 40px !important;
-    }
-
-    .titre-application {
-      font-size: 1.7rem;
-    }
-
-    .sous-titre-application {
-      font-size: 1rem;
-    }
-  }
-
-  .contenu-connexion {
-    padding: 25px 20px;
-  }
-
-  .informations-systeme {
-    padding: 20px 20px;
-
-    .texte-info {
-      font-size: 0.8rem;
-    }
-  }
-
-  .actions-secondaires {
-    gap: 12px;
-
-    .lien-mot-de-passe-oublie,
-    .lien-register {
-      padding: 10px 16px;
-      font-size: 0.9rem;
-    }
-  }
+.register-text {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
 }
 
-/* === ANIMATIONS D'ÉTAT AMÉLIORÉES === */
-.champ-saisie.ng-invalid.ng-touched {
-  border-color: $couleur-erreur;
-  animation: secousse 0.5s ease-in-out;
-  box-shadow: 0 0 0 4px rgba(244, 67, 54, 0.1);
-}
-
-@keyframes secousse {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-/* === EFFETS HOVER GLOBAUX === */
-.carte-connexion {
-  transition: transform 0.3s ease;
-
+.register-link {
+  color: #4A90E2;
+  text-decoration: none;
+  font-weight: 500;
+  
   &:hover {
-    transform: translateY(-2px);
+    text-decoration: underline;
   }
 }
 
-/* === DARK MODE SUPPORT (optionnel) === */
-@media (prefers-color-scheme: dark) {
-  .carte-connexion {
-    background: #1e1e1e;
-    color: #ffffff;
-  }
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
 
-  .champ-saisie {
-    background: #2d2d2d;
-    color: #ffffff;
-    border-color: #404040;
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
   }
-
-  .etiquette-champ {
-    color: #ffffff;
+  
+  .left-section {
+    flex: none;
+    min-height: 40vh;
+    padding: 1rem;
   }
-
-  .informations-systeme {
-    background: linear-gradient(135deg, #2d2d2d, #1e1e1e);
+  
+  .logo-circle {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1rem;
+  }
+  
+  .logo-text {
+    font-size: 1.8rem;
+  }
+  
+  .main-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .description {
+    font-size: 1rem;
+  }
+  
+  .right-section {
+    flex: 1;
+    padding: 1rem;
+  }
+  
+  .form-container {
+    max-width: none;
   }
 }

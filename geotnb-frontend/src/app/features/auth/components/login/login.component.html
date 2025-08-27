@@ -1,92 +1,124 @@
-<div class="conteneur-connexion">
-  <div class="carte-connexion-wrapper">
-    <div class="carte-connexion">
-      <!-- En-tête avec logo et branding -->
-      <div class="en-tete-connexion">
-        <div class="conteneur-logo">
-          <mat-icon class="icone-geo">map</mat-icon>
-        </div>
-        <h1 class="titre-application">Géoportail TNB</h1>
-        <p class="sous-titre-application">Commune d'Oujda</p>
+<!-- =====================================================
+     INTERFACE DE CONNEXION - EXACTEMENT COMME VOS IMAGES
+     ===================================================== -->
+
+<div class="login-container">
+  <!-- Partie gauche - Branding -->
+  <div class="left-section">
+    <div class="brand-container">
+      <!-- Logo TNB -->
+      <div class="logo-circle">
+        <span class="logo-text">TNB</span>
+      </div>
+      
+      <!-- Titre principal -->
+      <h1 class="main-title">GeoTNB</h1>
+      
+      <!-- Description -->
+      <p class="description">
+        Plateforme de gestion de la Taxe sur<br>
+        les Terrains Non Bâtis pour la<br>
+        <strong>Commune d'Oujda</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- Partie droite - Formulaire de connexion -->
+  <div class="right-section">
+    <div class="form-container">
+      <!-- Titre du formulaire -->
+      <div class="form-header">
+        <h2 class="form-title">Connexion</h2>
+        <p class="form-subtitle">Accédez à votre espace de travail</p>
       </div>
 
-      <!-- Contenu principal du formulaire -->
-      <div class="contenu-connexion">
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="formulaire-connexion" novalidate>
-          
-          <!-- Champ nom d'utilisateur -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Nom d'utilisateur</label>
+      <!-- Formulaire -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        
+        <!-- Nom d'utilisateur -->
+        <div class="form-group">
+          <label for="username" class="form-label">Nom d'utilisateur</label>
+          <div class="input-container">
+            <div class="input-icon-box">
+              <mat-icon class="input-icon">person</mat-icon>
+            </div>
             <input 
-              type="text"
-              formControlName="username" 
-              class="champ-saisie"
-              autocomplete="username"
-              placeholder="Saisissez votre nom d'utilisateur">
-            <div class="message-erreur" *ngIf="isFieldInvalid('username')">
-              <span *ngIf="username?.hasError('required')">Le nom d'utilisateur est requis</span>
-              <span *ngIf="username?.hasError('minlength')">Minimum 3 caractères requis</span>
+              type="text" 
+              id="username"
+              formControlName="username"
+              placeholder="agent.fiscal"
+              class="form-input"
+              autocomplete="username">
+          </div>
+          <div class="error-message" *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+            {{ getFieldError('username') }}
+          </div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="form-group">
+          <label for="password" class="form-label">Mot de passe</label>
+          <div class="input-container">
+            <div class="input-icon-box">
+              <mat-icon class="input-icon">lock</mat-icon>
+            </div>
+            <input 
+              [type]="hidePassword ? 'password' : 'text'"
+              id="password"
+              formControlName="password"
+              placeholder="••••••••"
+              class="form-input"
+              autocomplete="current-password">
+            <div class="password-toggle-box" (click)="togglePasswordVisibility()">
+              <mat-icon class="password-toggle-icon">
+                {{hidePassword ? 'visibility_off' : 'visibility'}}
+              </mat-icon>
             </div>
           </div>
-
-          <!-- Champ mot de passe -->
-          <div class="groupe-champ">
-            <label class="etiquette-champ">Mot de passe</label>
-            <div class="conteneur-mot-de-passe">
-              <input 
-                [type]="hidePassword ? 'password' : 'text'"
-                formControlName="password"
-                class="champ-saisie"
-                autocomplete="current-password"
-                placeholder="Saisissez votre mot de passe">
-              <button 
-                type="button"
-                class="bouton-visibilite" 
-                (click)="togglePasswordVisibility()">
-                {{ hidePassword ? '👁️' : '🔒' }}
-              </button>
-            </div>
-            <div class="message-erreur" *ngIf="isFieldInvalid('password')">
-              <span *ngIf="password?.hasError('required')">Le mot de passe est requis</span>
-              <span *ngIf="password?.hasError('minlength')">Minimum 6 caractères requis</span>
-            </div>
+          <div class="error-message" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            {{ getFieldError('password') }}
           </div>
+        </div>
 
-          <!-- Bouton de connexion principal -->
-          <button 
-            type="submit"
-            class="bouton-connexion"
-            [disabled]="loginForm.invalid || isLoading">
-            <span class="indicateur-chargement" *ngIf="isLoading"></span>
-            <span class="texte-bouton">
-              {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
-            </span>
-          </button>
-        </form>
-
-        <!-- Actions secondaires avec liens -->
-        <div class="actions-secondaires">
-          <a routerLink="/auth/forgot-password" class="lien-mot-de-passe-oublie">
-            <mat-icon class="icone-lien">lock_reset</mat-icon>
+        <!-- Options -->
+        <div class="form-options">
+          <label class="checkbox-container">
+            <input type="checkbox" formControlName="rememberMe">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">Se souvenir de moi</span>
+          </label>
+          <a routerLink="/auth/forgot-password" class="forgot-link">
             Mot de passe oublié ?
           </a>
-          
-          <div class="separateur-ou">
-            <span>ou</span>
-          </div>
-          
-          <a routerLink="/auth/register" class="lien-register">
-            <mat-icon class="icone-lien">person_add</mat-icon>
-            Créer un nouveau compte
-          </a>
         </div>
-      </div>
 
-      <!-- Informations système en bas -->
-      <div class="informations-systeme">
-        <p class="texte-info">Système de Gestion de la Taxe sur les Terrains Non Bâtis</p>
-        <p class="numero-version">Version 1.0.0</p>
-      </div>
+        <!-- Bouton de connexion -->
+        <button 
+          type="submit" 
+          class="login-button"
+          [disabled]="loginForm.invalid || loading">
+          <mat-spinner *ngIf="loading" diameter="20" class="button-spinner"></mat-spinner>
+          <span *ngIf="!loading">Se connecter</span>
+          <span *ngIf="loading">Connexion...</span>
+        </button>
+
+        <!-- Divider -->
+        <div class="divider">
+          <span class="divider-text">ou</span>
+        </div>
+
+        <!-- Connexion LDAP/AD -->
+        <button type="button" class="ldap-button" disabled>
+          <mat-icon class="ldap-icon">link</mat-icon>
+          <span>Connexion via LDAP/AD</span>
+        </button>
+
+        <!-- Lien d'inscription -->
+        <div class="register-section">
+          <p class="register-text">Pas encore de compte ?</p>
+          <a routerLink="/auth/register" class="register-link">Demander un accès</a>
+        </div>
+      </form>
     </div>
   </div>
 </div>

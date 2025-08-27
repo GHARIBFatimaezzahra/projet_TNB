@@ -1,0 +1,529 @@
+<!-- ===================================================== -->
+<!-- COMPOSANT REQUÊTES SPATIALES -->
+<!-- ===================================================== -->
+
+<div class="spatial-query">
+  <!-- En-tête -->
+  <div class="header">
+    <div class="title-section">
+      <h3>
+        <mat-icon>location_searching</mat-icon>
+        Requêtes Spatiales
+      </h3>
+      <p class="subtitle">Recherche géographique avancée</p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-icon-button (click)="clearAll()" 
+             matTooltip="Effacer toutes les requêtes"
+             [disabled]="!hasActiveQuery">
+        <mat-icon>clear_all</mat-icon>
+      </button>
+      
+      <button mat-icon-button [matMenuTriggerFor]="settingsMenu"
+             matTooltip="Paramètres">
+        <mat-icon>settings</mat-icon>
+      </button>
+
+      <mat-menu #settingsMenu="matMenu">
+        <button mat-menu-item (click)="toggleAutoExecute()">
+          <mat-icon>{{ autoExecute ? 'pause' : 'play_arrow' }}</mat-icon>
+          <span>{{ autoExecute ? 'Désactiver' : 'Activer' }} exécution auto</span>
+        </button>
+        
+        <button mat-menu-item (click)="exportResults()" [disabled]="!hasResults">
+          <mat-icon>download</mat-icon>
+          <span>Exporter les résultats</span>
+        </button>
+        
+        <mat-divider></mat-divider>
+        
+        <button mat-menu-item (click)="resetSettings()">
+          <mat-icon>restore</mat-icon>
+          <span>Réinitialiser</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Types de requêtes -->
+  <mat-card class="query-types-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>category</mat-icon>
+        Types de Requêtes
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="query-types">
+        <mat-chip-set>
+          <mat-chip *ngFor="let type of queryTypes" 
+                                      [class.selected]="selectedQueryType === type.value"   
+                   [color]="selectedQueryType === type.value ? 'primary' : ''"
+                   (click)="selectQueryType(type.value)"
+                   [matTooltip]="type.description">
+            <mat-icon matChipAvatar>{{ type.icon }}</mat-icon>
+            {{ type.label }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Configuration de la requête -->
+  <mat-card class="query-config-card" *ngIf="selectedQueryType">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>tune</mat-icon>
+        Configuration - {{ getSelectedQueryType()?.label }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="queryForm" class="query-form">
+        
+        <!-- Requête par point -->
+        <div *ngIf="selectedQueryType === 'point'" class="point-query">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Longitude (X)</mat-label>
+              <input matInput type="number" formControlName="longitude" 
+                    step="0.000001" placeholder="Ex: -7.123456">
+              <mat-error>Longitude requise</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Latitude (Y)</mat-label>
+              <input matInput type="number" formControlName="latitude" 
+                    step="0.000001" placeholder="Ex: 33.123456">
+              <mat-error>Latitude requise</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Rayon de recherche</mat-label>
+              <input matInput type="number" formControlName="bufferDistance" 
+                    min="1" max="10000" placeholder="100">
+              <span matSuffix>mètres</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Système de coordonnées</mat-label>
+              <mat-select formControlName="coordinateSystem">
+                <mat-option value="4326">WGS84 (EPSG:4326)</mat-option>
+                <mat-option value="26191">Lambert Maroc Nord (EPSG:26191)</mat-option>
+                <mat-option value="26192">Lambert Maroc Sud (EPSG:26192)</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="map-selection">
+            <mat-checkbox formControlName="useMapClick">
+              <mat-icon>touch_app</mat-icon>
+              Sélectionner sur la carte
+            </mat-checkbox>
+            <button mat-button color="primary" (click)="activateMapSelection()" 
+                   [disabled]="!queryForm.get('useMapClick')?.value">
+              <mat-icon>my_location</mat-icon>
+              Cliquer sur la carte
+            </button>
+          </div>
+        </div>
+
+        <!-- Requête par polygone -->
+        <div *ngIf="selectedQueryType === 'polygon'" class="polygon-query">
+          <div class="drawing-tools">
+            <button mat-raised-button color="primary" (click)="startPolygonDrawing()" 
+                   [disabled]="isDrawing">
+              <mat-icon>draw</mat-icon>
+              {{ isDrawing ? 'Dessinez sur la carte...' : 'Dessiner un polygone' }}
+            </button>
+            
+            <button mat-button (click)="clearDrawing()" [disabled]="!hasDrawnGeometry">
+              <mat-icon>clear</mat-icon>
+              Effacer
+            </button>
+          </div>
+
+          <div class="upload-section" *ngIf="!isDrawing">
+            <mat-divider></mat-divider>
+            <p class="upload-label">Ou importer un fichier :</p>
+            <input type="file" #fileInput (change)="onFileSelected($event)" 
+                  accept=".geojson,.kml,.gpx" style="display: none;">
+            <button mat-button (click)="fileInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              Importer GeoJSON/KML/GPX
+            </button>
+          </div>
+
+          <div class="geometry-info" *ngIf="hasDrawnGeometry">
+            <mat-icon color="primary">check_circle</mat-icon>
+            <span>Géométrie définie ({{ drawnGeometry?.getType() }})</span>
+            <button mat-icon-button (click)="viewGeometry()" matTooltip="Voir sur la carte">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Requête par zone administrative -->
+        <div *ngIf="selectedQueryType === 'administrative'" class="administrative-query">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Type de zone</mat-label>
+              <mat-select formControlName="administrativeType">
+                <mat-option value="commune">Commune</mat-option>
+                <mat-option value="quartier">Quartier</mat-option>
+                <mat-option value="secteur">Secteur</mat-option>
+                <mat-option value="zone_urbanisme">Zone d'urbanisme</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nom de la zone</mat-label>
+              <input matInput formControlName="administrativeName" 
+                    [matAutocomplete]="adminAuto" placeholder="Tapez pour rechercher...">
+              <mat-autocomplete #adminAuto="matAutocomplete">
+                <mat-option *ngFor="let zone of filteredAdminZones" [value]="zone.name">
+                  <div class="zone-option">
+                    <mat-icon>{{ getAdminZoneIcon(zone.type) }}</mat-icon>
+                    <span>{{ zone.name }}</span>
+                    <small>({{ zone.type }})</small>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Requête par attributs -->
+        <div *ngIf="selectedQueryType === 'attributes'" class="attributes-query">
+          <div class="attributes-builder">
+            <div *ngFor="let condition of attributeConditions; let i = index" 
+                 class="condition-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Champ</mat-label>
+                <mat-select [value]="condition.field" (selectionChange)="updateConditionField(i, $event.value)">
+                  <mat-option *ngFor="let field of availableFields" [value]="field.name">
+                    {{ field.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Opérateur</mat-label>
+                <mat-select [value]="condition.operator" (selectionChange)="updateConditionOperator(i, $event.value)">
+                  <mat-option value="eq">=</mat-option>
+                  <mat-option value="ne">≠</mat-option>
+                  <mat-option value="gt">></mat-option>
+                  <mat-option value="gte">≥</mat-option>
+                  <mat-option value="lt"><</mat-option>
+                  <mat-option value="lte">≤</mat-option>
+                  <mat-option value="like">Contient</mat-option>
+                  <mat-option value="in">Dans</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Valeur</mat-label>
+                <input matInput [value]="condition.value" 
+                      (input)="updateConditionValue(i, $event.target.value)"
+                      [placeholder]="getFieldPlaceholder(condition.field)">
+              </mat-form-field>
+
+              <button mat-icon-button color="warn" (click)="removeCondition(i)" 
+                     [disabled]="attributeConditions.length <= 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <div class="condition-actions">
+              <button mat-button (click)="addCondition()">
+                <mat-icon>add</mat-icon>
+                Ajouter une condition
+              </button>
+
+              <mat-form-field appearance="outline" class="logic-operator">
+                <mat-label>Opérateur logique</mat-label>
+                <mat-select [(value)]="logicalOperator">
+                  <mat-option value="AND">ET (AND)</mat-option>
+                  <mat-option value="OR">OU (OR)</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options communes -->
+        <div class="common-options">
+          <mat-divider></mat-divider>
+          
+          <div class="options-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre maximum de résultats</mat-label>
+              <input matInput type="number" formControlName="maxResults" 
+                    min="1" max="1000" value="100">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Trier par</mat-label>
+              <mat-select formControlName="sortBy">
+                <mat-option value="distance">Distance</mat-option>
+                <mat-option value="surface_totale">Surface totale</mat-option>
+                <mat-option value="montant_total_tnb">Montant TNB</mat-option>
+                <mat-option value="reference_fonciere">Référence foncière</mat-option>
+                <mat-option value="date_creation">Date de création</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Ordre</mat-label>
+              <mat-select formControlName="sortOrder">
+                <mat-option value="ASC">Croissant</mat-option>
+                <mat-option value="DESC">Décroissant</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="options-checkboxes">
+            <mat-checkbox formControlName="includeInactive">
+              Inclure les parcelles inactives
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="highlightResults">
+              Surligner les résultats sur la carte
+            </mat-checkbox>
+            
+            <mat-checkbox formControlName="zoomToResults">
+              Zoomer sur les résultats
+            </mat-checkbox>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button mat-button (click)="resetQuery()" [disabled]="isExecuting">
+            <mat-icon>refresh</mat-icon>
+            Réinitialiser
+          </button>
+          
+          <button mat-button (click)="saveQuery()" [disabled]="!queryForm.valid">
+            <mat-icon>save</mat-icon>
+            Sauvegarder la requête
+          </button>
+          
+          <button mat-raised-button color="primary" (click)="executeQuery()" 
+                 [disabled]="!queryForm.valid || isExecuting">
+            <mat-spinner diameter="20" *ngIf="isExecuting"></mat-spinner>
+            <mat-icon *ngIf="!isExecuting">search</mat-icon>
+            {{ isExecuting ? 'Recherche...' : 'Exécuter la requête' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Résultats -->
+  <mat-card class="results-card" *ngIf="hasResults">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list_alt</mat-icon>
+        Résultats de la Requête
+        <mat-chip [matBadge]="queryResults.length" matBadgePosition="after" matBadgeColor="primary">
+          {{ queryResults.length }} parcelle(s) trouvée(s)
+        </mat-chip>
+      </mat-card-title>
+      
+      <div class="results-actions">
+        <button mat-icon-button (click)="toggleResultsView()" 
+               [matTooltip]="resultsViewMode === 'table' ? 'Vue cartes' : 'Vue tableau'">
+          <mat-icon>{{ resultsViewMode === 'table' ? 'view_module' : 'view_list' }}</mat-icon>
+        </button>
+        
+        <button mat-icon-button [matMenuTriggerFor]="exportMenu" matTooltip="Exporter">
+          <mat-icon>download</mat-icon>
+        </button>
+        
+        <mat-menu #exportMenu="matMenu">
+          <button mat-menu-item (click)="exportResults('excel')">
+            <mat-icon>table_chart</mat-icon>
+            <span>Excel</span>
+          </button>
+          <button mat-menu-item (click)="exportResults('csv')">
+            <mat-icon>description</mat-icon>
+            <span>CSV</span>
+          </button>
+          <button mat-menu-item (click)="exportResults('geojson')">
+            <mat-icon>map</mat-icon>
+            <span>GeoJSON</span>
+          </button>
+          <button mat-menu-item (click)="exportResults('pdf')">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <span>PDF</span>
+          </button>
+        </mat-menu>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Statistiques des résultats -->
+      <div class="results-stats">
+        <div class="stat-item">
+          <mat-icon>crop_landscape</mat-icon>
+          <div class="stat-content">
+            <span class="value">{{ getTotalSurface() | number:'1.2-2' }} m²</span>
+            <span class="label">Surface totale</span>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <mat-icon>account_balance</mat-icon>
+          <div class="stat-content">
+            <span class="value">{{ getTotalTnb() | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
+            <span class="label">Montant TNB total</span>
+          </div>
+        </div>
+        
+        <div class="stat-item" *ngIf="selectedQueryType === 'point'">
+          <mat-icon>straighten</mat-icon>
+          <div class="stat-content">
+            <span class="value">{{ getAverageDistance() | number:'1.0-0' }} m</span>
+            <span class="label">Distance moyenne</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vue tableau -->
+      <div *ngIf="resultsViewMode === 'table'" class="results-table">
+        <table mat-table [dataSource]="queryResults" class="spatial-results-table">
+          <!-- Colonne Référence -->
+          <ng-container matColumnDef="reference_fonciere">
+            <th mat-header-cell *matHeaderCellDef>Référence</th>
+            <td mat-cell *matCellDef="let parcelle">
+              <a [routerLink]="['/parcelles', parcelle.id]" class="reference-link">
+                {{ parcelle.reference_fonciere }}
+              </a>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Surface -->
+          <ng-container matColumnDef="surface_totale">
+            <th mat-header-cell *matHeaderCellDef>Surface</th>
+            <td mat-cell *matCellDef="let parcelle">
+              {{ parcelle.surface_totale | number:'1.2-2' }} m²
+            </td>
+          </ng-container>
+
+          <!-- Colonne Zonage -->
+          <ng-container matColumnDef="zonage">
+            <th mat-header-cell *matHeaderCellDef>Zonage</th>
+            <td mat-cell *matCellDef="let parcelle">
+              <mat-chip>{{ parcelle.zonage }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Statut -->
+          <ng-container matColumnDef="etat_validation">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let parcelle">
+              <mat-chip [color]="getStatusColor(parcelle.etat_validation)">
+                {{ parcelle.etat_validation }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Distance (pour requête point) -->
+          <ng-container matColumnDef="distance" *ngIf="selectedQueryType === 'point'">
+            <th mat-header-cell *matHeaderCellDef>Distance</th>
+            <td mat-cell *matCellDef="let parcelle">
+              {{ parcelle.distance | number:'1.0-0' }} m
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let parcelle">
+              <button mat-icon-button (click)="viewOnMap(parcelle)" matTooltip="Voir sur la carte">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button (click)="selectParcelle(parcelle)" matTooltip="Sélectionner">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="getDisplayedColumns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: getDisplayedColumns();" 
+              (click)="selectParcelle(row)"
+              [class.selected-row]="selectedParcelles.includes(row.id)"></tr>
+        </table>
+
+        <!-- Pagination -->
+        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" 
+                      [pageSize]="25"
+                      showFirstLastButtons>
+        </mat-paginator>
+      </div>
+
+      <!-- Vue cartes -->
+      <div *ngIf="resultsViewMode === 'cards'" class="results-cards">
+        <div class="cards-grid">
+          <mat-card *ngFor="let parcelle of queryResults" class="result-card" 
+                   (click)="selectParcelle(parcelle)"
+                   [class.selected-card]="selectedParcelles.includes(parcelle.id)">
+            <mat-card-header>
+              <mat-card-title>{{ parcelle.reference_fonciere }}</mat-card-title>
+              <mat-card-subtitle>{{ parcelle.zonage }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <div class="card-info">
+                <div class="info-item">
+                  <mat-icon>crop_landscape</mat-icon>
+                  <span>{{ parcelle.surface_totale | number:'1.2-2' }} m²</span>
+                </div>
+                <div class="info-item">
+                  <mat-icon>account_balance</mat-icon>
+                  <span>{{ parcelle.montant_total_tnb | currency:'MAD':'symbol':'1.0-0':'fr' }}</span>
+                </div>
+                <div class="info-item" *ngIf="parcelle.distance">
+                  <mat-icon>straighten</mat-icon>
+                  <span>{{ parcelle.distance | number:'1.0-0' }} m</span>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-button (click)="viewOnMap(parcelle); $event.stopPropagation()">
+                <mat-icon>map</mat-icon>
+                Voir
+              </button>
+              <button mat-button [routerLink]="['/parcelles', parcelle.id]" 
+                     (click)="$event.stopPropagation()">
+                <mat-icon>info</mat-icon>
+                Détails
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message aucun résultat -->
+  <mat-card class="no-results-card" *ngIf="hasExecutedQuery && !hasResults && !isExecuting">
+    <mat-card-content>
+      <div class="no-results">
+        <mat-icon color="disabled">search_off</mat-icon>
+        <h3>Aucun résultat trouvé</h3>
+        <p>Essayez de modifier les critères de recherche ou d'élargir la zone de recherche.</p>
+        <button mat-raised-button color="primary" (click)="resetQuery()">
+          <mat-icon>refresh</mat-icon>
+          Nouvelle recherche
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

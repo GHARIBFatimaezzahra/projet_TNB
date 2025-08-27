@@ -1,68 +1,77 @@
+// =====================================================
+// INTERCEPTEUR AUTHENTIFICATION - INJECTION JWT
+// =====================================================
+
 import { Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
+
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private refreshTokenSubject = new BehaviorSubject<any>(null);
 
   constructor(private authService: AuthService) {}
 
-  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Ajouter le token d'authentification aux requêtes
-    const authReq = this.addAuthToken(request);
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Ajouter le token JWT aux requêtes
+    const authReq = this.addTokenToRequest(req);
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && !authReq.url.includes('auth/refresh')) {
+        // Si erreur 401, essayer de rafraîchir le token
+        if (error.status === 401 && !req.url.includes('/auth/login')) {
           return this.handle401Error(authReq, next);
         }
+        
         return throwError(() => error);
       })
     );
   }
 
-  private addAuthToken(request: HttpRequest<any>): HttpRequest<any> {
-    const token = this.authService.getToken();
+  private addTokenToRequest(req: HttpRequest<any>): HttpRequest<any> {
+    const token = this.authService.token;
     
-    if (!token || request.url.includes('auth/login') || request.url.includes('auth/refresh')) {
-      return request;
+    if (token && !req.url.includes('/auth/login') && !req.url.includes('/auth/refresh')) {
+      return req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
     }
-
-    return request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    
+    return req;
   }
 
-  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  private handle401Error(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
 
       return this.authService.refreshToken().pipe(
-        switchMap((token: string) => {
+        switchMap(() => {
           this.isRefreshing = false;
-          this.refreshTokenSubject.next(token);
-          return next.handle(this.addAuthToken(request));
+          this.refreshTokenSubject.next(this.authService.token);
+          
+          // Relancer la requête avec le nouveau token
+          return next.handle(this.addTokenToRequest(req));
         }),
         catchError((error) => {
           this.isRefreshing = false;
+          // Si le refresh échoue, déconnecter l'utilisateur
           this.authService.logout();
           return throwError(() => error);
         })
       );
     } else {
+      // Si un refresh est déjà en cours, attendre qu'il se termine
       return this.refreshTokenSubject.pipe(
-        filter(token => token !== null),
+        filter(token => token != null),
         take(1),
-        switchMap(token => {
-          return next.handle(this.addAuthToken(request));
-        })
+        switchMap(() => next.handle(this.addTokenToRequest(req)))
       );
     }
   }

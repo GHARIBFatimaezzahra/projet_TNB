@@ -1,0 +1,362 @@
+<!-- ===================================================== -->
+<!-- ÉDITEUR DE QUOTE-PARTS - GESTION INDIVISION -->
+<!-- ===================================================== -->
+
+<div class="quote-part-editor">
+  <!-- En-tête avec résumé -->
+  <div class="header">
+    <div class="title-section">
+      <h3>
+        <mat-icon>group</mat-icon>
+        Gestion des Quote-Parts
+      </h3>
+      <p class="subtitle">
+        Répartition des parts d'indivision pour la parcelle
+      </p>
+    </div>
+
+    <!-- Indicateurs de validation -->
+    <div class="validation-summary" [ngClass]="getValidationClass()">
+      <div class="progress-container">
+        <mat-progress-bar 
+          mode="determinate" 
+          [value]="totalQuotePartPercentage"
+          [color]="isValid ? 'primary' : 'warn'">
+        </mat-progress-bar>
+        <span class="progress-text">
+          {{ totalQuotePartPercentage.toFixed(2) }}% / 100%
+        </span>
+      </div>
+
+      <div class="validation-messages" *ngIf="currentValidation.errors.length > 0 || currentValidation.warnings.length > 0">
+        <div class="error-messages" *ngFor="let error of currentValidation.errors">
+          <mat-icon color="warn">error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <div class="warning-messages" *ngFor="let warning of currentValidation.warnings">
+          <mat-icon color="accent">warning</mat-icon>
+          <span>{{ warning }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration et modes -->
+  <mat-card class="configuration-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>settings</mat-icon>
+        Configuration
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="quotePartsForm">
+        <div class="config-row">
+          <!-- Mode d'édition -->
+          <div class="edit-mode-selector">
+            <label>Mode d'édition :</label>
+            <mat-chip-set>
+              <mat-chip 
+                *ngFor="let mode of editModes" 
+                [class.selected]="editMode === mode.value"
+                [color]="editMode === mode.value ? 'primary' : ''"
+                (click)="changeEditMode(mode.value)"
+                [matTooltip]="mode.description">
+                <mat-icon matChipAvatar>{{ mode.icon }}</mat-icon>
+                {{ mode.label }}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <!-- Mode de répartition -->
+          <mat-form-field appearance="outline">
+            <mat-label>Mode de répartition</mat-label>
+            <mat-select formControlName="modeRepartition">
+              <mat-option value="manuelle">Manuelle</mat-option>
+              <mat-option value="egale">Égale</mat-option>
+              <mat-option value="proportionnelle">Proportionnelle</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Base de calcul -->
+          <mat-form-field appearance="outline" *ngIf="quotePartsForm.get('modeRepartition')?.value === 'proportionnelle'">
+            <mat-label>Base de calcul</mat-label>
+            <mat-select formControlName="baseCalcul">
+              <mat-option value="surface">Surface</mat-option>
+              <mat-option value="valeur">Valeur</mat-option>
+              <mat-option value="autre">Autre</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="quick-actions">
+          <button type="button" mat-button (click)="distributeEqually()" 
+                 [disabled]="readonly || quoteParts.length === 0">
+            <mat-icon>balance</mat-icon>
+            Répartition égale
+          </button>
+
+          <button type="button" mat-button (click)="distributeProportionally()" 
+                 [disabled]="readonly || quoteParts.length === 0">
+            <mat-icon>trending_up</mat-icon>
+            Répartition proportionnelle
+          </button>
+
+          <button type="button" mat-button color="warn" (click)="resetDistribution()" 
+                 [disabled]="readonly || quoteParts.length === 0">
+            <mat-icon>refresh</mat-icon>
+            Réinitialiser
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Ajout de propriétaire -->
+  <mat-card class="add-proprietaire-card" *ngIf="!readonly">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon color="primary">person_add</mat-icon>
+        Ajouter un Propriétaire
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="add-proprietaire-form">
+        <mat-form-field appearance="outline" class="proprietaire-select">
+          <mat-label>Sélectionner un propriétaire</mat-label>
+          <mat-select formControlName="nouveauProprietaire">
+            <mat-option *ngFor="let proprietaire of availableProprietairesFiltered" 
+                       [value]="proprietaire.id">
+              {{ getProprietaireDisplay(proprietaire) }}
+            </mat-option>
+          </mat-select>
+          <mat-hint *ngIf="availableProprietairesFiltered.length === 0">
+            Tous les propriétaires disponibles sont déjà ajoutés
+          </mat-hint>
+        </mat-form-field>
+
+        <button type="button" mat-raised-button color="primary" 
+               (click)="addProprietaire()"
+               [disabled]="!quotePartsForm.get('nouveauProprietaire')?.value">
+          <mat-icon>add</mat-icon>
+          Ajouter
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des quote-parts -->
+  <mat-card class="quote-parts-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        Quote-Parts des Propriétaires
+        <mat-chip-set *ngIf="quoteParts.length > 0">
+          <mat-chip [color]="isValid ? 'primary' : 'warn'">
+            {{ quoteParts.length }} {{ quoteParts.length > 1 ? 'propriétaires' : 'propriétaire' }}
+          </mat-chip>
+        </mat-chip-set>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="quoteParts.length === 0" class="no-proprietaires">
+        <mat-icon color="disabled">group_off</mat-icon>
+        <p>Aucun propriétaire défini</p>
+        <p class="hint">Ajoutez des propriétaires pour commencer la répartition des quote-parts</p>
+      </div>
+
+      <!-- Mode tableau -->
+      <div *ngIf="quoteParts.length > 0 && editMode !== 'visual'" class="quote-parts-table">
+        <table mat-table [dataSource]="quotePartsArray.controls" class="quote-parts-mat-table">
+          
+          <!-- Colonne Propriétaire -->
+          <ng-container matColumnDef="proprietaire">
+            <th mat-header-cell *matHeaderCellDef>Propriétaire</th>
+            <td mat-cell *matCellDef="let control; let i = index">
+              <div class="proprietaire-cell">
+                <div class="proprietaire-info">
+                  <div class="name">{{ quoteParts[i].proprietaire.nom }} {{ quoteParts[i].proprietaire.prenom || '' }}</div>
+                  <div class="details">
+                    <span class="nature">{{ quoteParts[i].proprietaire.nature }}</span>
+                    <span class="separator">•</span>
+                    <span class="cin">{{ quoteParts[i].proprietaire.cin_ou_rc }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Quote-Part -->
+          <ng-container matColumnDef="quotePart">
+            <th mat-header-cell *matHeaderCellDef>Quote-Part</th>
+            <td mat-cell *matCellDef="let control; let i = index">
+              <div class="quote-part-cell">
+                <mat-form-field appearance="outline" class="quote-part-input" 
+                               *ngIf="editMode === 'percentage'">
+                  <mat-label>%</mat-label>
+                  <input matInput type="number" 
+                        [formControl]="control.get('quotePart')!"
+                        min="0" max="1" step="0.01"
+                        (input)="control.get('montantIndividuel')?.setValue(control.get('quotePart')?.value * montantTotalTnb)">
+                  <span matSuffix>%</span>
+                </mat-form-field>
+
+                <div class="quote-part-display" *ngIf="editMode !== 'percentage'">
+                  {{ formatPercentage(control.get('quotePart')?.value || 0) }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Montant -->
+          <ng-container matColumnDef="montantIndividuel">
+            <th mat-header-cell *matHeaderCellDef>Montant TNB</th>
+            <td mat-cell *matCellDef="let control; let i = index">
+              <div class="montant-cell">
+                <mat-form-field appearance="outline" class="montant-input" 
+                               *ngIf="editMode === 'amount'">
+                  <mat-label>DH</mat-label>
+                  <input matInput type="number" 
+                        [formControl]="control.get('montantIndividuel')!"
+                        min="0" step="0.01"
+                        (input)="onAmountChange(i, control.get('montantIndividuel')?.value)">
+                  <span matSuffix>DH</span>
+                </mat-form-field>
+
+                <div class="montant-display" *ngIf="editMode !== 'amount'">
+                  {{ formatCurrency(control.get('montantIndividuel')?.value || 0) }}
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Période -->
+          <ng-container matColumnDef="periode">
+            <th mat-header-cell *matHeaderCellDef>Période</th>
+            <td mat-cell *matCellDef="let control; let i = index">
+              <div class="periode-cell">
+                <mat-form-field appearance="outline" class="date-input">
+                  <mat-label>Début</mat-label>
+                  <input matInput [matDatepicker]="startPicker" 
+                        [formControl]="control.get('dateDebut')!">
+                  <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="date-input" 
+                               *ngIf="control.get('dateFin')?.value">
+                  <mat-label>Fin</mat-label>
+                  <input matInput [matDatepicker]="endPicker" 
+                        [formControl]="control.get('dateFin')!">
+                  <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endPicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let control; let i = index">
+              <div class="actions-cell">
+                <mat-checkbox [formControl]="control.get('estActif')!" 
+                             matTooltip="Actif">
+                </mat-checkbox>
+
+                <button mat-icon-button color="warn" 
+                       (click)="removeProprietaire(i)"
+                       [disabled]="readonly || quoteParts.length <= 1"
+                       matTooltip="Supprimer">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Mode visuel avec curseurs -->
+      <div *ngIf="quoteParts.length > 0 && editMode === 'visual'" class="visual-editor">
+        <div *ngFor="let quotePart of quoteParts; let i = index" class="visual-quote-part">
+          <div class="proprietaire-header">
+            <div class="proprietaire-name">
+              {{ quotePart.proprietaire.nom }} {{ quotePart.proprietaire.prenom || '' }}
+            </div>
+            <div class="quote-part-value">
+              {{ formatPercentage(quotePart.quotePart) }}
+            </div>
+          </div>
+
+          <div class="slider-container">
+            <mat-slider 
+              [min]="0" 
+              [max]="100" 
+              [step]="0.1"
+              [disabled]="readonly">
+              <input matSliderThumb 
+                     [value]="quotePart.quotePart * 100"
+                     (input)="onSliderChange(i, $event)">
+            </mat-slider>
+          </div>
+
+          <div class="montant-info">
+            {{ formatCurrency(quotePart.montantIndividuel) }}
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Résumé final -->
+  <mat-card class="summary-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>assessment</mat-icon>
+        Résumé de la Répartition
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="label">Nombre de propriétaires</div>
+          <div class="value">{{ quoteParts.length }}</div>
+        </div>
+
+        <div class="summary-item">
+          <div class="label">Total des quote-parts</div>
+          <div class="value" [ngClass]="{ 'error': !isValid, 'success': isValid }">
+            {{ formatPercentage(currentValidation.totalQuotePart) }}
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="label">Montant total TNB</div>
+          <div class="value">{{ formatCurrency(montantTotalTnb) }}</div>
+        </div>
+
+        <div class="summary-item" *ngIf="remainingQuotePart > 0">
+          <div class="label">Quote-part restante</div>
+          <div class="value warning">{{ formatPercentage(remainingQuotePart) }}</div>
+        </div>
+      </div>
+
+      <div class="validation-status">
+        <mat-icon [color]="isValid ? 'primary' : 'warn'">
+          {{ isValid ? 'check_circle' : 'error' }}
+        </mat-icon>
+        <span [ngClass]="{ 'success': isValid, 'error': !isValid }">
+          {{ isValid ? 'Répartition valide' : 'Répartition invalide' }}
+        </span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,20 +1,501 @@
-// Importer exactement les mêmes styles que login
-@import '../login/login.component.scss';
+/* =====================================================
+   STYLES INSCRIPTION - EXACTEMENT COMME L'EXEMPLE
+   ===================================================== */
 
-// Styles pour select
-.champ-saisie {
-  &[formControlName="profil"] {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 20px center;
-    background-size: 16px;
-    padding-right: 50px;
-    cursor: pointer;
+.register-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* =====================================================
+   PARTIE GAUCHE - BRANDING (réutilise les styles login)
+   ===================================================== */
+
+.left-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: white;
+  text-align: center;
+}
+
+.brand-container {
+  max-width: 400px;
+}
+
+.logo-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.logo-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 2px;
+}
+
+.main-title {
+  font-size: 3rem;
+  font-weight: 300;
+  margin: 0 0 2rem 0;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+/* =====================================================
+   PARTIE DROITE - FORMULAIRE
+   ===================================================== */
+
+.right-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.form-title {
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.form-subtitle {
+  color: #666;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  font-size: 0.9rem;
+}
+
+/* =====================================================
+   FORMULAIRE
+   ===================================================== */
+
+.register-form {
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  
+  .form-group.half {
+    flex: 1;
   }
 }
 
-// Titre register différent
-.titre-application {
-  color: #FF7043 !important;
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 48px;
+  
+  &:focus-within {
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+  }
+}
+
+.input-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  flex-shrink: 0;
+}
+
+.input-icon {
+  color: #6c757d;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.country-flag {
+  font-size: 18px;
+}
+
+.form-input {
+  flex: 1;
+  padding: 0 12px;
+  border: none;
+  background: white;
+  font-size: 0.95rem;
+  color: #333;
+  outline: none;
+  
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.password-toggle-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  background: #f8f9fa;
+  border-left: 1px solid #e9ecef;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: #e9ecef;
+  }
+}
+
+.password-toggle-icon {
+  color: #6c757d;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* =====================================================
+   SÉLECTION DE PROFIL
+   ===================================================== */
+
+.profile-selection {
+  margin-top: 0.5rem;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.profile-option {
+  cursor: pointer;
+  
+  input[type="radio"] {
+    display: none;
+  }
+  
+  &.selected .profile-content {
+    border-color: #4A90E2;
+    background: rgba(74, 144, 226, 0.05);
+  }
+}
+
+.profile-content {
+  padding: 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: white;
+  
+  &:hover {
+    border-color: #4A90E2;
+    background: rgba(74, 144, 226, 0.02);
+  }
+}
+
+.profile-icon {
+  font-size: 24px;
+  color: #4A90E2;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.profile-title {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.profile-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* =====================================================
+   FORCE DU MOT DE PASSE
+   ===================================================== */
+
+.password-strength {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.strength-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.strength-bar {
+  height: 4px;
+  background: #e1e5e9;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  
+  &.weak {
+    width: 25%;
+    background: #dc3545;
+  }
+  
+  &.fair {
+    width: 50%;
+    background: #ffc107;
+  }
+  
+  &.good {
+    width: 75%;
+    background: #17a2b8;
+  }
+  
+  &.strong {
+    width: 100%;
+    background: #28a745;
+  }
+}
+
+.strength-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  
+  &.weak { color: #dc3545; }
+  &.fair { color: #ffc107; }
+  &.good { color: #17a2b8; }
+  &.strong { color: #28a745; }
+}
+
+/* =====================================================
+   CHECKBOX ET LIENS
+   ===================================================== */
+
+.checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1.4;
+  
+  input[type="checkbox"] {
+    display: none;
+  }
+  
+  .checkmark {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ddd;
+    border-radius: 3px;
+    margin-right: 8px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.3s ease;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+  }
+  
+  input[type="checkbox"]:checked + .checkmark {
+    background: #4A90E2;
+    border-color: #4A90E2;
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+}
+
+.checkbox-text {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.terms-link {
+  color: #4A90E2;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* =====================================================
+   BOUTONS
+   ===================================================== */
+
+.register-button {
+  width: 100%;
+  padding: 12px;
+  background: #4A90E2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  &:hover:not(:disabled) {
+    background: #357ABD;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.button-spinner {
+  ::ng-deep .mat-spinner circle {
+    stroke: white;
+  }
+}
+
+.login-link {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  
+  a {
+    color: #4A90E2;
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .register-container {
+    flex-direction: column;
+  }
+  
+  .left-section {
+    flex: none;
+    min-height: 30vh;
+    padding: 1rem;
+  }
+  
+  .logo-circle {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1rem;
+  }
+  
+  .logo-text {
+    font-size: 1.8rem;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .right-section {
+    flex: 1;
+    padding: 1rem;
+  }
+  
+  .form-container {
+    max-width: none;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }

@@ -1,0 +1,221 @@
+<!-- =====================================================
+     GESTIONNAIRE DE DOCUMENTS - INTERFACE COMPLÈTE
+     ===================================================== -->
+
+<div class="document-manager-container">
+
+  <!-- En-tête -->
+  <div class="manager-header">
+    <div class="header-content">
+      <h3 class="section-title">
+        <mat-icon class="title-icon">folder</mat-icon>
+        Documents de la Parcelle
+      </h3>
+      <p class="section-subtitle">Gérez tous les documents liés à cette parcelle</p>
+    </div>
+    
+    <div class="header-stats" *ngIf="documents.length > 0">
+      <div class="stat-item">
+        <span class="stat-value">{{documents.length}}</span>
+        <span class="stat-label">Documents</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire d'upload -->
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="card-icon">cloud_upload</mat-icon>
+        Ajouter un Document
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="uploadForm" (ngSubmit)="onUpload()" class="upload-form">
+        
+        <!-- Première ligne : Type et fichier -->
+        <div class="form-row">
+          <mat-form-field class="form-field">
+            <mat-label>Type de document</mat-label>
+            <mat-select formControlName="type_document" required>
+              <mat-option *ngFor="let type of documentTypes" [value]="type">
+                <mat-icon class="option-icon">{{getDocumentIcon(type)}}</mat-icon>
+                {{getDocumentTypeLabel(type)}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="uploadForm.get('type_document')?.hasError('required')">
+              Le type de document est requis
+            </mat-error>
+          </mat-form-field>
+
+          <div class="file-input-container">
+            <input 
+              type="file" 
+              #fileInput
+              (change)="onFileSelected($event)"
+              [accept]="acceptedFileTypes.join(',')"
+              class="file-input"
+              id="document-file">
+            
+            <label for="document-file" class="file-input-label">
+              <mat-icon>attach_file</mat-icon>
+              <span *ngIf="!selectedFile">Choisir un fichier</span>
+              <span *ngIf="selectedFile" class="selected-file">
+                {{selectedFile.name}} ({{formatFileSize(selectedFile.size)}})
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Deuxième ligne : Description -->
+        <div class="form-row">
+          <mat-form-field class="form-field full-width">
+            <mat-label>Description (optionnelle)</mat-label>
+            <textarea 
+              matInput 
+              formControlName="description"
+              placeholder="Décrivez brièvement ce document..."
+              rows="2">
+            </textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Types acceptés -->
+        <div class="accepted-types">
+          <small class="help-text">
+            <mat-icon class="info-icon">info</mat-icon>
+            Types acceptés : {{acceptedFileTypes.join(', ')}} (Max: 10MB)
+          </small>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="form-actions">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            [disabled]="uploadForm.invalid || loading"
+            class="upload-btn">
+            <mat-icon *ngIf="!loading">cloud_upload</mat-icon>
+            <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+            {{loading ? 'Upload en cours...' : 'Ajouter le Document'}}
+          </button>
+          
+          <button 
+            mat-button 
+            type="button"
+            (click)="resetForm()"
+            [disabled]="loading"
+            class="reset-btn">
+            <mat-icon>refresh</mat-icon>
+            Réinitialiser
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Barre de progression -->
+  <mat-progress-bar 
+    *ngIf="loading" 
+    mode="indeterminate" 
+    class="progress-bar">
+  </mat-progress-bar>
+
+  <!-- Liste des documents -->
+  <mat-card class="documents-list-card" *ngIf="documents.length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="card-icon">list</mat-icon>
+        Documents Existants
+      </mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="documents-grid">
+        <div 
+          *ngFor="let document of documents; trackBy: trackByDocumentId" 
+          class="document-item"
+          [class.loading]="loading">
+          
+          <!-- Icône et info principale -->
+          <div class="document-header">
+            <div class="document-icon">
+              <mat-icon [class]="'type-' + document.type_document.toLowerCase()">
+                {{getDocumentIcon(document.type_document)}}
+              </mat-icon>
+            </div>
+            
+            <div class="document-info">
+              <h4 class="document-name" [matTooltip]="document.nom_original">
+                {{document.nom_original}}
+              </h4>
+              <div class="document-meta">
+                <mat-chip 
+                  class="type-chip" 
+                  [color]="getDocumentTypeColor(document.type_document)">
+                  {{getDocumentTypeLabel(document.type_document)}}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+
+          <!-- Détails du document -->
+          <div class="document-details">
+            <div class="detail-item">
+              <mat-icon class="detail-icon">schedule</mat-icon>
+              <span>{{document.date_upload | date:'dd/MM/yyyy HH:mm'}}</span>
+            </div>
+            
+            <div class="detail-item">
+              <mat-icon class="detail-icon">storage</mat-icon>
+              <span>{{formatFileSize(document.taille_fichier)}}</span>
+            </div>
+          </div>
+
+          <!-- Description si présente -->
+          <div class="document-description" *ngIf="document.description">
+            <p class="description-text">{{document.description}}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="document-actions">
+            <button 
+              mat-icon-button 
+              color="primary"
+              (click)="downloadDocument(document)"
+              [disabled]="loading"
+              matTooltip="Télécharger">
+              <mat-icon>download</mat-icon>
+            </button>
+            
+            <button 
+              mat-icon-button 
+              color="warn"
+              (click)="deleteDocument(document)"
+              [disabled]="loading"
+              matTooltip="Supprimer">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message si aucun document -->
+  <mat-card class="empty-state-card" *ngIf="documents.length === 0 && !loading">
+    <mat-card-content>
+      <div class="empty-state">
+        <mat-icon class="empty-icon">folder_open</mat-icon>
+        <h3 class="empty-title">Aucun document</h3>
+        <p class="empty-message">
+          Cette parcelle n'a pas encore de documents associés.<br>
+          Utilisez le formulaire ci-dessus pour ajouter des documents.
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

@@ -95,18 +95,18 @@ export class Parcelle {
   
   // Relation avec ParcelleProprietaire (Many-to-Many via table de liaison)
   @OneToMany('ParcelleProprietaire', 'parcelle', { cascade: true, lazy: true })
-  proprietaires: any[]; // Typed as any temporairement, sera remplacé par ParcelleProprietaire[]
+  proprietaires: import('../../parcelle-proprietaire/entities/parcelle-proprietaire.entity').ParcelleProprietaire[];
 
   // Relation avec DocumentJoint (One-to-Many)
   @OneToMany('DocumentJoint', 'parcelle', { cascade: true, lazy: true })
-  documents: any[]; // Typed as any temporairement, sera remplacé par DocumentJoint[]
+  documents: import('../../document-joint/entities/document-joint.entity').DocumentJoint[];
 
   // Relation avec FicheFiscale via ParcelleProprietaire
   // Les fiches fiscales sont liées aux ParcelleProprietaire pour gérer l'indivision
   
   // Relation avec JournalAction pour l'audit trail
   @OneToMany('JournalAction', 'parcelleId', { lazy: true })
-  journalActions: any[]; // Typed as any temporairement, sera remplacé par JournalAction[]
+  journalActions: import('../../journal-action/entities/journal-action.entity').JournalAction[];
 
   // Méthodes virtuelles pour faciliter l'utilisation
 

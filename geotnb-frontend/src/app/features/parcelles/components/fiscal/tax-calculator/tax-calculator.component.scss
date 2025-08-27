@@ -1,0 +1,179 @@
+// =====================================================
+// STYLES TAX CALCULATOR - CALCULATEUR DE TAXE TNB
+// =====================================================
+
+.tax-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.calculation-form {
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
+  
+  .form-field {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.exonerations-section {
+  margin-top: 1rem;
+  
+  .exoneration-item {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.calculation-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.results-section {
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    
+    .result-date {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 0.875rem;
+    }
+  }
+  
+  .result-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .result-item {
+    padding: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    text-align: center;
+    
+    .result-label {
+      font-size: 0.875rem;
+      color: rgba(0, 0, 0, 0.6);
+      margin-bottom: 0.5rem;
+    }
+    
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 500;
+      
+      &.success {
+        color: #4caf50;
+      }
+      
+      &.warning {
+        color: #ff9800;
+      }
+      
+      &.final-amount {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2196f3;
+      }
+    }
+  }
+}
+
+.exonerations-detail {
+  .exoneration-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .exoneration-info {
+      flex: 1;
+      
+      .exoneration-description {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+      
+      .exoneration-details {
+        font-size: 0.875rem;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+    
+    .exoneration-amount {
+      font-weight: 500;
+      color: #4caf50;
+    }
+  }
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.error-card {
+  .error-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+    mat-icon {
+      color: #f44336;
+    }
+  }
+  
+  .error-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .tax-calculator {
+    padding: 1rem;
+  }
+  
+  .result-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .calculation-actions,
+  .result-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

@@ -148,11 +148,14 @@ export interface Parcelle {
   date_permis?: string;
   duree_exoneration?: number;
   geometry?: GeometryPolygon;
-  date_creation: string;
-  date_modification: string;
+  date_creation: Date | string;
+  date_modification: Date | string;
   etat_validation: EtatValidation;
-  derniere_mise_a_jour: string;
-  version: number;
+  derniere_mise_a_jour?: Date | string;
+  version?: number;
+  est_actif?: boolean;
+  // Relations
+  parcelle_proprietaires?: ParcelleProprietaire[];
 }
 
 // Interface ParcelleProprietaire (table parcelle_proprietaires)
@@ -299,6 +302,9 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
+  // Propriétés manquantes ajoutées pour compatibilité
+  items: T[];
+  totalElements: number;
 }
 
 export interface SearchFilters {
@@ -311,6 +317,35 @@ export interface SearchFilters {
   exonere_tnb?: boolean;
   date_debut?: string;
   date_fin?: string;
+}
+
+// Interface manquante ajoutée
+export interface SearchParcelleDto {
+  reference_fonciere?: string;
+  zonage?: string;
+  statut_foncier?: StatutFoncier;
+  statut_occupation?: StatutOccupation;
+  etat_validation?: EtatValidation;
+  exonere_tnb?: boolean;
+  proprietaire_nom?: string;
+  surface_min?: number;
+  surface_max?: number;
+  montant_min?: number;
+  montant_max?: number;
+  date_creation_debut?: string;
+  date_creation_fin?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}
+
+// Interface manquante ajoutée - Parcelle avec ses propriétaires
+export interface ParcelleWithProprietaires extends Parcelle {
+  proprietaires: Proprietaire[];
+  parcelle_proprietaires: ParcelleProprietaire[];
+  surface_calculee?: number;
+  centroide?: [number, number];
 }
 
 // Interfaces spécifiques au projet TNB
@@ -396,4 +431,77 @@ export interface SystemConfig {
     max_exemption_years: number;
   };
   validation_workflow: WorkflowTransition[];
+}
+
+// DTOs pour les parcelles
+export interface CreateParcelleDto {
+  reference_fonciere: string;
+  surface_totale: number;
+  surface_imposable: number;
+  zonage: string;
+  statut_foncier: StatutFoncier;
+  statut_occupation: StatutOccupation;
+  exonere_tnb: boolean;
+  date_exoneration?: string;
+  duree_exoneration?: number;
+  geometry?: Geometry;
+  observations?: string;
+  id_zone_fiscale?: number;
+}
+
+export interface UpdateParcelleDto extends Partial<CreateParcelleDto> {
+  id: number;
+}
+
+// Types pour les configurations de dessin (pour MapService)
+export interface DrawingConfig {
+  type: 'polygon' | 'rectangle' | 'circle' | 'point';
+  strokeColor?: string;
+  fillColor?: string;
+  strokeWidth?: number;
+  fillOpacity?: number;
+}
+
+// Types pour les layers de carte
+export interface LayerConfig {
+  id: string;
+  name: string;
+  visible: boolean;
+  opacity: number;
+  zIndex: number;
+  source?: any;
+}
+
+// Interface pour les événements de sélection sur la carte
+export interface MapSelectionEvent {
+  coordinate: [number, number];
+  feature?: any;
+}
+
+// Interface pour les résultats de calculs fiscaux
+export interface CalculTnbResult {
+  montantTotalTnb: number;
+  prixUnitaireM2: number;
+  surface_imposable: number;
+  zonage: string;
+  exoneration?: {
+    active: boolean;
+    duree: number;
+    pourcentage_reduction: number;
+  };
+}
+
+// Type pour les rôles d'utilisateur (pour AuthService)
+export type UserRole = UserProfil;
+
+// Interface pour les permissions
+export interface UserPermissions {
+  canCreate: boolean;
+  canRead: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  canValidate: boolean;
+  canPublish: boolean;
+  canExport: boolean;
+  canImport: boolean;
 }

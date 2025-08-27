@@ -1,0 +1,31 @@
+/* =====================================================
+   DOCUMENTS EN ATTENTE - STYLES ADDITIONNELS
+   ===================================================== */
+
+.documents-pending {
+  .pending-message {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    
+    .pending-icon {
+      font-size: 3rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+    
+    h4 {
+      color: #495057;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    p {
+      color: #6c757d;
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+}

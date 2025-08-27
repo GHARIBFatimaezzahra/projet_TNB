@@ -1,6 +1,6 @@
-export { cinValidator } from './cin.validator';
+export { CinValidator } from './cin.validator';
 export { rcValidator } from './rc.validator';
-export { phoneValidator } from './phone.validator';
+export { PhoneValidator } from './phone.validator';
 export { surfaceValidator } from './surface.validator';
 export { quotePartValidator, quotePartSumValidator } from './quote-part.validator';
 export { geometryValidator } from './geometry.validator';

@@ -57,7 +57,7 @@ export class WorkflowEngineService {
 
   // Obtenir les transitions possibles pour un état donné
   getAvailableTransitions(currentState: EtatValidation): WorkflowTransition[] {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     if (!user) return [];
 
     return this.workflowTransitions.filter(transition => 
@@ -185,7 +185,7 @@ export class WorkflowEngineService {
 
   // Obtenir les permissions par état
   getStatePermissions(state: EtatValidation): { canEdit: boolean; canDelete: boolean; canGenerateFiche: boolean } {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     if (!user) return { canEdit: false, canDelete: false, canGenerateFiche: false };
 
     switch (state) {

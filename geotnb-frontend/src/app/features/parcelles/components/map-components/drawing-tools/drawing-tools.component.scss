@@ -1,0 +1,439 @@
+// =====================================================
+// STYLES OUTILS DE DESSIN - ÉDITION GÉOMÉTRIQUE
+// =====================================================
+
+.drawing-tools-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-width: 200px;
+
+  &.enabled {
+    border-left: 4px solid var(--mdc-theme-secondary);
+  }
+
+  &.compact {
+    min-width: auto;
+  }
+
+  // Mode normal - panneau complet
+  .tools-panel {
+    display: flex;
+    flex-direction: column;
+
+    // En-tête
+    .tools-header {
+      background: var(--mdc-theme-secondary);
+      color: white;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+
+        mat-icon {
+          font-size: 1.25rem;
+          width: 1.25rem;
+          height: 1.25rem;
+        }
+      }
+
+      button {
+        color: white;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    // Section d'outils
+    .tool-section {
+      padding: 1rem;
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--mdc-theme-text-secondary-on-background);
+
+        mat-icon {
+          font-size: 1rem;
+          width: 1rem;
+          height: 1rem;
+          color: var(--mdc-theme-text-hint-on-background);
+        }
+      }
+
+      // Groupe d'outils
+      .tool-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+
+        button {
+          width: 40px;
+          height: 40px;
+          min-height: 40px;
+          border-radius: 0.25rem;
+          transition: all 0.2s ease;
+
+          &.selected {
+            background: var(--mdc-theme-primary);
+            color: white;
+            
+            mat-icon {
+              color: white;
+            }
+          }
+
+          &:not(.selected):hover {
+            background: rgba(33, 150, 243, 0.1);
+          }
+
+          &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+          }
+
+          mat-icon {
+            font-size: 1.25rem;
+            width: 1.25rem;
+            height: 1.25rem;
+          }
+        }
+      }
+
+      // Boutons d'action
+      .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        button {
+          justify-content: flex-start;
+          font-size: 0.875rem;
+          height: 36px;
+
+          mat-icon {
+            font-size: 1rem;
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+          }
+
+          &[color="warn"] {
+            color: #f44336;
+            border-color: rgba(244, 67, 54, 0.5);
+
+            &:hover {
+              background: rgba(244, 67, 54, 0.04);
+            }
+          }
+        }
+      }
+    }
+
+    // Séparateurs
+    mat-divider {
+      margin: 0 1rem;
+    }
+  }
+
+  // Mode compact
+  .tools-compact {
+    padding: 0.75rem;
+
+    .compact-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      mat-button-toggle-group {
+        ::ng-deep .mat-button-toggle {
+          border-radius: 0.25rem;
+          
+          &.mat-button-toggle-checked {
+            background: var(--mdc-theme-primary);
+            color: white;
+          }
+        }
+
+        mat-button-toggle {
+          width: 40px;
+          height: 40px;
+          min-height: 40px;
+
+          mat-icon {
+            font-size: 1.25rem;
+            width: 1.25rem;
+            height: 1.25rem;
+          }
+        }
+      }
+
+      > button {
+        width: 40px;
+        height: 40px;
+        min-height: 40px;
+      }
+    }
+  }
+
+  // Menu d'outils
+  ::ng-deep .mat-mdc-menu-panel {
+    .menu-section {
+      padding: 0.5rem 0;
+
+      .menu-section-title {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--mdc-theme-text-secondary-on-background);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      button {
+        mat-icon {
+          margin-right: 0.75rem;
+        }
+      }
+    }
+  }
+
+  // Indicateur d'état
+  .tool-status {
+    background: rgba(255, 193, 7, 0.1);
+    border-top: 1px solid rgba(255, 193, 7, 0.3);
+    padding: 0.75rem 1rem;
+
+    .status-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #F57C00;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 1rem;
+          width: 1rem;
+          height: 1rem;
+          color: #FF9800;
+        }
+      }
+    }
+  }
+
+  // Message désactivé
+  .disabled-message {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--mdc-theme-text-secondary-on-background);
+
+    mat-icon {
+      font-size: 3rem;
+      width: 3rem;
+      height: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+      color: var(--mdc-theme-text-hint-on-background);
+    }
+
+    p {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    small {
+      font-size: 0.875rem;
+      opacity: 0.7;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .drawing-tools-container {
+    min-width: 180px;
+
+    .tools-panel {
+      .tool-section {
+        padding: 0.75rem;
+
+        .tool-group {
+          gap: 0.125rem;
+
+          button {
+            width: 36px;
+            height: 36px;
+            min-height: 36px;
+          }
+        }
+
+        .action-buttons {
+          button {
+            font-size: 0.8rem;
+            height: 32px;
+          }
+        }
+      }
+    }
+
+    .tools-compact {
+      padding: 0.5rem;
+
+      .compact-tools {
+        mat-button-toggle-group {
+          mat-button-toggle {
+            width: 36px;
+            height: 36px;
+            min-height: 36px;
+          }
+        }
+
+        > button {
+          width: 36px;
+          height: 36px;
+          min-height: 36px;
+        }
+      }
+    }
+  }
+}
+
+// Mode très compact pour mobile
+@media (max-width: 480px) {
+  .drawing-tools-container {
+    &.compact {
+      .tools-compact {
+        .compact-tools {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.25rem;
+
+          mat-button-toggle-group {
+            ::ng-deep .mat-button-toggle-group-appearance-standard {
+              .mat-button-toggle + .mat-button-toggle {
+                border-left: 1px solid var(--mdc-theme-surface-variant);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes toolSelect {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tool-group button.selected {
+  animation: toolSelect 0.2s ease-out;
+}
+
+// États spéciaux
+.tool-group button {
+  position: relative;
+
+  // Indicateur de raccourci clavier
+  &::after {
+    content: attr(data-shortcut);
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: var(--mdc-theme-primary);
+    color: white;
+    font-size: 0.6rem;
+    padding: 1px 3px;
+    border-radius: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+
+  // Indicateur d'activité
+  &.active {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+  }
+}
+
+// Mode sombre (si supporté)
+@media (prefers-color-scheme: dark) {
+  .drawing-tools-container {
+    background: rgba(33, 33, 33, 0.95);
+    color: white;
+
+    .tools-header {
+      background: var(--mdc-theme-secondary-dark, #F57C00);
+    }
+
+    .tool-section {
+      .section-title {
+        color: rgba(255, 255, 255, 0.7);
+
+        mat-icon {
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      .tool-group button {
+        &:not(.selected):hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+    }
+
+    .disabled-message {
+      color: rgba(255, 255, 255, 0.7);
+
+      mat-icon {
+        color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}

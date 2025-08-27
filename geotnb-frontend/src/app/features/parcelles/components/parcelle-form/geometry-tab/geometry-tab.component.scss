@@ -1,0 +1,481 @@
+// =====================================================
+// STYLES ONGLET GÉOMÉTRIE - ÉDITION CARTOGRAPHIQUE
+// =====================================================
+
+.geometry-tab-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1rem;
+
+  // Barre d'outils
+  .toolbar-card {
+    .toolbar-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 0.5rem 1rem;
+
+      .drawing-tools {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .tool-group {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+
+          .tool-group-label {
+            font-size: 0.875rem;
+            color: var(--mdc-theme-text-secondary-on-background);
+            margin-right: 0.5rem;
+          }
+        }
+
+        .drawing-actions {
+          display: flex;
+          gap: 0.5rem;
+
+          button {
+            min-width: auto;
+          }
+        }
+      }
+
+      .general-actions {
+        display: flex;
+        gap: 0.25rem;
+      }
+
+      mat-divider {
+        height: 2rem;
+      }
+    }
+  }
+
+  // Conteneur principal
+  .main-container {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
+    min-height: 0;
+
+    // Section carte
+    .map-section {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+
+      .map-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        .map-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          padding: 0;
+
+          // Indicateurs d'état
+          .map-status {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            .status-item {
+              background: rgba(255, 255, 255, 0.95);
+              backdrop-filter: blur(4px);
+              border-radius: 0.5rem;
+              padding: 0.75rem 1rem;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              font-size: 0.875rem;
+
+              &.drawing {
+                background: rgba(33, 150, 243, 0.1);
+                border-left: 4px solid #2196F3;
+                color: #1976D2;
+              }
+
+              &.editing {
+                background: rgba(255, 193, 7, 0.1);
+                border-left: 4px solid #FFC107;
+                color: #F57C00;
+              }
+
+              &.calculating {
+                background: rgba(76, 175, 80, 0.1);
+                border-left: 4px solid #4CAF50;
+                color: #388E3C;
+              }
+
+              mat-icon {
+                font-size: 1.25rem;
+                width: 1.25rem;
+                height: 1.25rem;
+              }
+
+              mat-spinner {
+                margin-right: 0.25rem;
+              }
+            }
+          }
+
+          // Conteneur OpenLayers
+          .map-container {
+            flex: 1;
+            min-height: 400px;
+            background: #f5f5f5;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+
+            // Styles OpenLayers (à personnaliser)
+            ::ng-deep {
+              .ol-viewport {
+                border-radius: 0.5rem;
+              }
+
+              .ol-control {
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 0.25rem;
+                
+                button {
+                  background: transparent;
+                  border: none;
+                  color: #333;
+                  
+                  &:hover {
+                    background: rgba(0, 0, 0, 0.1);
+                  }
+                }
+              }
+
+              .ol-zoom {
+                top: 1rem;
+                left: 1rem;
+              }
+
+              .ol-attribution {
+                bottom: 0.5rem;
+                right: 0.5rem;
+                font-size: 0.75rem;
+              }
+            }
+          }
+
+          // Overlay d'informations
+          .map-overlay {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+
+            .overlay-content {
+              background: rgba(255, 255, 255, 0.95);
+              backdrop-filter: blur(4px);
+              border-radius: 0.5rem;
+              padding: 1rem;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              min-width: 200px;
+
+              .geometry-type {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 0.75rem;
+                font-weight: 500;
+                color: var(--mdc-theme-primary);
+
+                mat-icon {
+                  font-size: 1.5rem;
+                  width: 1.5rem;
+                  height: 1.5rem;
+                }
+              }
+
+              .quick-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+
+                .stat-item {
+                  display: flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                  font-size: 0.875rem;
+                  color: var(--mdc-theme-text-secondary-on-background);
+
+                  mat-icon {
+                    font-size: 1rem;
+                    width: 1rem;
+                    height: 1rem;
+                    color: var(--mdc-theme-text-hint-on-background);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Panneau d'informations
+    .info-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 300px;
+
+      .info-card {
+        mat-card-header {
+          mat-card-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+
+            mat-icon {
+              font-size: 1.25rem;
+              width: 1.25rem;
+              height: 1.25rem;
+            }
+          }
+        }
+
+        // Informations géométriques
+        &.geometry-info-card {
+          .info-grid {
+            display: grid;
+            gap: 1rem;
+
+            .info-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0.5rem 0;
+              border-bottom: 1px solid var(--mdc-theme-surface-variant);
+
+              &:last-child {
+                border-bottom: none;
+              }
+
+              .info-label {
+                font-weight: 500;
+                color: var(--mdc-theme-text-secondary-on-background);
+              }
+
+              .info-value {
+                font-weight: 400;
+                text-align: right;
+
+                &.surface-value {
+                  font-weight: 600;
+                  color: var(--mdc-theme-primary);
+                }
+              }
+
+              &.bounds-item {
+                flex-direction: column;
+                align-items: flex-start;
+
+                .bounds-value {
+                  margin-top: 0.25rem;
+                  width: 100%;
+                  text-align: right;
+                }
+              }
+            }
+          }
+
+          .no-geometry-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--mdc-theme-text-secondary-on-background);
+
+            mat-icon {
+              font-size: 3rem;
+              width: 3rem;
+              height: 3rem;
+              margin-bottom: 1rem;
+              opacity: 0.5;
+            }
+
+            p {
+              margin: 0 0 1rem 0;
+              font-size: 1.1rem;
+            }
+
+            small {
+              font-size: 0.875rem;
+              opacity: 0.7;
+            }
+          }
+        }
+
+        // Cohérence des surfaces
+        &.coherence-card {
+          .coherence-analysis {
+            .comparison-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0.75rem 0;
+              border-bottom: 1px solid var(--mdc-theme-surface-variant);
+
+              &:last-of-type {
+                border-bottom: none;
+              }
+
+              &.difference-item {
+                margin-top: 0.5rem;
+                padding-top: 1rem;
+                border-top: 2px solid var(--mdc-theme-surface-variant);
+              }
+
+              .comparison-label {
+                font-weight: 500;
+              }
+
+              .comparison-value {
+                font-weight: 600;
+
+                &.calculated {
+                  color: var(--mdc-theme-primary);
+                }
+
+                &.declared {
+                  color: var(--mdc-theme-secondary);
+                }
+
+                &.difference {
+                  &.warning {
+                    color: #FF9800;
+                  }
+
+                  &.error {
+                    color: #F44336;
+                  }
+                }
+              }
+            }
+
+            .coherence-message {
+              margin-top: 1rem;
+              padding: 0.75rem;
+              border-radius: 0.5rem;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.875rem;
+
+              &.good {
+                background: rgba(76, 175, 80, 0.1);
+                color: #2E7D32;
+                border-left: 4px solid #4CAF50;
+              }
+
+              &.warning {
+                background: rgba(255, 152, 0, 0.1);
+                color: #E65100;
+                border-left: 4px solid #FF9800;
+              }
+
+              &.error {
+                background: rgba(244, 67, 54, 0.1);
+                color: #C62828;
+                border-left: 4px solid #F44336;
+              }
+
+              mat-icon {
+                font-size: 1.25rem;
+                width: 1.25rem;
+                height: 1.25rem;
+              }
+            }
+          }
+        }
+
+        // Actions rapides
+        &.actions-card {
+          .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+
+            .action-button {
+              justify-content: flex-start;
+              text-align: left;
+
+              mat-icon {
+                margin-right: 0.5rem;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .geometry-tab-container {
+    .main-container {
+      flex-direction: column;
+
+      .map-section {
+        order: 2;
+      }
+
+      .info-panel {
+        order: 1;
+        flex-direction: row;
+        overflow-x: auto;
+
+        .info-card {
+          min-width: 280px;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .geometry-tab-container {
+    .toolbar-card .toolbar-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+
+      .drawing-tools,
+      .general-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+    }
+
+    .main-container {
+      .info-panel {
+        flex-direction: column;
+      }
+
+      .map-section .map-card .map-content .map-container {
+        min-height: 300px;
+      }
+    }
+  }
+}

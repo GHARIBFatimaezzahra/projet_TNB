@@ -34,6 +34,15 @@ export class FicheFiscale {
   @Column({ name: 'montant_tnb', type: 'float' })
   montantTnb: number;
 
+  @Column({ name: 'categorie_fiscale', nullable: true })
+  categorieFiscale: string;
+
+  @Column({ name: 'tarif', type: 'float', nullable: true })
+  tarif: number;
+
+  @Column({ name: 'surface_imposable', type: 'float', nullable: true })
+  surfaceImposable: number;
+
   @Column({ name: 'montant_paye', type: 'float', default: 0 })
   montantPaye: number;
 
@@ -59,12 +68,12 @@ export class FicheFiscale {
   // Relation avec ParcelleProprietaire (Many-to-One)
   @ManyToOne('ParcelleProprietaire', 'ficheFiscale', { lazy: true })
   @JoinColumn({ name: 'parcelle_proprietaire_id' })
-  parcelleProprietaire: any; // Sera remplacé par ParcelleProprietaire
+  parcelleProprietaire: import('../../parcelle-proprietaire/entities/parcelle-proprietaire.entity').ParcelleProprietaire;
 
   // Relation avec User (Many-to-One) - Utilisateur qui a généré la fiche
   @ManyToOne('User', 'fichesGenerees', { lazy: true })
   @JoinColumn({ name: 'genere_par' })
-  genereParUtilisateur: any; // Sera remplacé par User
+  genereParUtilisateur: import('../../user/entities/user.entity').User;
 
   // Méthodes virtuelles pour faciliter l'utilisation
 

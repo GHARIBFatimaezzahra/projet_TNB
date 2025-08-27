@@ -116,7 +116,7 @@ export class LoggerService {
       return;
     }
 
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     
     const logEntry: LogEntry = {
       id: this.generateLogId(),

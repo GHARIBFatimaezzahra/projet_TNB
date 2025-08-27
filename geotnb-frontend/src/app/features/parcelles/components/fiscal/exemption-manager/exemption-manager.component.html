@@ -1,0 +1,317 @@
+<!-- ===================================================== -->
+<!-- GESTIONNAIRE D'EXONÉRATIONS TNB -->
+<!-- ===================================================== -->
+
+<div class="exemption-manager">
+  <!-- En-tête -->
+  <div class="header">
+    <div class="title-section">
+      <h3>
+        <mat-icon>account_balance</mat-icon>
+        Gestion des Exonérations TNB
+      </h3>
+      <p class="subtitle" *ngIf="parcelle">
+        Parcelle {{ parcelle.reference_fonciere }}
+      </p>
+    </div>
+
+    <div class="summary-cards" *ngIf="exemptions.length > 0">
+      <mat-card class="summary-card active">
+        <mat-card-content>
+          <div class="metric">
+            <span class="value">{{ hasActiveExemptions ? 'OUI' : 'NON' }}</span>
+            <span class="label">Exonération Active</span>
+          </div>
+          <mat-icon [color]="hasActiveExemptions ? 'primary' : ''">
+            {{ hasActiveExemptions ? 'check_circle' : 'cancel' }}
+          </mat-icon>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card amount">
+        <mat-card-content>
+          <div class="metric">
+            <span class="value">{{ formatCurrency(totalExemptionAmount) }}</span>
+            <span class="label">Montant Exonéré</span>
+          </div>
+          <mat-icon color="accent">savings</mat-icon>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card count">
+        <mat-card-content>
+          <div class="metric">
+            <span class="value">{{ exemptions.length }}</span>
+            <span class="label">{{ exemptions.length > 1 ? 'Exonérations' : 'Exonération' }}</span>
+          </div>
+          <mat-icon>list_alt</mat-icon>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Formulaire d'ajout d'exonération -->
+  <mat-card class="exemption-form-card" *ngIf="!readonly">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>add_circle</mat-icon>
+        Nouvelle Exonération
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="exemptionForm" (ngSubmit)="addExemption()">
+        <div class="form-row">
+          <!-- Type d'exonération -->
+          <mat-form-field appearance="outline" class="form-field-full">
+            <mat-label>Type d'exonération</mat-label>
+            <mat-select formControlName="typeExoneration" required>
+              <mat-option *ngFor="let type of exemptionTypes" [value]="type.value">
+                <div class="exemption-type-option">
+                  <mat-icon [color]="type.color">{{ type.icon }}</mat-icon>
+                  <span>{{ type.label }}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-error>Le type d'exonération est requis</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row" *ngIf="exemptionForm.get('typeExoneration')?.value">
+          <!-- Date de début -->
+          <mat-form-field appearance="outline">
+            <mat-label>Date de début</mat-label>
+            <input matInput [matDatepicker]="startPicker" formControlName="dateDebut" required>
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+            <mat-error>La date de début est requise</mat-error>
+          </mat-form-field>
+
+          <!-- Durée -->
+          <mat-form-field appearance="outline">
+            <mat-label>Durée (années)</mat-label>
+            <mat-select formControlName="dureeExoneration" required>
+              <mat-option *ngFor="let duree of getDureesForType(exemptionForm.get('typeExoneration')?.value)" 
+                         [value]="duree">
+                {{ duree }} {{ duree > 1 ? 'ans' : 'an' }}
+              </mat-option>
+            </mat-select>
+            <mat-error>La durée est requise</mat-error>
+          </mat-form-field>
+
+          <!-- Pourcentage -->
+          <mat-form-field appearance="outline">
+            <mat-label>Pourcentage d'exonération</mat-label>
+            <mat-select formControlName="pourcentageExoneration" required>
+              <mat-option *ngFor="let pct of getPourcentagesForType(exemptionForm.get('typeExoneration')?.value)" 
+                         [value]="pct">
+                {{ pct }}%
+              </mat-option>
+            </mat-select>
+            <mat-error>Le pourcentage est requis</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Motif -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field-full">
+            <mat-label>Motif de l'exonération</mat-label>
+            <textarea matInput formControlName="motif" rows="3" 
+                     placeholder="Décrivez les raisons de cette exonération..." required></textarea>
+            <mat-error>Le motif est requis (minimum 10 caractères)</mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Documents joints -->
+        <div class="form-row">
+          <div class="documents-section">
+            <div class="section-header">
+              <h4>Documents justificatifs</h4>
+              <button type="button" mat-icon-button (click)="addDocument()" 
+                     matTooltip="Ajouter un document">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+
+            <div class="documents-list" *ngIf="documentsJointsArray.length > 0">
+              <div *ngFor="let document of documentsJointsArray.controls; let i = index" 
+                   class="document-item">
+                <mat-form-field appearance="outline" class="document-field">
+                  <mat-label>Document {{ i + 1 }}</mat-label>
+                  <input matInput [formControlName]="'document' + i" 
+                        placeholder="Nom ou référence du document">
+                </mat-form-field>
+                <button type="button" mat-icon-button color="warn" 
+                       (click)="removeDocument(i)" matTooltip="Supprimer">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conditions spéciales -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="form-field-full">
+            <mat-label>Conditions spéciales (optionnel)</mat-label>
+            <textarea matInput formControlName="conditionsSpeciales" rows="2"
+                     placeholder="Conditions particulières ou remarques..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Actions du formulaire -->
+        <div class="form-actions">
+          <button type="button" mat-button (click)="resetForm()" class="reset-button">
+            <mat-icon>refresh</mat-icon>
+            Réinitialiser
+          </button>
+          
+          <button type="submit" mat-raised-button color="primary" 
+                 [disabled]="!canAddExemption">
+            <mat-icon>add_circle</mat-icon>
+            Ajouter l'exonération
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Liste des exonérations existantes -->
+  <mat-card class="exemptions-list-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        Exonérations Existantes
+        <mat-chip-set *ngIf="exemptions.length > 0">
+          <mat-chip [color]="hasActiveExemptions ? 'primary' : ''" 
+                   [highlighted]="hasActiveExemptions">
+            {{ exemptions.length }} {{ exemptions.length > 1 ? 'exonérations' : 'exonération' }}
+          </mat-chip>
+        </mat-chip-set>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="exemptions.length === 0" class="no-exemptions">
+        <mat-icon color="disabled">info</mat-icon>
+        <p>Aucune exonération enregistrée pour cette parcelle</p>
+      </div>
+
+      <div *ngIf="exemptions.length > 0" class="exemptions-table">
+        <table mat-table [dataSource]="exemptions" class="exemptions-mat-table">
+          <!-- Colonne Type -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let exemption">
+              <div class="type-cell">
+                <mat-icon [color]="getExemptionTypeColor(exemption.typeExoneration)">
+                  {{ getExemptionTypeIcon(exemption.typeExoneration) }}
+                </mat-icon>
+                <span>{{ getExemptionTypeLabel(exemption.typeExoneration) }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Période -->
+          <ng-container matColumnDef="periode">
+            <th mat-header-cell *matHeaderCellDef>Période</th>
+            <td mat-cell *matCellDef="let exemption">
+              <div class="periode-cell">
+                <span class="dates">{{ formatDateRange(exemption.dateDebut, exemption.dateFin) }}</span>
+                <span class="duration">
+                  {{ ((exemption.dateFin.getTime() - exemption.dateDebut.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) | number:'1.0-0' }} ans
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Pourcentage -->
+          <ng-container matColumnDef="pourcentage">
+            <th mat-header-cell *matHeaderCellDef>Exonération</th>
+            <td mat-cell *matCellDef="let exemption">
+              <mat-chip [color]="exemption.pourcentageExoneration === 100 ? 'primary' : 'accent'">
+                {{ exemption.pourcentageExoneration }}%
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Montant -->
+          <ng-container matColumnDef="montant">
+            <th mat-header-cell *matHeaderCellDef>Montant Exonéré</th>
+            <td mat-cell *matCellDef="let exemption">
+              <span class="amount">{{ formatCurrency(exemption.montantExonere) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Statut -->
+          <ng-container matColumnDef="statut">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let exemption">
+              <mat-chip [color]="getExemptionStatus(exemption).color">
+                <mat-icon matChipAvatar>{{ getExemptionStatus(exemption).icon }}</mat-icon>
+                {{ getExemptionStatus(exemption).label }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let exemption">
+              <div class="actions-cell">
+                <button mat-icon-button [matMenuTriggerFor]="actionsMenu" 
+                       matTooltip="Actions">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <mat-menu #actionsMenu="matMenu">
+                  <button mat-menu-item *ngIf="exemption.statut === 'Active'" 
+                         (click)="suspendExemption(exemption)">
+                    <mat-icon>pause</mat-icon>
+                    <span>Suspendre</span>
+                  </button>
+
+                  <button mat-menu-item *ngIf="exemption.statut === 'Suspendue'" 
+                         (click)="reactivateExemption(exemption)">
+                    <mat-icon>play_arrow</mat-icon>
+                    <span>Réactiver</span>
+                  </button>
+
+                  <mat-divider></mat-divider>
+
+                  <button mat-menu-item (click)="removeExemption(exemption)" 
+                         class="delete-action">
+                    <mat-icon>delete</mat-icon>
+                    <span>Supprimer</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="exemptionsColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: exemptionsColumns;" 
+              [class.active-exemption]="isExemptionActive(row)"
+              [class.expired-exemption]="isExemptionExpired(row)"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Historique des exonérations -->
+  <mat-card class="history-card" *ngIf="showHistory">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Historique des Exonérations
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="history-placeholder">
+        <mat-icon color="disabled">schedule</mat-icon>
+        <p>L'historique des modifications sera affiché ici</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

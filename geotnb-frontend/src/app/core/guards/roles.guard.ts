@@ -3,6 +3,7 @@ import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTr
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { UserProfil } from '../models/database.models';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,7 @@ export class RolesGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    const requiredRoles = route.data['roles'] as string[];
+    const requiredRoles = route.data['roles'] as UserProfil[];
     
     if (!requiredRoles || requiredRoles.length === 0) {
         return true;

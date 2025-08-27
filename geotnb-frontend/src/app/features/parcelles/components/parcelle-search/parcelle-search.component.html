@@ -1,0 +1,526 @@
+<!-- ===================================================== -->
+<!-- COMPOSANT RECHERCHE DE PARCELLES -->
+<!-- ===================================================== -->
+
+<div class="parcelle-search">
+  <!-- En-tête -->
+  <div class="header">
+    <div class="title-section">
+      <h3>
+        <mat-icon>search</mat-icon>
+        Recherche de Parcelles
+      </h3>
+      <p class="subtitle">Trouvez rapidement les parcelles selon vos critères</p>
+    </div>
+
+    <div class="header-actions">
+      <mat-button-toggle-group [(value)]="searchMode" (change)="toggleSearchMode()">
+        <mat-button-toggle value="quick" matTooltip="Recherche rapide">
+          <mat-icon>flash_on</mat-icon>
+          Rapide
+        </mat-button-toggle>
+        <mat-button-toggle value="advanced" matTooltip="Recherche avancée">
+          <mat-icon>tune</mat-icon>
+          Avancée
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <button mat-icon-button (click)="clearSearch()" 
+             matTooltip="Effacer la recherche"
+             [disabled]="!hasActiveFilters && !hasSearched">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres rapides -->
+  <mat-card class="quick-filters-card" *ngIf="showQuickFilters">
+    <mat-card-content>
+      <div class="quick-filters">
+        <span class="filters-label">Filtres rapides :</span>
+        <mat-chip-set>
+          <mat-chip *ngFor="let filter of quickFilters" 
+                   [class.selected]="selectedQuickFilter === filter.id"
+                   [color]="selectedQuickFilter === filter.id ? 'primary' : ''"
+                   (click)="selectQuickFilter(filter.id)"
+                   [matTooltip]="filter.label">
+            <mat-icon matChipAvatar>{{ filter.icon }}</mat-icon>
+            {{ filter.label }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Recherche rapide -->
+  <mat-card class="quick-search-card" *ngIf="isQuickMode">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>flash_on</mat-icon>
+        Recherche Rapide
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="quickSearchForm" class="quick-search-form">
+        <div class="search-row">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher...</mat-label>
+            <input matInput formControlName="searchTerm" 
+                  placeholder="Référence, propriétaire, zonage..."
+                  (keyup.enter)="executeSearch()">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Type de recherche</mat-label>
+            <mat-select formControlName="searchType">
+              <mat-option value="all">Tous les champs</mat-option>
+              <mat-option value="reference">Référence foncière</mat-option>
+              <mat-option value="proprietaire">Propriétaire</mat-option>
+              <mat-option value="zonage">Zonage</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="executeSearch()" 
+                 [disabled]="isSearching">
+            <mat-spinner diameter="20" *ngIf="isSearching"></mat-spinner>
+            <mat-icon *ngIf="!isSearching">search</mat-icon>
+            {{ isSearching ? 'Recherche...' : 'Rechercher' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Recherche avancée -->
+  <mat-card class="advanced-search-card" *ngIf="isAdvancedMode">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>tune</mat-icon>
+        Recherche Avancée
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="advancedSearchForm" class="advanced-search-form">
+        
+        <!-- Section Identification -->
+        <mat-expansion-panel class="search-section" [expanded]="true">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>fingerprint</mat-icon>
+              Identification
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Référence foncière</mat-label>
+                <input matInput formControlName="reference_fonciere" 
+                      placeholder="Ex: TF-123456">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Zonage</mat-label>
+                <input matInput formControlName="zonage" 
+                      [matAutocomplete]="zonageAuto"
+                      placeholder="Ex: U1, R2...">
+                <mat-autocomplete #zonageAuto="matAutocomplete">
+                  <mat-option *ngFor="let zonage of filteredZonages" [value]="zonage">
+                    {{ zonage }}
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Secteur</mat-label>
+                <input matInput formControlName="secteur" 
+                      placeholder="Nom du secteur">
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Section Caractéristiques -->
+        <mat-expansion-panel class="search-section">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>category</mat-icon>
+              Caractéristiques Foncières
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Statut foncier</mat-label>
+                <mat-select formControlName="statut_foncier">
+                  <mat-option value="">Tous</mat-option>
+                  <mat-option *ngFor="let statut of statutFoncierOptions" [value]="statut.value">
+                    {{ statut.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Statut d'occupation</mat-label>
+                <mat-select formControlName="statut_occupation">
+                  <mat-option value="">Tous</mat-option>
+                  <mat-option *ngFor="let statut of statutOccupationOptions" [value]="statut.value">
+                    {{ statut.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>État de validation</mat-label>
+                <mat-select formControlName="etat_validation">
+                  <mat-option value="">Tous</mat-option>
+                  <mat-option *ngFor="let etat of etatValidationOptions" [value]="etat.value">
+                    {{ etat.label }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Section Surfaces -->
+        <mat-expansion-panel class="search-section">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>crop_landscape</mat-icon>
+              Surfaces
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Surface totale min</mat-label>
+                <input matInput type="number" formControlName="surface_totale_min" 
+                      min="0" step="0.01">
+                <span matSuffix>m²</span>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Surface totale max</mat-label>
+                <input matInput type="number" formControlName="surface_totale_max" 
+                      min="0" step="0.01">
+                <span matSuffix>m²</span>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Surface imposable min</mat-label>
+                <input matInput type="number" formControlName="surface_imposable_min" 
+                      min="0" step="0.01">
+                <span matSuffix>m²</span>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Surface imposable max</mat-label>
+                <input matInput type="number" formControlName="surface_imposable_max" 
+                      min="0" step="0.01">
+                <span matSuffix>m²</span>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Section Aspects Fiscaux -->
+        <mat-expansion-panel class="search-section">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>account_balance</mat-icon>
+              Aspects Fiscaux
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Exonération TNB</mat-label>
+                <mat-select formControlName="exonere_tnb">
+                  <mat-option value="">Toutes</mat-option>
+                  <mat-option value="true">Exonérées</mat-option>
+                  <mat-option value="false">Non exonérées</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Montant TNB min</mat-label>
+                <input matInput type="number" formControlName="montant_tnb_min" 
+                      min="0" step="0.01">
+                <span matSuffix>DH</span>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Montant TNB max</mat-label>
+                <input matInput type="number" formControlName="montant_tnb_max" 
+                      min="0" step="0.01">
+                <span matSuffix>DH</span>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Section Dates -->
+        <mat-expansion-panel class="search-section">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>date_range</mat-icon>
+              Dates
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Date création (début)</mat-label>
+                <input matInput [matDatepicker]="creationStartPicker" 
+                      formControlName="date_creation_debut">
+                <mat-datepicker-toggle matIconSuffix [for]="creationStartPicker"></mat-datepicker-toggle>
+                <mat-datepicker #creationStartPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Date création (fin)</mat-label>
+                <input matInput [matDatepicker]="creationEndPicker" 
+                      formControlName="date_creation_fin">
+                <mat-datepicker-toggle matIconSuffix [for]="creationEndPicker"></mat-datepicker-toggle>
+                <mat-datepicker #creationEndPicker></mat-datepicker>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Date permis (début)</mat-label>
+                <input matInput [matDatepicker]="permisStartPicker" 
+                      formControlName="date_permis_debut">
+                <mat-datepicker-toggle matIconSuffix [for]="permisStartPicker"></mat-datepicker-toggle>
+                <mat-datepicker #permisStartPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Date permis (fin)</mat-label>
+                <input matInput [matDatepicker]="permisEndPicker" 
+                      formControlName="date_permis_fin">
+                <mat-datepicker-toggle matIconSuffix [for]="permisEndPicker"></mat-datepicker-toggle>
+                <mat-datepicker #permisEndPicker></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Section Propriétaires -->
+        <mat-expansion-panel class="search-section">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>group</mat-icon>
+              Propriétaires
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="section-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Nom du propriétaire</mat-label>
+                <input matInput formControlName="proprietaire_nom" 
+                      placeholder="Nom ou raison sociale">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>CIN/RC</mat-label>
+                <input matInput formControlName="proprietaire_cin" 
+                      placeholder="CIN ou Registre de commerce">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre propriétaires min</mat-label>
+                <input matInput type="number" formControlName="nombre_proprietaires_min" 
+                      min="1">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Nombre propriétaires max</mat-label>
+                <input matInput type="number" formControlName="nombre_proprietaires_max" 
+                      min="1">
+              </mat-form-field>
+            </div>
+          </div>
+        </mat-expansion-panel>
+
+        <!-- Actions -->
+        <div class="search-actions">
+          <button mat-button (click)="clearAllFilters()" [disabled]="isSearching">
+            <mat-icon>clear_all</mat-icon>
+            Effacer tout
+          </button>
+
+          <button mat-button (click)="saveCurrentSearch()" 
+                 [disabled]="!hasActiveFilters" *ngIf="showSavedSearches">
+            <mat-icon>save</mat-icon>
+            Sauvegarder
+          </button>
+
+          <button mat-raised-button color="primary" (click)="executeSearch()" 
+                 [disabled]="isSearching">
+            <mat-spinner diameter="20" *ngIf="isSearching"></mat-spinner>
+            <mat-icon *ngIf="!isSearching">search</mat-icon>
+            {{ isSearching ? 'Recherche...' : 'Rechercher' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filtres actifs -->
+  <mat-card class="active-filters-card" *ngIf="hasActiveFilters">
+    <mat-card-content>
+      <div class="active-filters">
+        <span class="filters-label">Filtres actifs :</span>
+        <div class="filters-list">
+          <mat-chip *ngFor="let filter of activeFilters" 
+                   class="active-filter-chip"
+                   (removed)="removeFilter(filter)">
+            {{ filter.label }}
+            <mat-icon matChipRemove>cancel</mat-icon>
+          </mat-chip>
+        </div>
+        <button mat-button color="warn" (click)="clearAllFilters()" class="clear-all-btn">
+          <mat-icon>clear_all</mat-icon>
+          Tout effacer
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Résultats -->
+  <mat-card class="results-card" *ngIf="hasResults">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list_alt</mat-icon>
+        Résultats de la Recherche
+        <mat-chip>
+          {{ resultsCount }} / {{ totalCount }} parcelle(s)
+        </mat-chip>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="results-summary">
+        <div class="summary-stats">
+          <div class="stat-item">
+            <mat-icon>crop_landscape</mat-icon>
+            <span>Surface totale: {{ getTotalSurface() | surfaceFormat }}</span>
+          </div>
+          <div class="stat-item">
+            <mat-icon>account_balance</mat-icon>
+            <span>Montant TNB total: {{ getTotalTNB() | currency:'MAD':'symbol':'1.0-0':'fr' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-list">
+        <div *ngFor="let parcelle of currentResults?.items" 
+             class="result-item" 
+             (click)="selectParcelle(parcelle)">
+          <div class="result-header">
+            <div class="parcelle-info">
+              <h4 class="reference">{{ parcelle.reference_fonciere }}</h4>
+              <div class="details">
+                <mat-chip class="zonage-chip">{{ parcelle.zonage }}</mat-chip>
+                <mat-chip [color]="parcelle.etat_validation === 'Publie' ? 'primary' : parcelle.etat_validation === 'Valide' ? 'accent' : ''">
+                  {{ parcelle.etat_validation }}
+                </mat-chip>
+              </div>
+            </div>
+            <div class="result-actions">
+              <button mat-icon-button matTooltip="Voir détails" 
+                     (click)="$event.stopPropagation()">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="result-content">
+            <div class="info-grid">
+              <div class="info-item">
+                <mat-icon>crop_landscape</mat-icon>
+                <span>{{ parcelle.surface_totale | surfaceFormat }}</span>
+              </div>
+              <div class="info-item">
+                <mat-icon>account_balance</mat-icon>
+                <span>{{ parcelle.montant_total_tnb | currency:'MAD':'symbol':'1.0-0':'fr' }}</span>
+              </div>
+              <div class="info-item" *ngIf="parcelle.statut_foncier">
+                <mat-icon>gavel</mat-icon>
+                <span>{{ parcelle.statut_foncier }}</span>
+              </div>
+              <div class="info-item" *ngIf="parcelle.exonere_tnb">
+                <mat-icon>money_off</mat-icon>
+                <span>Exonérée TNB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Message aucun résultat -->
+  <mat-card class="no-results-card" *ngIf="hasSearched && !hasResults && !isSearching">
+    <mat-card-content>
+      <div class="no-results">
+        <mat-icon color="disabled">search_off</mat-icon>
+        <h3>Aucun résultat trouvé</h3>
+        <p>Aucune parcelle ne correspond aux critères de recherche.</p>
+        <div class="suggestions">
+          <p>Suggestions :</p>
+          <ul>
+            <li>Vérifiez l'orthographe des termes de recherche</li>
+            <li>Utilisez des critères moins restrictifs</li>
+            <li>Essayez la recherche rapide avec des mots-clés généraux</li>
+          </ul>
+        </div>
+        <button mat-raised-button color="primary" (click)="clearSearch()">
+          <mat-icon>refresh</mat-icon>
+          Nouvelle recherche
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Recherches sauvegardées -->
+  <mat-card class="saved-searches-card" *ngIf="showSavedSearches && getSavedSearches().length > 0">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>bookmark</mat-icon>
+        Recherches Sauvegardées
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="saved-searches-list">
+        <div *ngFor="let search of getSavedSearches()" class="saved-search-item">
+          <div class="search-info">
+            <span class="search-name">{{ search.name }}</span>
+            <span class="search-date">{{ search.date | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="search-actions">
+            <button mat-button (click)="loadSavedSearch(search.name)">
+              <mat-icon>play_arrow</mat-icon>
+              Charger
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

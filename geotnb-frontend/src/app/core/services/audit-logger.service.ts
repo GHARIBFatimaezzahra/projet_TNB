@@ -23,7 +23,7 @@ export class AuditLoggerService {
     idCible?: number,
     details?: any
   ): Observable<JournalAction> {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     
     const logEntry = {
       utilisateur_id: user?.id,
@@ -57,12 +57,12 @@ export class AuditLoggerService {
 
   // Logger une connexion
   logLogin(): Observable<JournalAction> {
-    return this.logAction(ActionType.LOGIN, 'users', this.authService.getCurrentUser()?.id);
+    return this.logAction(ActionType.LOGIN, 'users', this.authService.currentUser?.id);
   }
 
   // Logger une déconnexion
   logLogout(): Observable<JournalAction> {
-    return this.logAction(ActionType.LOGOUT, 'users', this.authService.getCurrentUser()?.id);
+    return this.logAction(ActionType.LOGOUT, 'users', this.authService.currentUser?.id);
   }
 
   // Logger une consultation

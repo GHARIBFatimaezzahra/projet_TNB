@@ -1,0 +1,526 @@
+<!-- =====================================================
+     FORMULAIRE PARCELLE - ÉDITION MULTI-ONGLETS MODERNE
+     ===================================================== -->
+
+<div class="parcelle-form-container">
+  
+  <!-- Header du formulaire -->
+  <div class="form-header">
+    <div class="header-content">
+      <h1 class="form-title">
+        <mat-icon class="title-icon">{{isEditMode ? 'edit' : 'add'}}</mat-icon>
+        {{isEditMode ? 'Modifier la parcelle' : 'Nouvelle parcelle'}}
+        <span class="parcelle-ref" *ngIf="isEditMode && currentParcelle">
+          {{currentParcelle.reference_fonciere}}
+        </span>
+      </h1>
+      <p class="form-subtitle">
+        {{isEditMode ? 'Modifiez les informations de la parcelle' : 'Saisissez les informations de la nouvelle parcelle'}}
+      </p>
+    </div>
+    
+    <div class="header-actions">
+      <button mat-stroked-button 
+              class="action-btn"
+              routerLink="/parcelles"
+              [disabled]="saving">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Retour</span>
+      </button>
+      
+      <div class="save-actions">
+        <button mat-stroked-button 
+                class="action-btn draft"
+                (click)="saveDraft()"
+                [disabled]="saving || parcelleForm.invalid">
+          <mat-icon>save</mat-icon>
+          <span>BROUILLON</span>
+        </button>
+        
+        <button mat-flat-button 
+                color="primary"
+                class="action-btn save"
+                (click)="saveAndValidate()"
+                [disabled]="saving || parcelleForm.invalid">
+          <mat-spinner diameter="20" *ngIf="saving" class="save-spinner"></mat-spinner>
+          <mat-icon *ngIf="!saving">{{isEditMode ? 'save' : 'add'}}</mat-icon>
+          <span *ngIf="!saving">{{isEditMode ? 'Enregistrer' : 'Valider'}}</span>
+          <span *ngIf="saving">Enregistrement...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de progression -->
+  <div class="progress-bar" *ngIf="saving">
+    <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
+  </div>
+
+  <!-- Formulaire avec onglets -->
+  <mat-card class="form-card">
+    
+    <!-- Navigation des onglets -->
+    <mat-tab-group [(selectedIndex)]="selectedTabIndex" 
+                   class="parcelle-tabs"
+                   (selectedTabChange)="onTabChange($event)">
+      
+      <!-- ONGLET GÉNÉRAL -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">📋</mat-icon>
+          <span class="tab-text">Général</span>
+          <mat-icon class="tab-status" 
+                    [class.valid]="isTabValid('general')"
+                    [class.invalid]="!isTabValid('general')">
+            {{isTabValid('general') ? 'check_circle' : 'error'}}
+          </mat-icon>
+        </ng-template>
+        
+        <div class="tab-content">
+          <form [formGroup]="parcelleForm" class="general-form">
+            
+            <!-- Section Identification -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>fingerprint</mat-icon>
+                Identification de la parcelle
+              </h3>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Référence foncière *</mat-label>
+                  <input matInput 
+                         formControlName="reference_fonciere"
+                         placeholder="TF-478923-B"
+                         (blur)="checkReferenceExists()"
+                         autocomplete="off">
+                  <mat-icon matPrefix class="field-icon">tag</mat-icon>
+                  <mat-error>{{getFieldError('reference_fonciere')}}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Statut foncier *</mat-label>
+                  <mat-select formControlName="statut_foncier">
+                    <mat-option value="">Sélectionnez un statut</mat-option>
+                    <mat-option value="TF">TF - Titre Foncier</mat-option>
+                    <mat-option value="MELK">Melk</mat-option>
+                    <mat-option value="HABOUS">Habous</mat-option>
+                    <mat-option value="DOMANIAL">Domanial</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix class="field-icon">gavel</mat-icon>
+                  <mat-error>{{getFieldError('statut_foncier')}}</mat-error>
+                </mat-form-field>
+              </div>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Surface totale (m²) *</mat-label>
+                  <input matInput 
+                         type="number" 
+                         formControlName="surface_totale"
+                         placeholder="1250.75"
+                         step="0.01"
+                         min="0">
+                  <mat-icon matPrefix class="field-icon">straighten</mat-icon>
+                  <span matSuffix>m²</span>
+                  <mat-error>{{getFieldError('surface_totale')}}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Surface imposable (m²) *</mat-label>
+                  <input matInput 
+                         type="number" 
+                         formControlName="surface_imposable"
+                         placeholder="1120.50"
+                         step="0.01"
+                         min="0">
+                  <mat-icon matPrefix class="field-icon">calculate</mat-icon>
+                  <span matSuffix>m²</span>
+                  <mat-error>{{getFieldError('surface_imposable')}}</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Section Localisation -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>location_on</mat-icon>
+                Localisation et zonage
+              </h3>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Zone urbanistique *</mat-label>
+                  <mat-select formControlName="zonage">
+                    <mat-option value="">Sélectionnez une zone</mat-option>
+                    <mat-option value="R+4">R+4 - Résidentiel 4 étages</mat-option>
+                    <mat-option value="R+2">R+2 - Résidentiel 2 étages</mat-option>
+                    <mat-option value="COM">COM - Commercial</mat-option>
+                    <mat-option value="IND">IND - Industriel</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix class="field-icon">domain</mat-icon>
+                  <mat-error>{{getFieldError('zonage')}}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Statut occupation</mat-label>
+                  <mat-select formControlName="statut_occupation">
+                    <mat-option value="">Sélectionnez un statut</mat-option>
+                    <mat-option value="OCCUPE">Occupé</mat-option>
+                    <mat-option value="LIBRE">Libre</mat-option>
+                    <mat-option value="PARTIELLEMENT_OCCUPE">Partiellement occupé</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix class="field-icon">home</mat-icon>
+                  <mat-error>{{getFieldError('statut_occupation')}}</mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field full-width">
+                  <mat-label>Adresse</mat-label>
+                  <textarea matInput 
+                            formControlName="adresse"
+                            placeholder="Hay Al Qods, Oujda"
+                            rows="2"></textarea>
+                  <mat-icon matPrefix class="field-icon">place</mat-icon>
+                  <mat-error>{{getFieldError('adresse')}}</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Section État -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>info</mat-icon>
+                État de validation
+              </h3>
+              
+              <div class="status-info">
+                <div class="current-status">
+                  <span class="status-label">Statut actuel :</span>
+                  <div class="status-badge" [class]="getStatusClass(currentParcelle?.etat_validation)">
+                    <mat-icon>{{getStatusIcon(currentParcelle?.etat_validation)}}</mat-icon>
+                    <span>{{getStatusLabel(currentParcelle?.etat_validation)}}</span>
+                  </div>
+                </div>
+                
+                <div class="status-actions" *ngIf="isEditMode">
+                  <button mat-stroked-button 
+                          class="status-btn"
+                          (click)="validateParcelle()"
+                          *ngIf="canValidate()"
+                          [disabled]="saving">
+                    <mat-icon>check_circle</mat-icon>
+                    <span>Valider</span>
+                  </button>
+                  
+                  <button mat-stroked-button 
+                          class="status-btn"
+                          (click)="publishParcelle()"
+                          *ngIf="canPublish()"
+                          [disabled]="saving">
+                    <mat-icon>publish</mat-icon>
+                    <span>Publier</span>
+                  </button>
+                  
+                  <button mat-stroked-button 
+                          class="status-btn archive"
+                          (click)="archiveParcelle()"
+                          *ngIf="canArchive()"
+                          [disabled]="saving">
+                    <mat-icon>archive</mat-icon>
+                    <span>Archiver</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- ONGLET FISCAL -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">🏛️</mat-icon>
+          <span class="tab-text">Fiscal</span>
+          <mat-icon class="tab-status"
+                    [class.valid]="isTabValid('fiscal')"
+                    [class.invalid]="!isTabValid('fiscal')">
+            {{isTabValid('fiscal') ? 'check_circle' : 'error'}}
+          </mat-icon>
+        </ng-template>
+        
+        <div class="tab-content">
+          <form [formGroup]="parcelleForm" class="fiscal-form">
+            
+            <!-- Section Calcul TNB -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>calculate</mat-icon>
+                Calcul de la TNB
+              </h3>
+              
+              <div class="tnb-calculation">
+                <div class="calc-header">
+                  <h4 class="calc-title">
+                    <mat-icon>calculate</mat-icon>
+                    Calcul Interactif de la TNB
+                  </h4>
+                </div>
+
+                <div class="calc-inputs">
+                  <div class="input-row">
+                    <mat-form-field class="calc-field">
+                      <mat-label>Surface imposable (m²)</mat-label>
+                      <input matInput 
+                             type="number" 
+                             step="0.01"
+                             min="0"
+                             [value]="parcelleForm.get('surface_imposable')?.value || 0"
+                             (input)="onSurfaceImposableChange($event)"
+                             placeholder="0.00">
+                    </mat-form-field>
+
+                    <div class="calc-operator">×</div>
+
+                    <mat-form-field class="calc-field">
+                      <mat-label>Prix unitaire (MAD/m²)</mat-label>
+                      <input matInput 
+                             type="number" 
+                             step="0.01"
+                             min="0"
+                             [value]="getPrixUnitaireM2()"
+                             (input)="onPrixUnitaireChange($event)"
+                             placeholder="0.00">
+                      <mat-hint>Selon le zonage et la catégorie</mat-hint>
+                    </mat-form-field>
+
+                    <div class="calc-operator">=</div>
+
+                    <div class="calc-result">
+                      <div class="result-label">Montant TNB Total</div>
+                      <div class="result-value">{{calculateTnb()}} MAD</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="calc-details" *ngIf="proprietaires.length > 0">
+                  <h5 class="details-title">Répartition par propriétaire</h5>
+                  <div class="proprietaires-calc">
+                    <div class="proprietaire-calc" *ngFor="let prop of proprietaires">
+                      <div class="prop-info">
+                        <span class="prop-name">{{prop.proprietaire.prenom}} {{prop.proprietaire.nom}}</span>
+                        <span class="prop-quote">{{prop.quote_part}}%</span>
+                      </div>
+                      <div class="prop-montant">
+                        {{(calculateTnb() * prop.quote_part / 100)}} MAD
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="calc-warning" *ngIf="totalQuotePart !== 100">
+                    <mat-icon class="warning-icon">warning</mat-icon>
+                    <span *ngIf="totalQuotePart < 100">
+                      Quote-part incomplète ({{100 - totalQuotePart}}% manquant)
+                    </span>
+                    <span *ngIf="totalQuotePart > 100">
+                      Quote-part dépassée (+{{totalQuotePart - 100}}%)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="calc-actions">
+                  <button mat-stroked-button 
+                          class="recalc-btn"
+                          (click)="updateTnbCalculation()"
+                          type="button">
+                    <mat-icon>refresh</mat-icon>
+                    <span>Recalculer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section Exonération -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>money_off</mat-icon>
+                Exonération
+              </h3>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Date de permis</mat-label>
+                  <input matInput 
+                         [matDatepicker]="permisDatePicker"
+                         formControlName="date_permis"
+                         placeholder="JJ/MM/AAAA">
+                  <mat-datepicker-toggle matSuffix [for]="permisDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #permisDatePicker></mat-datepicker>
+                  <mat-icon matPrefix class="field-icon">event</mat-icon>
+                  <mat-error>{{getFieldError('date_permis')}}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Durée exonération</mat-label>
+                  <mat-select formControlName="duree_exoneration">
+                    <mat-option value="">Aucune exonération</mat-option>
+                    <mat-option value="2">2 ans</mat-option>
+                    <mat-option value="3">3 ans</mat-option>
+                    <mat-option value="5">5 ans</mat-option>
+                  </mat-select>
+                  <mat-icon matPrefix class="field-icon">schedule</mat-icon>
+                  <mat-error>{{getFieldError('duree_exoneration')}}</mat-error>
+                </mat-form-field>
+              </div>
+              
+              <div class="exoneration-info" *ngIf="parcelleForm.get('date_permis')?.value && parcelleForm.get('duree_exoneration')?.value">
+                <mat-icon class="info-icon">info</mat-icon>
+                <div class="info-content">
+                  <p class="info-title">Période d'exonération</p>
+                  <p class="info-text">
+                    Du {{parcelleForm.get('date_permis')?.value | date:'dd/MM/yyyy':'fr'}} 
+                    au {{getExonerationEndYear() | date:'dd/MM/yyyy':'fr'}}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section Résumé fiscal -->
+            <div class="form-section">
+              <h3 class="section-title">
+                <mat-icon>receipt</mat-icon>
+                Résumé fiscal
+              </h3>
+              
+              <div class="fiscal-summary">
+                <div class="summary-row">
+                  <span class="summary-label">Surface imposable :</span>
+                  <span class="summary-value">{{parcelleForm.get('surface_imposable')?.value | number:'1.2-2':'fr'}} m²</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Montant brut TNB :</span>
+                  <span class="summary-value">{{calculateTnb() | currency:'MAD':'symbol':'1.2-2'}}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Exonération :</span>
+                  <span class="summary-value exoneration">
+                    {{parcelleForm.get('duree_exoneration')?.value ? 'Oui (' + parcelleForm.get('duree_exoneration')?.value + ' ans)' : 'Non'}}
+                  </span>
+                </div>
+                <div class="summary-row total">
+                  <span class="summary-label">Montant final :</span>
+                  <span class="summary-value">{{calculateTnb() | currency:'MAD':'symbol':'1.2-2'}}</span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </mat-tab>
+
+      <!-- ONGLET GÉOMÉTRIE -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">🗺️</mat-icon>
+          <span class="tab-text">Géométrie</span>
+          <mat-icon class="tab-status"
+                    [class.valid]="isTabValid('geometry')"
+                    [class.invalid]="!isTabValid('geometry')">
+            {{isTabValid('geometry') ? 'check_circle' : 'error'}}
+          </mat-icon>
+        </ng-template>
+        
+        <div class="tab-content">
+          <div class="geometry-content">
+            <div class="geometry-info">
+              <h3 class="section-title">
+                <mat-icon>map</mat-icon>
+                Géométrie de la parcelle
+              </h3>
+              <p class="geometry-description">
+                Définissez la géométrie de la parcelle en utilisant les outils de dessin ou en important un fichier.
+              </p>
+            </div>
+            
+            <div class="geometry-placeholder">
+              <mat-icon class="placeholder-icon">🗺️</mat-icon>
+              <h4>Carte OpenLayers Interactive</h4>
+              <p>Projection EPSG:26191 (Lambert Maroc)</p>
+              <div class="geometry-tools">
+                <button mat-stroked-button class="geo-btn">
+                  <mat-icon>draw</mat-icon>
+                  Dessiner
+                </button>
+                <button mat-stroked-button class="geo-btn">
+                  <mat-icon>upload</mat-icon>
+                  Importer
+                </button>
+                <button mat-stroked-button class="geo-btn">
+                  <mat-icon>my_location</mat-icon>
+                  Localiser
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- ONGLET PROPRIÉTAIRES -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">👥</mat-icon>
+          <span class="tab-text">Propriétaires</span>
+          <mat-icon class="tab-status"
+                    [class.valid]="isTabValid('proprietaires')"
+                    [class.invalid]="!isTabValid('proprietaires')">
+            {{isTabValid('proprietaires') ? 'check_circle' : 'error'}}
+          </mat-icon>
+        </ng-template>
+        
+        <div class="tab-content">
+          <!-- Gestionnaire de propriétaires intégré -->
+          <app-proprietaire-manager 
+            [proprietaires]="proprietaires"
+            (proprietairesChange)="onProprietairesChange($event)"
+            (quotesPartChange)="onQuotesPartChange($event)">
+          </app-proprietaire-manager>
+        </div>
+      </mat-tab>
+
+      <!-- ONGLET DOCUMENTS -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">📁</mat-icon>
+          <span class="tab-text">Documents</span>
+          <mat-icon class="tab-status"
+                    [class.valid]="isTabValid('documents')"
+                    [class.invalid]="!isTabValid('documents')">
+            {{isTabValid('documents') ? 'check_circle' : 'error'}}
+          </mat-icon>
+        </ng-template>
+        
+        <div class="tab-content">
+          <!-- Gestionnaire de documents intégré -->
+          <app-document-manager 
+            *ngIf="parcelleId" 
+            [parcelleId]="parcelleId">
+          </app-document-manager>
+          
+          <!-- Message si nouvelle parcelle -->
+          <div class="documents-pending" *ngIf="!parcelleId">
+            <div class="pending-message">
+              <mat-icon class="pending-icon">info</mat-icon>
+              <h4>Documents en attente</h4>
+              <p>
+                Vous pourrez ajouter des documents après avoir sauvegardé la parcelle.
+                <br>Veuillez d'abord compléter les informations générales et fiscales.
+              </p>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  </mat-card>
+
+</div>

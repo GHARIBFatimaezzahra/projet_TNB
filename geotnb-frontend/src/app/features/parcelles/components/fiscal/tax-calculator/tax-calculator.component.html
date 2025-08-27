@@ -1,0 +1,217 @@
+<!-- =====================================================
+     CALCULATEUR TNB - INTERFACE MODERNE
+     ===================================================== -->
+
+<div class="tax-calculator-container">
+  <!-- En-tête -->
+  <div class="calculator-header">
+    <mat-icon class="header-icon">calculate</mat-icon>
+    <h3>Calculateur TNB</h3>
+    <p class="subtitle">Calcul automatique de la Taxe sur les Terrains Non Bâtis</p>
+  </div>
+
+  <!-- Paramètres de calcul -->
+  <mat-card class="parameters-card">
+    <mat-card-header>
+      <mat-card-title>Paramètres de calcul</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="calculatorForm" class="calculation-form">
+        <div class="form-row">
+          <!-- Surface totale -->
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Surface totale</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="surfaceTotale"
+                   placeholder="0.00">
+            <span matSuffix>m²</span>
+            <mat-error *ngIf="calculatorForm.get('surfaceTotale')?.hasError('required')">
+              La surface totale est obligatoire
+            </mat-error>
+            <mat-error *ngIf="calculatorForm.get('surfaceTotale')?.hasError('min')">
+              La surface doit être positive
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Zonage -->
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Zonage</mat-label>
+            <mat-select formControlName="zonage">
+              <mat-option value="urbain">Urbain</mat-option>
+              <mat-option value="rural">Rural</mat-option>
+              <mat-option value="industriel">Industriel</mat-option>
+              <mat-option value="touristique">Touristique</mat-option>
+            </mat-select>
+            <mat-error *ngIf="calculatorForm.get('zonage')?.hasError('required')">
+              Le zonage est obligatoire
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Année fiscale -->
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Année fiscale</mat-label>
+            <input matInput 
+                   type="number" 
+                   formControlName="anneeFiscale"
+                   [min]="2020"
+                   [max]="2030">
+            <mat-error *ngIf="calculatorForm.get('anneeFiscale')?.hasError('required')">
+              L'année fiscale est obligatoire
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Exonérations -->
+        <div class="exonerations-section" *ngIf="availableExonerations.length > 0">
+          <h4>Exonérations applicables</h4>
+          <div class="exonerations-list">
+            <mat-checkbox 
+              *ngFor="let exo of availableExonerations"
+              [checked]="selectedExonerations.includes(exo.type)"
+              (change)="toggleExoneration(exo.type, $event.checked)"
+              class="exoneration-checkbox">
+              <div class="exoneration-info">
+                <span class="exoneration-label">{{ exo.label }}</span>
+                <span class="exoneration-percentage">{{ exo.percentage }}%</span>
+              </div>
+              <div class="exoneration-description">{{ exo.description }}</div>
+            </mat-checkbox>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button 
+              type="button" 
+              (click)="resetCalculation()"
+              [disabled]="isCalculating">
+        <mat-icon>refresh</mat-icon>
+        Réinitialiser
+      </button>
+      
+      <button mat-raised-button 
+              color="primary"
+              type="button"
+              (click)="calculateTax()"
+              [disabled]="calculatorForm.invalid || isCalculating">
+        <mat-icon>calculate</mat-icon>
+        <span *ngIf="!isCalculating">Calculer</span>
+        <span *ngIf="isCalculating">Calcul en cours...</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Résultats du calcul -->
+  <mat-card class="results-card" *ngIf="currentResult">
+    <mat-card-header>
+      <mat-card-title>Résultats du calcul</mat-card-title>
+      <mat-card-subtitle>
+        Calculé le {{ currentResult.dateCalcul | date:'dd/MM/yyyy à HH:mm' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="results-grid">
+        <!-- Surface imposable -->
+        <div class="result-item">
+          <mat-icon class="result-icon">crop</mat-icon>
+          <div class="result-content">
+            <span class="result-label">Surface imposable</span>
+            <span class="result-value">{{ currentResult.surfaceImposable | number:'1.2-2' }} m²</span>
+          </div>
+        </div>
+
+        <!-- Tarif appliqué -->
+        <div class="result-item">
+          <mat-icon class="result-icon">attach_money</mat-icon>
+          <div class="result-content">
+            <span class="result-label">Tarif appliqué</span>
+            <span class="result-value">{{ currentResult.tarifUnitaire | currency:'MAD':'symbol':'1.2-2':'fr' }}/m²</span>
+          </div>
+        </div>
+
+        <!-- Montant brut -->
+        <div class="result-item">
+          <mat-icon class="result-icon">receipt</mat-icon>
+          <div class="result-content">
+            <span class="result-label">Montant brut</span>
+            <span class="result-value">{{ currentResult.montantBrut | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
+          </div>
+        </div>
+
+        <!-- Total exonérations -->
+        <div class="result-item" *ngIf="currentResult.totalExonerations > 0">
+          <mat-icon class="result-icon">discount</mat-icon>
+          <div class="result-content">
+            <span class="result-label">Exonérations</span>
+            <span class="result-value text-success">-{{ currentResult.totalExonerations | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
+          </div>
+        </div>
+
+        <!-- Montant net -->
+        <div class="result-item total-result">
+          <mat-icon class="result-icon">monetization_on</mat-icon>
+          <div class="result-content">
+            <span class="result-label">Montant TNB</span>
+            <span class="result-value total-amount">{{ currentResult.montantNet | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Détails des exonérations -->
+      <div class="exonerations-details" *ngIf="currentResult.exonerations && currentResult.exonerations.length > 0">
+        <h4>Détail des exonérations appliquées</h4>
+        <div class="exoneration-detail" *ngFor="let exo of currentResult.exonerations">
+          <div class="exoneration-header">
+            <span class="exoneration-name">{{ exo.type }}</span>
+            <span class="exoneration-amount">-{{ exo.montant | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
+          </div>
+          <div class="exoneration-calculation">
+            {{ exo.pourcentage }}% sur {{ exo.baseCalcul | currency:'MAD':'symbol':'1.2-2':'fr' }}
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button 
+              type="button"
+              (click)="exportCalculation()">
+        <mat-icon>download</mat-icon>
+        Exporter
+      </button>
+      
+      <button mat-raised-button 
+              color="accent"
+              type="button"
+              (click)="saveCalculation()"
+              [disabled]="!currentResult">
+        <mat-icon>save</mat-icon>
+        Enregistrer
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Message d'erreur -->
+  <mat-card class="error-card" *ngIf="errorMessage">
+    <mat-card-content>
+      <div class="error-content">
+        <mat-icon class="error-icon">error</mat-icon>
+        <div class="error-text">
+          <h4>Erreur de calcul</h4>
+          <p>{{ errorMessage }}</p>
+        </div>
+      </div>
+    </mat-card-content>
+    
+    <mat-card-actions align="end">
+      <button mat-button (click)="clearError()">
+        <mat-icon>close</mat-icon>
+        Fermer
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

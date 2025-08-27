@@ -1,0 +1,423 @@
+// =====================================================
+// STYLES ONGLET GÉNÉRAL - DESIGN MODERNE
+// =====================================================
+
+.general-tab-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+
+  // ===================================================
+  // CARTES DE SECTION
+  // ===================================================
+  .section-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    mat-card-header {
+      background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+      padding: 20px 24px;
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        font-weight: 500;
+        color: #2c3e50;
+        margin: 0;
+        
+        mat-icon {
+          margin-right: 12px;
+          color: #3498db;
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+      
+      mat-card-subtitle {
+        margin-top: 4px;
+        color: #6c757d;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+    }
+    
+    mat-card-content {
+      padding: 24px !important;
+    }
+    
+    // Cartes spécialisées
+    &.identification-section {
+      border-left: 4px solid #3498db;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #ebf3ff, #d6e9ff);
+      }
+    }
+    
+    &.occupation-section {
+      border-left: 4px solid #27ae60;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #eafaf1, #d5f4e6);
+      }
+    }
+    
+    &.zonage-section {
+      border-left: 4px solid #f39c12;
+      
+      mat-card-header {
+        background: linear-gradient(45deg, #fef9e7, #fdf2cc);
+      }
+    }
+  }
+
+  // ===================================================
+  // CHAMPS DE FORMULAIRE
+  // ===================================================
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  // Champ référence avec bouton
+  .reference-field-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    
+    .reference-field {
+      flex: 1;
+      
+      mat-icon[matSuffix] {
+        transition: color 0.3s ease;
+        
+        &.checking {
+          color: #f39c12;
+          animation: spin 1s linear infinite;
+        }
+        
+        &.exists {
+          color: #e74c3c;
+        }
+        
+        &.available {
+          color: #27ae60;
+        }
+      }
+    }
+    
+    .generate-btn {
+      margin-top: 8px;
+      color: #3498db;
+      
+      &:hover:not(:disabled) {
+        background: rgba(52, 152, 219, 0.1);
+      }
+      
+      &:disabled {
+        color: #bdc3c7;
+      }
+    }
+  }
+  
+  // Options de select personnalisées
+  .select-option {
+    padding: 8px 0;
+    
+    .option-main {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+      
+      .option-icon {
+        margin-right: 12px;
+        color: #3498db;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+      
+      .option-label {
+        font-weight: 500;
+        color: #2c3e50;
+      }
+    }
+    
+    .option-description {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin-left: 30px;
+      line-height: 1.3;
+    }
+  }
+
+  // ===================================================
+  // AFFICHAGES DE STATUT
+  // ===================================================
+  .status-display {
+    margin-top: 16px;
+    
+    mat-chip-list {
+      mat-chip {
+        font-size: 13px;
+        font-weight: 500;
+        
+        mat-icon[matChipAvatar] {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+  
+  .occupation-display {
+    margin-top: 20px;
+    
+    .occupation-card {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: linear-gradient(45deg, #f8f9fa, #ffffff);
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      
+      .occupation-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #27ae60;
+        margin-right: 16px;
+      }
+      
+      .occupation-info {
+        flex: 1;
+        
+        h4 {
+          margin: 0 0 4px 0;
+          font-size: 16px;
+          font-weight: 500;
+          color: #2c3e50;
+        }
+        
+        p {
+          margin: 0;
+          font-size: 13px;
+          color: #6c757d;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  // ===================================================
+  // SECTION ZONAGE
+  // ===================================================
+  .zonage-fields {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    
+    .zonage-field,
+    .category-field {
+      flex: 1;
+    }
+  }
+  
+  .zone-info {
+    background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid #f39c12;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      
+      .info-icon {
+        margin-right: 12px;
+        color: #e67e22;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .info-text {
+        color: #8b4513;
+        font-size: 14px;
+        
+        strong {
+          color: #d68910;
+        font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // ===================================================
+  // RÉSUMÉ DE VALIDATION
+  // ===================================================
+  .validation-summary {
+    .summary-card {
+      background: linear-gradient(45deg, #e8f5e8, #f0f8f0);
+      border: 1px solid #c3e6c3;
+      
+      .summary-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        
+        .summary-icon {
+          color: #27ae60;
+          font-size: 28px;
+          width: 28px;
+          height: 28px;
+          margin-right: 12px;
+        }
+        
+        h3 {
+          margin: 0;
+          color: #2c3e50;
+          font-size: 18px;
+          font-weight: 500;
+        }
+      }
+      
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        
+        .summary-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          
+          label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+          }
+        }
+      }
+    }
+  }
+
+  // ===================================================
+  // RESPONSIVE
+  // ===================================================
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 20px;
+    
+    .section-card {
+      mat-card-header {
+        padding: 16px 20px;
+        
+        mat-card-title {
+          font-size: 16px;
+          
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+      
+      mat-card-content {
+        padding: 20px !important;
+      }
+    }
+    
+    .reference-field-container {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .generate-btn {
+        margin-top: 0;
+        align-self: flex-end;
+      }
+    }
+    
+    .zonage-fields {
+      flex-direction: column;
+      gap: 0;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    
+    .occupation-display {
+      .occupation-card {
+        flex-direction: column;
+        text-align: center;
+        
+        .occupation-icon {
+          margin-right: 0;
+          margin-bottom: 12px;
+        }
+      }
+    }
+  }
+}
+
+// ===================================================
+// ANIMATIONS
+// ===================================================
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.general-tab-container {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.section-card {
+  animation: fadeInUp 0.5s ease-out;
+  
+  &:nth-child(2) { animation-delay: 0.1s; }
+  &:nth-child(3) { animation-delay: 0.2s; }
+  &:nth-child(4) { animation-delay: 0.3s; }
+}

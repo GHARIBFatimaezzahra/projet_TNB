@@ -1,0 +1,364 @@
+<!-- =====================================================
+     TEMPLATE ONGLET GÉOMÉTRIE - ÉDITION CARTOGRAPHIQUE
+     ===================================================== -->
+
+<div class="geometry-tab-container" [formGroup]="formGroup">
+  
+  <!-- Barre d'outils -->
+  <mat-card class="toolbar-card">
+    <mat-card-content class="toolbar-content">
+      
+      <!-- Outils de dessin -->
+      <div class="drawing-tools" *ngIf="canEdit">
+        <div class="tool-group">
+          <span class="tool-group-label">Outils de dessin :</span>
+          <button *ngFor="let tool of drawingTools"
+                  mat-icon-button
+                  [color]="selectedTool === tool.id ? 'primary' : ''"
+                  [matTooltip]="tool.tooltip"
+                  (click)="selectDrawingTool(tool.id)"
+                  [disabled]="isDrawing || isEditing">
+            <mat-icon>{{ tool.icon }}</mat-icon>
+          </button>
+        </div>
+
+        <mat-divider [vertical]="true"></mat-divider>
+
+        <!-- Actions de dessin -->
+        <div class="drawing-actions">
+          <button mat-raised-button
+                  color="primary"
+                  (click)="startDrawing()"
+                  [disabled]="isDrawing || isEditing || !mapLoaded"
+                  matTooltip="Commencer le dessin">
+            <mat-icon>edit</mat-icon>
+            Dessiner
+          </button>
+
+          <button mat-button
+                  (click)="stopDrawing()"
+                  [disabled]="!isDrawing"
+                  matTooltip="Arrêter le dessin">
+            <mat-icon>stop</mat-icon>
+            Arrêter
+          </button>
+
+          <button mat-button
+                  color="accent"
+                  (click)="startEditing()"
+                  [disabled]="!hasGeometry || isDrawing || isEditing"
+                  matTooltip="Modifier la géométrie">
+            <mat-icon>edit_location</mat-icon>
+            Modifier
+          </button>
+
+          <button mat-button
+                  (click)="stopEditing()"
+                  [disabled]="!isEditing"
+                  matTooltip="Terminer la modification">
+            <mat-icon>done</mat-icon>
+            Terminer
+          </button>
+        </div>
+
+        <mat-divider [vertical]="true"></mat-divider>
+      </div>
+
+      <!-- Actions générales -->
+      <div class="general-actions">
+        <button mat-icon-button
+                (click)="zoomToGeometry()"
+                [disabled]="!hasGeometry"
+                matTooltip="Zoomer sur la géométrie">
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+
+        <button mat-icon-button
+                (click)="centerMap()"
+                matTooltip="Centrer la carte">
+          <mat-icon>my_location</mat-icon>
+        </button>
+
+        <button mat-icon-button
+                (click)="toggleFullscreen()"
+                matTooltip="Plein écran">
+          <mat-icon>fullscreen</mat-icon>
+        </button>
+
+        <mat-divider [vertical]="true"></mat-divider>
+
+        <!-- Import/Export -->
+        <button mat-icon-button
+                (click)="exportGeometry()"
+                [disabled]="!hasGeometry"
+                matTooltip="Exporter la géométrie">
+          <mat-icon>download</mat-icon>
+        </button>
+
+        <input #fileInput
+               type="file"
+               accept=".geojson,.json"
+               (change)="importGeometry($event)"
+               style="display: none">
+
+        <button mat-icon-button
+                (click)="fileInput.click()"
+                [disabled]="isViewMode"
+                matTooltip="Importer une géométrie">
+          <mat-icon>upload</mat-icon>
+        </button>
+
+        <mat-divider [vertical]="true"></mat-divider>
+
+        <!-- Requêtes spatiales -->
+        <button mat-icon-button
+                (click)="findIntersectingParcels()"
+                [disabled]="!hasGeometry"
+                matTooltip="Trouver les intersections">
+          <mat-icon>compare_arrows</mat-icon>
+        </button>
+
+        <button mat-icon-button
+                (click)="findNearbyParcels(100)"
+                [disabled]="!hasGeometry"
+                matTooltip="Trouver les parcelles proches (100m)">
+          <mat-icon>near_me</mat-icon>
+        </button>
+
+        <!-- Nettoyage -->
+        <button mat-icon-button
+                color="warn"
+                (click)="clearGeometry()"
+                [disabled]="isViewMode || !hasGeometry"
+                matTooltip="Effacer la géométrie">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Conteneur principal -->
+  <div class="main-container">
+    
+    <!-- Carte -->
+    <div class="map-section">
+      <mat-card class="map-card">
+        <mat-card-content class="map-content">
+          
+          <!-- Indicateurs d'état -->
+          <div class="map-status" *ngIf="!mapLoaded || isDrawing || isEditing || calculatingArea">
+            <div class="status-item" *ngIf="!mapLoaded">
+              <mat-spinner diameter="20"></mat-spinner>
+              <span>Chargement de la carte...</span>
+            </div>
+            
+            <div class="status-item drawing" *ngIf="isDrawing">
+              <mat-icon>edit</mat-icon>
+              <span>Mode dessin actif - Cliquez pour dessiner</span>
+            </div>
+            
+            <div class="status-item editing" *ngIf="isEditing">
+              <mat-icon>edit_location</mat-icon>
+              <span>Mode édition actif - Déplacez les points</span>
+            </div>
+            
+            <div class="status-item calculating" *ngIf="calculatingArea">
+              <mat-spinner diameter="16"></mat-spinner>
+              <span>Calcul en cours...</span>
+            </div>
+          </div>
+
+          <!-- Conteneur de la carte OpenLayers -->
+          <div #mapContainer class="map-container"></div>
+          
+          <!-- Overlay d'informations -->
+          <div class="map-overlay" *ngIf="hasGeometry">
+            <div class="overlay-content">
+              <div class="geometry-type">
+                <mat-icon>{{ geometryType === 'Polygon' ? 'crop_free' : 'place' }}</mat-icon>
+                <span>{{ geometryType }}</span>
+              </div>
+              
+              <div class="quick-stats">
+                <span class="stat-item">
+                  <mat-icon>square_foot</mat-icon>
+                  {{ geometryInfo.area | surfaceFormat }}
+                </span>
+                
+                <span class="stat-item" *ngIf="geometryInfo.perimeter > 0">
+                  <mat-icon>straighten</mat-icon>
+                  {{ geometryInfo.perimeter.toFixed(2) }}m
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Panneau d'informations -->
+    <div class="info-panel">
+      
+      <!-- Informations géométriques -->
+      <mat-card class="info-card geometry-info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>info</mat-icon>
+            Propriétés Géométriques
+          </mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="info-grid" *ngIf="hasGeometry; else noGeometryMessage">
+            
+            <div class="info-item">
+              <span class="info-label">Type :</span>
+              <span class="info-value">{{ geometryType }}</span>
+            </div>
+            
+            <div class="info-item">
+              <span class="info-label">Surface :</span>
+              <span class="info-value surface-value">
+                {{ geometryInfo.area | surfaceFormat }}
+              </span>
+            </div>
+            
+            <div class="info-item" *ngIf="geometryInfo.perimeter > 0">
+              <span class="info-label">Périmètre :</span>
+              <span class="info-value">{{ geometryInfo.perimeter.toFixed(2) }} m</span>
+            </div>
+            
+            <div class="info-item">
+              <span class="info-label">Centroïde :</span>
+              <span class="info-value">
+                {{ geometryInfo.centroid | coordinateFormat:'WGS84':'decimal':4 }}
+              </span>
+            </div>
+            
+            <div class="info-item" *ngIf="geometryInfo.coordinates.length > 0">
+              <span class="info-label">Points :</span>
+              <span class="info-value">{{ geometryInfo.coordinates.length }}</span>
+            </div>
+            
+            <div class="info-item bounds-item" *ngIf="geometryInfo.bounds">
+              <span class="info-label">Emprise :</span>
+              <div class="bounds-value">
+                <small>
+                  X: {{ geometryInfo.bounds[0].toFixed(4) }} → {{ geometryInfo.bounds[2].toFixed(4) }}<br>
+                  Y: {{ geometryInfo.bounds[1].toFixed(4) }} → {{ geometryInfo.bounds[3].toFixed(4) }}
+                </small>
+              </div>
+            </div>
+            
+          </div>
+          
+          <ng-template #noGeometryMessage>
+            <div class="no-geometry-message">
+              <mat-icon>location_off</mat-icon>
+              <p>Aucune géométrie définie</p>
+              <small *ngIf="canEdit">Utilisez les outils de dessin pour créer une géométrie</small>
+            </div>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Cohérence avec les surfaces déclarées -->
+      <mat-card class="info-card coherence-card" *ngIf="hasGeometry">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>balance</mat-icon>
+            Cohérence des Surfaces
+          </mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="coherence-analysis">
+            
+            <div class="comparison-item">
+              <span class="comparison-label">Surface géométrique :</span>
+              <span class="comparison-value calculated">
+                {{ geometryInfo.area | surfaceFormat }}
+              </span>
+            </div>
+            
+            <div class="comparison-item">
+              <span class="comparison-label">Surface déclarée :</span>
+              <span class="comparison-value declared">
+                {{ (formGroup.get('surface_totale')?.value || 0) | surfaceFormat }}
+              </span>
+            </div>
+            
+            <div class="comparison-item difference-item">
+              <span class="comparison-label">Différence :</span>
+              <span class="comparison-value difference" 
+                    [class.warning]="getDifferencePercentage() > 10"
+                    [class.error]="getDifferencePercentage() > 25">
+                {{ getDifferencePercentage().toFixed(1) }}%
+              </span>
+            </div>
+            
+            <div class="coherence-message" 
+                 [ngClass]="{
+                   'good': getDifferencePercentage() <= 5,
+                   'warning': getDifferencePercentage() > 5 && getDifferencePercentage() <= 15,
+                   'error': getDifferencePercentage() > 15
+                 }">
+              <mat-icon>
+                {{ getDifferencePercentage() <= 5 ? 'check_circle' : 
+                   getDifferencePercentage() <= 15 ? 'warning' : 'error' }}
+              </mat-icon>
+              <span>
+                {{ getDifferencePercentage() <= 5 ? 'Surfaces cohérentes' :
+                   getDifferencePercentage() <= 15 ? 'Écart modéré détecté' : 'Écart important détecté' }}
+              </span>
+            </div>
+            
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Actions rapides -->
+      <mat-card class="info-card actions-card" *ngIf="hasGeometry">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flash_on</mat-icon>
+            Actions Rapides
+          </mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="quick-actions">
+            
+            <button mat-stroked-button
+                    (click)="updateSurfaceFromGeometry()"
+                    [disabled]="isViewMode"
+                    class="action-button">
+              <mat-icon>sync_alt</mat-icon>
+              Synchroniser Surface
+            </button>
+            
+            <button mat-stroked-button
+                    (click)="validateGeometry()"
+                    class="action-button">
+              <mat-icon>verified</mat-icon>
+              Valider Géométrie
+            </button>
+            
+            <button mat-stroked-button
+                    (click)="simplifyGeometry()"
+                    [disabled]="isViewMode"
+                    class="action-button">
+              <mat-icon>tune</mat-icon>
+              Simplifier
+            </button>
+            
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,416 @@
+/* =====================================================
+   DOCUMENT MANAGER STYLES
+   ===================================================== */
+
+.document-manager-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =====================================================
+   EN-TÊTE
+   ===================================================== */
+
+.manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+
+  .header-content {
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1976d2;
+
+      .title-icon {
+        font-size: 1.75rem;
+        width: 1.75rem;
+        height: 1.75rem;
+      }
+    }
+
+    .section-subtitle {
+      margin: 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 16px;
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      min-width: 80px;
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1976d2;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+/* =====================================================
+   CARTE D'UPLOAD
+   ===================================================== */
+
+.upload-card {
+  .card-icon {
+    margin-right: 8px;
+    color: #1976d2;
+  }
+
+  .upload-form {
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .form-field {
+      flex: 1;
+      
+      &.full-width {
+        width: 100%;
+      }
+    }
+
+    .file-input-container {
+      flex: 1;
+      position: relative;
+
+      .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+      }
+
+      .file-input-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        background: #fafafa;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 56px;
+        box-sizing: border-box;
+
+        &:hover {
+          border-color: #1976d2;
+          background: #f0f7ff;
+        }
+
+        mat-icon {
+          color: #666;
+        }
+
+        .selected-file {
+          color: #1976d2;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .accepted-types {
+      margin-bottom: 16px;
+
+      .help-text {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #666;
+        font-size: 0.85rem;
+
+        .info-icon {
+          font-size: 1rem;
+          width: 1rem;
+          height: 1rem;
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-start;
+
+      .upload-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        mat-spinner {
+          margin-right: 4px;
+        }
+      }
+
+      .reset-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+}
+
+/* =====================================================
+   BARRE DE PROGRESSION
+   ===================================================== */
+
+.progress-bar {
+  margin: 16px 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* =====================================================
+   LISTE DES DOCUMENTS
+   ===================================================== */
+
+.documents-list-card {
+  .documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+  }
+
+  .document-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #1976d2;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15);
+      transform: translateY(-2px);
+    }
+
+    &.loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .document-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+
+      .document-icon {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e3f2fd;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+          color: #1976d2;
+
+          &.type-titre_foncier { color: #d32f2f; }
+          &.type-plan_topographique { color: #388e3c; }
+          &.type-permis_construire { color: #f57c00; }
+          &.type-photo_terrain { color: #7b1fa2; }
+        }
+      }
+
+      .document-info {
+        flex: 1;
+        min-width: 0;
+
+        .document-name {
+          margin: 0 0 8px 0;
+          font-size: 1rem;
+          font-weight: 500;
+          line-height: 1.3;
+          color: #333;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .document-meta {
+          .type-chip {
+            font-size: 0.75rem;
+            height: 24px;
+            line-height: 24px;
+          }
+        }
+      }
+    }
+
+    .document-details {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #666;
+
+        .detail-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+
+    .document-description {
+      margin-bottom: 16px;
+
+      .description-text {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #555;
+        line-height: 1.4;
+        font-style: italic;
+      }
+    }
+
+    .document-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+  }
+}
+
+/* =====================================================
+   ÉTAT VIDE
+   ===================================================== */
+
+.empty-state-card {
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+
+    .empty-icon {
+      font-size: 4rem;
+      width: 4rem;
+      height: 4rem;
+      color: #ccc;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      margin: 0 0 8px 0;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .empty-message {
+      margin: 0;
+      color: #999;
+      line-height: 1.5;
+    }
+  }
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .document-manager-container {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .manager-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    .header-stats {
+      justify-content: center;
+    }
+  }
+
+  .upload-form {
+    .form-row {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .document-item {
+    .document-header {
+      .document-icon {
+        width: 40px;
+        height: 40px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    .document-details {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+}

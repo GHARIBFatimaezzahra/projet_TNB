@@ -59,7 +59,7 @@ export class RoleAccessDirective implements OnInit, OnDestroy {
       return true;
     }
 
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     if (!user) {
       return false;
     }

@@ -1,0 +1,191 @@
+<!-- =====================================================
+     DASHBOARD ANALYTIQUE - EXACTEMENT COMME VOS IMAGES
+     ===================================================== -->
+
+<div class="dashboard-container">
+  
+  <!-- TITRE DE LA PAGE -->
+  <div class="page-header">
+    <h1 class="page-title">Dashboard Analytique</h1>
+    <p class="page-subtitle">Vue d'ensemble des indicateurs clés et statistiques</p>
+  </div>
+
+  <!-- KPIs PRINCIPAUX -->
+  <div class="kpi-grid">
+    
+    <!-- Total Parcelles -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-icon total">
+          <mat-icon>description</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <h3 class="kpi-title">TOTAL PARCELLES</h3>
+          <div class="kpi-value">2,847</div>
+          <div class="kpi-change positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>+12% ce mois</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Surface Imposable -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-icon surface">
+          <mat-icon>square_foot</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <h3 class="kpi-title">SURFACE IMPOSABLE</h3>
+          <div class="kpi-value">1,245 ha</div>
+          <div class="kpi-subtitle">Surface totale recensée</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recettes Prévues -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-icon revenue">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <h3 class="kpi-title">RECETTES PRÉVUES</h3>
+          <div class="kpi-value">8.2M DH</div>
+          <div class="kpi-change positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>+5.8% vs année précédente</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Taux Recouvrement -->
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-icon collection">
+          <mat-icon>pie_chart</mat-icon>
+        </div>
+        <div class="kpi-info">
+          <h3 class="kpi-title">TAUX RECOUVREMENT</h3>
+          <div class="kpi-value">67%</div>
+          <div class="kpi-subtitle">Fiches payées 2024</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GRAPHIQUES ET ANALYSES -->
+  <div class="charts-grid">
+    
+    <!-- Évolution des recettes TNB -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Évolution des recettes TNB</h3>
+        <div class="chart-controls">
+          <mat-form-field appearance="outline" class="year-select">
+            <mat-select value="2024">
+              <mat-option value="2024">2024</mat-option>
+              <mat-option value="2023">2023</mat-option>
+              <mat-option value="2022">2022</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas #revenueChart></canvas>
+        <div class="chart-placeholder">
+          <mat-icon class="chart-icon">show_chart</mat-icon>
+          <p>Graphique Chart.js - Évolution mensuelle</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Répartition par Zone -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Répartition par Zone</h3>
+        <div class="chart-controls">
+          <button mat-button class="view-toggle active">Dashboard</button>
+          <button mat-button class="view-toggle">Carte</button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas #zoneChart></canvas>
+        <div class="chart-placeholder">
+          <mat-icon class="chart-icon">donut_large</mat-icon>
+          <p>Pie Chart - Zones urbanistiques</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ACTIVITÉS RÉCENTES -->
+  <div class="activity-section">
+    <div class="activity-card">
+      <div class="activity-header">
+        <h3 class="activity-title">Activités récentes</h3>
+        <button mat-button class="view-all-btn">
+          <span>Voir tout</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+      
+      <div class="activity-list">
+        
+        <div class="activity-item">
+          <div class="activity-icon validated">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Parcelle TF-478923-B validée</div>
+            <div class="activity-details">Par Mohammed ALAMI - Agent Fiscal</div>
+            <div class="activity-time">Il y a 2 heures</div>
+          </div>
+          <div class="activity-amount">5,603.75 DH</div>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon created">
+            <mat-icon>add_circle</mat-icon>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Nouvelle parcelle R-789456-C</div>
+            <div class="activity-details">Ajoutée par Fatima BENJELLOUN - Technicien SIG</div>
+            <div class="activity-time">Il y a 4 heures</div>
+          </div>
+          <div class="activity-amount">24,500.00 DH</div>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon warning">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Fiche TNB en attente</div>
+            <div class="activity-details">TF-123789-A - Validation requise</div>
+            <div class="activity-time">Il y a 6 heures</div>
+          </div>
+          <div class="activity-amount pending">2,550.75 DH</div>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon paid">
+            <mat-icon>payment</mat-icon>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Paiement reçu</div>
+            <div class="activity-details">NI-456123-D - Paiement effectué</div>
+            <div class="activity-time">Hier à 16:30</div>
+          </div>
+          <div class="activity-amount">1,850.00 DH</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

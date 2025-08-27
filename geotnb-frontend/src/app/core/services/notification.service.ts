@@ -43,6 +43,10 @@ export class NotificationService {
   ) {}
 
   // Notification de succès
+  success(message: string, options?: NotificationOptions): void {
+    this.showSuccess(message, options);
+  }
+
   showSuccess(message: string, options?: NotificationOptions): void {
     const config = this.buildConfig('success', options);
     const snackBarRef = this.snackBar.open(message, options?.actionText || 'Fermer', config);
@@ -57,6 +61,10 @@ export class NotificationService {
   }
 
   // Notification d'erreur
+  error(message: string, options?: NotificationOptions): void {
+    this.showError(message, options);
+  }
+
   showError(message: string, options?: NotificationOptions): void {
     const config = this.buildConfig('error', options);
     config.duration = options?.persistent ? 0 : (options?.duration || 10000);
@@ -66,6 +74,10 @@ export class NotificationService {
   }
 
   // Notification d'information
+  info(message: string, options?: NotificationOptions): void {
+    this.showInfo(message, options);
+  }
+
   showInfo(message: string, options?: NotificationOptions): void {
     const config = this.buildConfig('info', options);
     const snackBarRef = this.snackBar.open(message, options?.actionText || 'Fermer', config);
@@ -73,6 +85,10 @@ export class NotificationService {
   }
 
   // Notification d'avertissement
+  warning(message: string, options?: NotificationOptions): void {
+    this.showWarning(message, options);
+  }
+
   showWarning(message: string, options?: NotificationOptions): void {
     const config = this.buildConfig('warning', options);
     const snackBarRef = this.snackBar.open(message, options?.actionText || 'Fermer', config);
@@ -154,6 +170,16 @@ export class NotificationService {
   // Fermer toutes les notifications
   dismissAll(): void {
     this.snackBar.dismiss();
+  }
+
+  // Toast notifications (aliases pour compatibilité)
+  toast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
+    switch (type) {
+      case 'success': this.success(message); break;
+      case 'error': this.error(message); break;
+      case 'warning': this.warning(message); break;
+      default: this.info(message); break;
+    }
   }
 
   // Construire la configuration
