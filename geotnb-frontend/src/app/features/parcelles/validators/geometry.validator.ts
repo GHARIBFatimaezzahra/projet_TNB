@@ -91,7 +91,7 @@ export class GeometryValidator {
       const area = GeometryValidator.calculateArea(geometry);
       
       if (area > maxArea) {
-        return { 
+            return {
           maxArea: { 
             actual: area, 
             max: maxArea 
@@ -136,14 +136,14 @@ export class GeometryValidator {
       const validationResult = GeometryValidator.validateTopology(geometry);
       
       if (!validationResult.valid) {
-        return { 
+          return {
           invalidTopology: { 
             errors: validationResult.errors 
-          } 
-        };
-      }
+            }
+          };
+        }
 
-      return null;
+        return null;
     };
   }
 
@@ -170,11 +170,11 @@ export class GeometryValidator {
       const [gMinX, gMinY, gMaxX, gMaxY] = geometryBounds;
 
       if (gMinX < minX || gMinY < minY || gMaxX > maxX || gMaxY > maxY) {
-        return { 
+        return {
           geometryOutOfBounds: { 
             geometryBounds: geometryBounds,
             allowedBounds: bounds 
-          } 
+          }
         };
       }
 
@@ -228,9 +228,9 @@ export class GeometryValidator {
             max: maxVertices 
           } 
         };
-      }
+    }
 
-      return null;
+    return null;
     };
   }
 
@@ -252,9 +252,9 @@ export class GeometryValidator {
             min: minVertices 
           } 
         };
-      }
+    }
 
-      return null;
+    return null;
     };
   }
 
@@ -434,7 +434,7 @@ export class GeometryValidator {
    * Calcule les bounds d'une géométrie
    */
   private static getBounds(geometry: any): [number, number, number, number] | null {
-    if (!geometry || !geometry.coordinates) return null;
+      if (!geometry || !geometry.coordinates) return null;
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 

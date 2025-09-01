@@ -1,0 +1,338 @@
+<!-- Interface 6 - Gestion Indivision et Quote-parts - Design exact fourni -->
+<div class="container">
+  <div class="interface-section">
+    <div class="section-header">
+      <mat-icon>people</mat-icon>
+      6. Gestion Indivision et Quote-parts
+    </div>
+    <div class="section-content">
+      
+      <!-- Sélection de parcelle -->
+      <div class="parcel-selector">
+        <h3>Sélectionner une parcelle</h3>
+        <div class="selector-row">
+          <mat-form-field appearance="outline" class="parcel-field">
+            <mat-label>Rechercher une parcelle</mat-label>
+            <input matInput 
+                   placeholder="Référence, propriétaire..." 
+                   [(ngModel)]="searchTerm"
+                   (input)="searchParcels()">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="parcel-field">
+            <mat-label>Parcelle sélectionnée</mat-label>
+            <mat-select [(value)]="selectedParcelId" (selectionChange)="loadParcelData()">
+              <mat-option *ngFor="let parcel of filteredParcels" [value]="parcel.id">
+                {{ parcel.reference }} - {{ parcel.proprietaire }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" 
+                  [disabled]="!selectedParcelId"
+                  (click)="loadParcelData()">
+            <mat-icon>refresh</mat-icon>
+            Charger
+          </button>
+        </div>
+      </div>
+
+      <!-- Informations parcelle sélectionnée -->
+      <div class="parcel-info" *ngIf="selectedParcel">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Parcelle {{ selectedParcel.reference }}</mat-card-title>
+            <div class="card-actions">
+              <span class="badge" [class]="getStatusBadgeClass(selectedParcel.statut)">
+                {{ selectedParcel.statut }}
+              </span>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="parcel-summary">
+              <div class="summary-item">
+                <strong>Surface totale:</strong>
+                {{ formatNumber(selectedParcel.surface) }} m²
+              </div>
+              <div class="summary-item">
+                <strong>Zone:</strong>
+                {{ selectedParcel.zone }}
+              </div>
+              <div class="summary-item">
+                <strong>TNB totale:</strong>
+                {{ formatCurrency(selectedParcel.tnb) }}
+              </div>
+              <div class="summary-item">
+                <strong>Propriétaires:</strong>
+                {{ selectedParcel.proprietaires.length }} en indivision
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Gestion des propriétaires -->
+      <div class="proprietaires-management" *ngIf="selectedParcel">
+        
+        <!-- Header avec actions -->
+        <div class="management-header">
+          <h3>Gestion des propriétaires ({{ selectedParcel.proprietaires.length }})</h3>
+          <div class="header-actions">
+            <button mat-raised-button color="primary" (click)="addProprietaire()">
+              <mat-icon>person_add</mat-icon>
+              Ajouter propriétaire
+            </button>
+            <button mat-stroked-button (click)="importProprietaires()">
+              <mat-icon>upload_file</mat-icon>
+              Import Excel
+            </button>
+            <button mat-stroked-button (click)="exportProprietaires()">
+              <mat-icon>file_download</mat-icon>
+              Export
+            </button>
+          </div>
+        </div>
+
+        <!-- Validation des quote-parts -->
+        <div class="quotes-validation">
+          <div class="validation-card" [class]="getValidationClass()">
+            <div class="validation-info">
+              <mat-icon>{{ isQuotesValid() ? 'check_circle' : 'error' }}</mat-icon>
+              <div class="validation-text">
+                <strong>Total des quote-parts: {{ getTotalQuotes() }}%</strong>
+                <p>{{ getValidationMessage() }}</p>
+              </div>
+            </div>
+            <div class="validation-actions" *ngIf="!isQuotesValid()">
+              <button mat-raised-button color="warn" (click)="autoBalanceQuotes()">
+                <mat-icon>balance</mat-icon>
+                Équilibrer automatiquement
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des propriétaires -->
+        <div class="proprietaires-list">
+          <div *ngFor="let prop of selectedParcel.proprietaires; let i = index" 
+               class="proprietaire-card"
+               [class.editing]="editingIndex === i">
+            
+            <!-- Mode affichage -->
+            <div *ngIf="editingIndex !== i" class="proprietaire-display">
+              <div class="proprietaire-info">
+                <div class="proprietaire-identity">
+                  <div class="proprietaire-avatar">
+                    <mat-icon>{{ prop.type === 'physique' ? 'person' : 'business' }}</mat-icon>
+                  </div>
+                  <div class="proprietaire-details">
+                    <h4>{{ prop.nom }} {{ prop.prenom }}</h4>
+                    <div class="proprietaire-meta">
+                      <span class="badge" [class]="prop.type === 'physique' ? 'info' : 'warning'">
+                        {{ prop.type === 'physique' ? 'Personne physique' : 'Personne morale' }}
+                      </span>
+                      <span class="identifier">
+                        {{ prop.type === 'physique' ? 'CIN: ' + prop.cin : 'RC: ' + prop.rc }}
+                      </span>
+                    </div>
+                    <div class="contact-info" *ngIf="prop.telephone || prop.adresse">
+                      <div *ngIf="prop.telephone" class="contact-item">
+                        <mat-icon>phone</mat-icon>
+                        {{ prop.telephone }}
+                      </div>
+                      <div *ngIf="prop.adresse" class="contact-item">
+                        <mat-icon>location_on</mat-icon>
+                        {{ prop.adresse }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="quote-info">
+                  <div class="quote-percentage">
+                    <span class="quote-value">{{ prop.quotePart }}%</span>
+                    <div class="quote-bar">
+                      <div class="quote-fill" [style.width.%]="prop.quotePart"></div>
+                    </div>
+                  </div>
+                  <div class="quote-amount">
+                    {{ formatCurrency(calculateQuoteAmount(prop.quotePart)) }}
+                  </div>
+                </div>
+
+                <div class="proprietaire-actions">
+                  <button mat-icon-button color="primary" 
+                          (click)="editProprietaire(i)"
+                          matTooltip="Modifier">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="accent" 
+                          (click)="duplicateProprietaire(i)"
+                          matTooltip="Dupliquer">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" 
+                          (click)="deleteProprietaire(i)"
+                          matTooltip="Supprimer">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mode édition -->
+            <div *ngIf="editingIndex === i" class="proprietaire-edit">
+              <div class="edit-form">
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Type de propriétaire</mat-label>
+                    <mat-select [(value)]="editingProprietaire.type">
+                      <mat-option value="physique">Personne physique</mat-option>
+                      <mat-option value="morale">Personne morale</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nom</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.nom" required>
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" *ngIf="editingProprietaire.type === 'physique'">
+                    <mat-label>Prénom</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.prenom">
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" *ngIf="editingProprietaire.type === 'physique'">
+                    <mat-label>CIN</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.cin">
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline" *ngIf="editingProprietaire.type === 'morale'">
+                    <mat-label>Registre de Commerce</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.rc">
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline">
+                    <mat-label>Quote-part (%)</mat-label>
+                    <input matInput 
+                           type="number" 
+                           min="0" 
+                           max="100" 
+                           step="0.01"
+                           [(ngModel)]="editingProprietaire.quotePart">
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Téléphone</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.telephone">
+                  </mat-form-field>
+                  
+                  <mat-form-field appearance="outline">
+                    <mat-label>Adresse</mat-label>
+                    <input matInput [(ngModel)]="editingProprietaire.adresse">
+                  </mat-form-field>
+                </div>
+
+                <div class="edit-actions">
+                  <button mat-raised-button color="primary" (click)="saveProprietaire()">
+                    <mat-icon>save</mat-icon>
+                    Sauvegarder
+                  </button>
+                  <button mat-stroked-button (click)="cancelEdit()">
+                    <mat-icon>cancel</mat-icon>
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé des quote-parts -->
+        <div class="quotes-summary">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Résumé de la répartition</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-grid">
+                <div class="summary-stat">
+                  <div class="stat-label">Nombre de propriétaires</div>
+                  <div class="stat-value">{{ selectedParcel.proprietaires.length }}</div>
+                </div>
+                <div class="summary-stat">
+                  <div class="stat-label">Total quote-parts</div>
+                  <div class="stat-value" [class]="getQuotesTotalClass()">
+                    {{ getTotalQuotes() }}%
+                  </div>
+                </div>
+                <div class="summary-stat">
+                  <div class="stat-label">TNB totale</div>
+                  <div class="stat-value">{{ formatCurrency(selectedParcel.tnb) }}</div>
+                </div>
+                <div class="summary-stat">
+                  <div class="stat-label">Quote-part moyenne</div>
+                  <div class="stat-value">{{ getAverageQuote() }}%</div>
+                </div>
+              </div>
+
+              <!-- Graphique de répartition -->
+              <div class="distribution-chart">
+                <h4>Répartition des quote-parts</h4>
+                <div class="chart-bars">
+                  <div *ngFor="let prop of selectedParcel.proprietaires; let i = index" 
+                       class="chart-bar">
+                    <div class="bar-info">
+                      <span class="bar-label">{{ prop.nom }}</span>
+                      <span class="bar-value">{{ prop.quotePart }}%</span>
+                    </div>
+                    <div class="bar-container">
+                      <div class="bar-fill" 
+                           [style.width.%]="prop.quotePart"
+                           [style.background-color]="getBarColor(i)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Actions finales -->
+        <div class="final-actions">
+          <button mat-raised-button color="primary" 
+                  [disabled]="!isQuotesValid()"
+                  (click)="saveIndivision()">
+            <mat-icon>save</mat-icon>
+            Sauvegarder l'indivision
+          </button>
+          <button mat-stroked-button (click)="generateDocument()">
+            <mat-icon>description</mat-icon>
+            Générer acte d'indivision
+          </button>
+          <button mat-stroked-button (click)="previewDistribution()">
+            <mat-icon>preview</mat-icon>
+            Aperçu répartition TNB
+          </button>
+          <button mat-stroked-button color="warn" (click)="resetChanges()">
+            <mat-icon>restore</mat-icon>
+            Annuler les modifications
+          </button>
+        </div>
+      </div>
+
+      <!-- Message si aucune parcelle sélectionnée -->
+      <div class="no-selection" *ngIf="!selectedParcel">
+        <mat-icon>info</mat-icon>
+        <h3>Aucune parcelle sélectionnée</h3>
+        <p>Veuillez sélectionner une parcelle pour gérer les propriétaires et quote-parts</p>
+      </div>
+    </div>
+  </div>
+</div>

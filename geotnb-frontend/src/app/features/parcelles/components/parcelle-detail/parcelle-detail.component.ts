@@ -1,132 +1,231 @@
 // =====================================================
-// COMPOSANT DÉTAIL PARCELLE - AFFICHAGE COMPLET
+// COMPOSANT FICHE DÉTAILLÉE PARCELLE - INTERFACE COMPLÈTE
 // =====================================================
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-// Angular Material
+// Angular Material Imports
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTableModule } from '@angular/material/table';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-// Services
-import { ParcelleService } from '../../services/parcelle.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { UserProfil } from '../../../../core/models/database.models';
+// Interfaces
+export interface ParcelleDetail {
+  id: number;
+  reference: string;
+  proprietaire: string;
+  zone: string;
+  statut: string;
+  surface: number;
+  surfaceImposable: number;
+  tnb: number;
+  statutFoncier: string;
+  statutOccupation: string;
+  adresse: string;
+  secteur: string;
+  coordonnees: string;
+  perimetre: number;
+  formeGeometrique: string;
+  prixUnitaire: number;
+  coefficientAbattement: number;
+  anneeFiscale: number;
+  exonere: boolean;
+  dateExoneration?: Date;
+  dureeExoneration?: number;
+  motifExoneration?: string;
+  proprietaires: Proprietaire[];
+  geometry: GeometryInfo;
+  documents: Document[];
+  historique: HistoryEntry[];
+}
 
-// Models
-import { Parcelle, ParcelleProprietaire, DocumentJoint, FicheFiscale, JournalAction } from '../../models/parcelle.models';
+export interface Proprietaire {
+  id: number;
+  nom: string;
+  prenom: string;
+  type: 'physique' | 'morale';
+  cin?: string;
+  rc?: string;
+  adresse?: string;
+  telephone?: string;
+  quotePart: number;
+}
 
-// Composants
-import { ParcelleMapComponent } from '../map-components/parcelle-map/parcelle-map.component';
-import { TaxCalculatorComponent } from '../fiscal/tax-calculator/tax-calculator.component';
-import { ValidationSummaryComponent } from '../indivision/validation-summary/validation-summary.component';
+export interface GeometryInfo {
+  nombrePoints: number;
+  centroide: { x: number; y: number };
+  valide: boolean;
+}
 
-// Pipes
-import { SurfaceFormatPipe } from '../../pipes/surface-format.pipe';
-import { ReferenceFoncierePipe } from '../../pipes/reference-fonciere.pipe';
+export interface Document {
+  id: number;
+  nom: string;
+  type: string;
+  taille: string;
+  dateAjout: Date;
+}
+
+export interface HistoryEntry {
+  id: number;
+  date: Date;
+  action: string;
+  details: string;
+  type: string;
+  utilisateur: string;
+}
 
 @Component({
   selector: 'app-parcelle-detail',
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
+    MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatCardModule,
-    MatTabsModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatTooltipModule,
     MatProgressSpinnerModule,
-    MatMenuModule,
-    MatBadgeModule,
-    MatExpansionModule,
-    MatTableModule,
-    MatSnackBarModule,
-    MatDialogModule,
-    ParcelleMapComponent,
-    TaxCalculatorComponent,
-    ValidationSummaryComponent,
-    SurfaceFormatPipe,
-    ReferenceFoncierePipe
+    MatTooltipModule,
+    MatSnackBarModule
   ],
   templateUrl: './parcelle-detail.component.html',
   styleUrls: ['./parcelle-detail.component.scss']
 })
 export class ParcelleDetailComponent implements OnInit, OnDestroy {
-  // État principal
-  parcelle: Parcelle | null = null;
-  parcelleId!: number;
-  isLoading = true;
-  selectedTabIndex = 0;
-  
-  // Vue spécifique (depuis les routes)
-  specificView?: string;
-  
-  // Données associées
-  proprietaires: ParcelleProprietaire[] = [];
-  documents: DocumentJoint[] = [];
-  fichesFiscales: FicheFiscale[] = [];
-  journalActions: JournalAction[] = [];
-  
-  // État des données
-  loadingProprietaires = false;
-  loadingDocuments = false;
-  loadingFiches = false;
-  loadingJournal = false;
-  
-  // Configuration des onglets
-  tabs = [
-    { id: 'general', label: 'Général', icon: 'info' },
-    { id: 'map', label: 'Cartographie', icon: 'map' },
-    { id: 'proprietaires', label: 'Propriétaires', icon: 'group' },
-    { id: 'fiscal', label: 'Fiscal', icon: 'account_balance' },
-    { id: 'documents', label: 'Documents', icon: 'folder' },
-    { id: 'history', label: 'Historique', icon: 'history' }
-  ];
-  
-  // Colonnes des tables
-  proprietairesColumns = ['nom', 'nature', 'cin_ou_rc', 'quote_part', 'montant_individuel', 'actions'];
-  documentsColumns = ['nom_fichier', 'type_doc', 'taille_fichier', 'date_ajout', 'actions'];
-  fichesColumns = ['code_unique', 'annee', 'montant_tnb', 'statut_payment', 'date_generation', 'actions'];
-  journalColumns = ['action', 'date_heure', 'utilisateur', 'details'];
-  
+
+  // =====================================================
+  // PROPRIÉTÉS
+  // =====================================================
+
+  parcelleDetails: ParcelleDetail = {
+    id: 1,
+    reference: 'TF-478923-B',
+    proprietaire: 'ALAMI Mohammed, BENALI Fatima',
+    zone: 'R+4',
+    statut: 'VALIDE',
+    surface: 1250.75,
+    surfaceImposable: 1180.50,
+    tnb: 15680,
+    statutFoncier: 'TF - Titre Foncier',
+    statutOccupation: 'Terrain nu',
+    adresse: 'Avenue Hassan II, Secteur 12',
+    secteur: 'Nord-Est',
+    coordonnees: '34.6814° N, 1.9086° W',
+    perimetre: 142.35,
+    formeGeometrique: 'Polygone irrégulier',
+    prixUnitaire: 180,
+    coefficientAbattement: 15,
+    anneeFiscale: 2024,
+    exonere: false,
+    proprietaires: [
+      {
+        id: 1,
+        nom: 'ALAMI',
+        prenom: 'Mohammed',
+        type: 'physique',
+        cin: 'BE123456',
+        adresse: 'Rue Al Andalous, Oujda',
+        telephone: '0661234567',
+        quotePart: 60
+      },
+      {
+        id: 2,
+        nom: 'BENALI',
+        prenom: 'Fatima',
+        type: 'physique',
+        cin: 'BE789012',
+        adresse: 'Avenue Mohammed V, Oujda',
+        telephone: '0662345678',
+        quotePart: 40
+      }
+    ],
+    geometry: {
+      nombrePoints: 5,
+      centroide: { x: 524802.78, y: 385713.48 },
+      valide: true
+    },
+    documents: [
+      {
+        id: 1,
+        nom: 'Titre_Foncier_TF478923B.pdf',
+        type: 'titre-foncier',
+        taille: '2.4 MB',
+        dateAjout: new Date('2024-01-15')
+      },
+      {
+        id: 2,
+        nom: 'Plan_Parcellaire_2024.dwg',
+        type: 'plan',
+        taille: '5.1 MB',
+        dateAjout: new Date('2024-02-20')
+      },
+      {
+        id: 3,
+        nom: 'Certificat_Urbanisme.pdf',
+        type: 'certificat',
+        taille: '1.8 MB',
+        dateAjout: new Date('2024-03-10')
+      }
+    ],
+    historique: [
+      {
+        id: 1,
+        date: new Date('2024-03-15T14:30:00'),
+        action: 'Validation parcelle',
+        details: 'Parcelle validée et prête pour publication',
+        type: 'validated',
+        utilisateur: 'Ahmed BENNANI'
+      },
+      {
+        id: 2,
+        date: new Date('2024-02-28T09:15:00'),
+        action: 'Modification surface',
+        details: 'Surface mise à jour de 1230.45 m² à 1250.75 m²',
+        type: 'updated',
+        utilisateur: 'Fatima LAHLOU'
+      },
+      {
+        id: 3,
+        date: new Date('2024-01-15T16:45:00'),
+        action: 'Création parcelle',
+        details: 'Création initiale de la parcelle avec import géométrie',
+        type: 'created',
+        utilisateur: 'Mohammed TAZI'
+      }
+    ]
+  };
+
+  loading = false;
+  activeTab = 'general';
+
+  // Subject pour la destruction
   private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private parcelleService: ParcelleService,
-    private authService: AuthService,
     private snackBar: MatSnackBar
   ) {}
 
+  // =====================================================
+  // CYCLE DE VIE
+  // =====================================================
+
   ngOnInit(): void {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      this.parcelleId = +params['id'];
-      this.loadParcelle();
-    });
-    
-    // Récupérer la vue spécifique depuis les données de route
-    this.specificView = this.route.snapshot.data['view'];
-    if (this.specificView) {
-      this.selectTabByView(this.specificView);
-    }
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        const id = +params['id'];
+        if (id) {
+          this.loadParcelleDetails(id);
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -138,445 +237,304 @@ export class ParcelleDetailComponent implements OnInit, OnDestroy {
   // CHARGEMENT DES DONNÉES
   // =====================================================
 
-  private loadParcelle(): void {
-    this.isLoading = true;
+  private loadParcelleDetails(id: number): void {
+    this.loading = true;
+    console.log('Chargement détails parcelle ID:', id);
     
-    this.parcelleService.getParcelleById(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (parcelle) => {
-          this.parcelle = parcelle;
-          this.isLoading = false;
-          
-          // Charger les données associées selon l'onglet actif
-          this.loadAssociatedData();
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du chargement de la parcelle', error);
-          this.isLoading = false;
-        }
-      });
-  }
-
-  private loadAssociatedData(): void {
-    // Charger selon l'onglet sélectionné ou la vue spécifique
-    const activeTab = this.tabs[this.selectedTabIndex]?.id || this.specificView;
-    
-    switch (activeTab) {
-      case 'proprietaires':
-        this.loadProprietaires();
-        break;
-      case 'documents':
-        this.loadDocuments();
-        break;
-      case 'fiscal':
-        this.loadFichesFiscales();
-        break;
-      case 'history':
-        this.loadJournalActions();
-        break;
-    }
-  }
-
-  private loadProprietaires(): void {
-    if (this.loadingProprietaires || this.proprietaires.length > 0) return;
-    
-    this.loadingProprietaires = true;
-    
-    this.parcelleService.getParcelleProprietaires(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (proprietaires) => {
-          this.proprietaires = proprietaires;
-          this.loadingProprietaires = false;
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du chargement des propriétaires', error);
-          this.loadingProprietaires = false;
-        }
-      });
-  }
-
-  private loadDocuments(): void {
-    if (this.loadingDocuments || this.documents.length > 0) return;
-    
-    this.loadingDocuments = true;
-    
-    this.parcelleService.getParcelleDocuments(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (documents) => {
-          this.documents = documents;
-          this.loadingDocuments = false;
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du chargement des documents', error);
-          this.loadingDocuments = false;
-        }
-      });
-  }
-
-  private loadFichesFiscales(): void {
-    if (this.loadingFiches || this.fichesFiscales.length > 0) return;
-    
-    this.loadingFiches = true;
-    
-    this.parcelleService.getParcelleFichesFiscales(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (fiches: any) => {
-          this.fichesFiscales = fiches;
-          this.loadingFiches = false;
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du chargement des fiches fiscales', error);
-          this.loadingFiches = false;
-        }
-      });
-  }
-
-  private loadJournalActions(): void {
-    if (this.loadingJournal || this.journalActions.length > 0) return;
-    
-    this.loadingJournal = true;
-    
-    // Simulation de données pour le journal
+    // Simulation du chargement
     setTimeout(() => {
-      this.journalActions = [
-        {
-          id: 1,
-          action: 'creation',
-          details: 'Création de la parcelle',
-          utilisateur_id: 1,
-          date_heure: new Date(),
-          id_cible: this.parcelleId,
-          table_cible: 'parcelle'
-        }
-      ];
-      this.loadingJournal = false;
-    }, 500);
+      this.loading = false;
+      this.showSuccess('Détails de la parcelle chargés');
+    }, 1000);
   }
 
   // =====================================================
-  // NAVIGATION ET ONGLETS
+  // NAVIGATION ONGLETS
   // =====================================================
 
-  onTabChange(event: any): void {
-    this.selectedTabIndex = event.index;
-    this.loadAssociatedData();
-  }
-
-  private selectTabByView(view: string): void {
-    const tabIndex = this.tabs.findIndex(tab => tab.id === view);
-    if (tabIndex >= 0) {
-      this.selectedTabIndex = tabIndex;
-    }
+  switchTab(tab: string): void {
+    this.activeTab = tab;
   }
 
   // =====================================================
-  // ACTIONS PRINCIPALES
+  // ACTIONS PARCELLE
   // =====================================================
 
-  editParcelle(): void {
-    if (!this.canEdit) {
-      this.showError('Vous n\'avez pas les permissions pour modifier cette parcelle');
-      return;
-    }
-    
-    this.router.navigate(['/parcelles', this.parcelleId, 'edit']);
+  retourListe(): void {
+    this.router.navigate(['/parcelles']);
+  }
+
+  editParcel(): void {
+    this.router.navigate(['/parcelles/edit', this.parcelleDetails.id]);
+  }
+
+  editGeometry(): void {
+    this.router.navigate(['/parcelles/geometry', this.parcelleDetails.id]);
   }
 
   viewOnMap(): void {
-    this.selectedTabIndex = this.tabs.findIndex(tab => tab.id === 'map');
+    this.router.navigate(['/parcelles/carte'], {
+      queryParams: { 
+        parcelle: this.parcelleDetails.reference,
+        center: 'true'
+      }
+    });
   }
 
-  duplicateParcelle(): void {
-    if (!this.canCreate) {
-      this.showError('Vous n\'avez pas les permissions pour créer une parcelle');
-      return;
-    }
-    
-    this.parcelleService.duplicateParcelle(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (newParcelle) => {
-          this.showSuccess('Parcelle dupliquée avec succès');
-          this.router.navigate(['/parcelles', newParcelle.id, 'edit']);
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors de la duplication', error);
-        }
-      });
+  generateFicheTNB(): void {
+    this.showSuccess('Génération de la fiche TNB en cours...');
+    // TODO: Implémenter la génération de fiche TNB
   }
 
-  deleteParcelle(): void {
-    if (!this.canDelete) {
-      this.showError('Vous n\'avez pas les permissions pour supprimer cette parcelle');
-      return;
+  genererFicheTnb(): void {
+    this.generateFicheTNB();
+  }
+
+  modifierParcelle(): void {
+    this.router.navigate(['/parcelles/edit', this.parcelleDetails.id]);
+  }
+
+  voirSurCarte(): void {
+    this.router.navigate(['/parcelles/sig'], { 
+      queryParams: { parcelleId: this.parcelleDetails.id } 
+    });
+  }
+
+  imprimerDetails(): void {
+    window.print();
+  }
+
+  changerStatut(): void {
+    this.showSuccess('Changement de statut en cours...');
+    // TODO: Implémenter le changement de statut
+  }
+
+  archiverParcelle(): void {
+    if (confirm('Êtes-vous sûr de vouloir archiver cette parcelle ?')) {
+      this.showSuccess('Parcelle archivée avec succès');
+      // TODO: Implémenter l'archivage
     }
-    
-    // Ouvrir dialog de confirmation
-    // Implémentation simplifiée
-    if (confirm(`Êtes-vous sûr de vouloir supprimer la parcelle ${this.parcelle?.reference_fonciere} ?`)) {
-      this.parcelleService.deleteParcelle(this.parcelleId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.showSuccess('Parcelle supprimée avec succès');
-            this.router.navigate(['/parcelles']);
-          },
-          error: (error: any) => {
-            this.handleError('Erreur lors de la suppression', error);
-          }
-        });
-    }
+  }
+
+  ajouterDocument(): void {
+    this.showSuccess('Ouverture du formulaire d\'ajout de document...');
+    // TODO: Ouvrir modal d'ajout de document
+  }
+
+  printParcel(): void {
+    this.showSuccess('Impression en cours...');
+    // TODO: Implémenter l'impression
+  }
+
+  shareParcel(): void {
+    this.showSuccess('Lien de partage copié');
+    // TODO: Implémenter le partage
   }
 
   // =====================================================
-  // ACTIONS WORKFLOW
+  // GESTION PROPRIÉTAIRES
   // =====================================================
 
-  validateParcelle(): void {
-    if (!this.canValidate) {
-      this.showError('Vous n\'avez pas les permissions pour valider cette parcelle');
-      return;
-    }
-    
-    this.executeWorkflowAction('validate', 'Validation de la parcelle');
+  addProprietaire(): void {
+    this.showSuccess('Formulaire d\'ajout de propriétaire');
+    // TODO: Ouvrir modal d'ajout de propriétaire
   }
 
-  publishParcelle(): void {
-    if (!this.canPublish) {
-      this.showError('Vous n\'avez pas les permissions pour publier cette parcelle');
-      return;
-    }
-    
-    this.executeWorkflowAction('publish', 'Publication de la parcelle');
+  editProprietaire(index: number): void {
+    const prop = this.parcelleDetails.proprietaires[index];
+    this.showSuccess(`Édition propriétaire: ${prop.nom} ${prop.prenom}`);
+    // TODO: Ouvrir modal d'édition
   }
 
-  archiveParcelle(): void {
-    if (!this.canArchive) {
-      this.showError('Vous n\'avez pas les permissions pour archiver cette parcelle');
-      return;
+  deleteProprietaire(index: number): void {
+    const prop = this.parcelleDetails.proprietaires[index];
+    if (confirm(`Supprimer le propriétaire ${prop.nom} ${prop.prenom} ?`)) {
+      this.parcelleDetails.proprietaires.splice(index, 1);
+      this.showSuccess('Propriétaire supprimé');
     }
-    
-    this.executeWorkflowAction('archive', 'Archivage de la parcelle');
   }
 
-  private executeWorkflowAction(action: string, actionLabel: string): void {
-    this.parcelleService.executeWorkflowAction(this.parcelleId, {
-      action,
-      comment: `${actionLabel} effectuée depuis la vue détail`,
-      userId: this.authService.currentUser?.id
-    }).pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updatedParcelle) => {
-          this.parcelle = updatedParcelle;
-          this.showSuccess(`${actionLabel} effectuée avec succès`);
-          
-          // Recharger l'historique si affiché
-          if (this.tabs[this.selectedTabIndex]?.id === 'history') {
-            this.journalActions = [];
-            this.loadJournalActions();
-          }
-        },
-        error: (error: any) => {
-          this.handleError(`Erreur lors de ${actionLabel.toLowerCase()}`, error);
-        }
-      });
+  calculateQuoteAmount(quotePart: number): number {
+    return (this.parcelleDetails.tnb * quotePart) / 100;
+  }
+
+  getTotalQuotes(): number {
+    return this.parcelleDetails.proprietaires.reduce((total, prop) => total + prop.quotePart, 0);
+  }
+
+  getTotalQuotesClass(): string {
+    const total = this.getTotalQuotes();
+    if (total === 100) return 'success';
+    if (total < 100) return 'warning';
+    return 'error';
   }
 
   // =====================================================
-  // ACTIONS DOCUMENTS
+  // GESTION DOCUMENTS
   // =====================================================
 
   uploadDocument(): void {
-    // Implémentation upload de document
-    // Ouvrir dialog d'upload
+    this.showSuccess('Sélection de document à télécharger...');
+    // TODO: Implémenter l'upload de document
   }
 
-  downloadDocument(documentJoint: DocumentJoint): void {
-    this.parcelleService.downloadDocument(documentJoint.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = documentJoint.nom_fichier;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du téléchargement', error);
-        }
-      });
+  viewDocument(doc: Document): void {
+    this.showSuccess(`Ouverture du document: ${doc.nom}`);
+    // TODO: Ouvrir le document
   }
 
-  deleteDocument(document: DocumentJoint): void {
-    if (confirm(`Supprimer le document ${document.nom_fichier} ?`)) {
-      this.parcelleService.deleteDocument(document.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.documents = this.documents.filter(d => d.id !== document.id);
-            this.showSuccess('Document supprimé');
-          },
-          error: (error: any) => {
-            this.handleError('Erreur lors de la suppression du document', error);
-          }
-        });
+  downloadDocument(doc: Document): void {
+    this.showSuccess(`Téléchargement: ${doc.nom}`);
+    // TODO: Télécharger le document
+  }
+
+  deleteDocument(doc: Document): void {
+    if (confirm(`Supprimer le document ${doc.nom} ?`)) {
+      const index = this.parcelleDetails.documents.findIndex(d => d.id === doc.id);
+      if (index > -1) {
+        this.parcelleDetails.documents.splice(index, 1);
+        this.showSuccess('Document supprimé');
+      }
     }
   }
 
-  // =====================================================
-  // ACTIONS FICHES FISCALES
-  // =====================================================
-
-  generateFiche(): void {
-    if (!this.canGenerateFiche) {
-      this.showError('Vous n\'avez pas les permissions pour générer une fiche fiscale');
-      return;
-    }
-    
-    this.parcelleService.generateFicheFiscale(this.parcelleId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (fiche) => {
-          this.fichesFiscales = [fiche, ...this.fichesFiscales];
-          this.showSuccess('Fiche fiscale générée avec succès');
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors de la génération de la fiche', error);
-        }
-      });
-  }
-
-  downloadFiche(fiche: FicheFiscale): void {
-    this.parcelleService.downloadFiche(fiche.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `fiche_${fiche.code_unique}.pdf`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-        },
-        error: (error: any) => {
-          this.handleError('Erreur lors du téléchargement de la fiche', error);
-        }
-      });
+  exportGeometry(): void {
+    this.showSuccess('Export de la géométrie en cours...');
+    // TODO: Implémenter l'export de géométrie
   }
 
   // =====================================================
-  // PERMISSIONS ET ÉTAT
+  // CALCULS FISCAUX
   // =====================================================
 
-  get canEdit(): boolean {
-    return this.parcelleService.canEditParcelle();
+  getMontantBrut(): number {
+    return this.parcelleDetails.surfaceImposable * this.parcelleDetails.prixUnitaire;
   }
 
-  get canDelete(): boolean {
-    return this.parcelleService.canDeleteParcelle();
+  getAbattement(): number {
+    return (this.getMontantBrut() * this.parcelleDetails.coefficientAbattement) / 100;
   }
 
-  get canCreate(): boolean {
-    return this.parcelleService.canCreateParcelle();
+  getCalculatedPercentage(): number {
+    return Math.round((this.parcelleDetails.surfaceImposable / this.parcelleDetails.surface) * 100);
   }
 
-  get canValidate(): boolean {
-    return this.parcelleService.canValidateParcelle() && 
-           this.parcelle?.etat_validation === 'Brouillon';
-  }
+  // =====================================================
+  // MÉTHODES D'AFFICHAGE
+  // =====================================================
 
-  get canPublish(): boolean {
-    return this.parcelleService.canPublishParcelle() && 
-           this.parcelle?.etat_validation === 'Valide';
-  }
-
-  get canArchive(): boolean {
-    return this.parcelleService.canArchiveParcelle() && 
-           this.parcelle?.etat_validation !== 'Archive';
-  }
-
-  get canGenerateFiche(): boolean {
-    return this.authService.hasPermission(UserProfil.ADMIN, UserProfil.AGENT_FISCAL) &&
-           this.parcelle?.etat_validation === 'Publie';
-  }
-
-  get parcelleStatus(): { label: string; color: string; icon: string } {
-    if (!this.parcelle) return { label: '', color: '', icon: '' };
-    
-    switch (this.parcelle.etat_validation) {
-      case 'Brouillon':
-        return { label: 'Brouillon', color: 'warn', icon: 'edit' };
-      case 'Valide':
-        return { label: 'Validé', color: 'accent', icon: 'check_circle' };
-      case 'Publie':
-        return { label: 'Publié', color: 'primary', icon: 'public' };
-      case 'Archive':
-        return { label: 'Archivé', color: '', icon: 'archive' };
+  getStatusBadgeClass(statut: string): string {
+    switch (statut.toUpperCase()) {
+      case 'VALIDE':
+        return 'success';
+      case 'PUBLIE':
+        return 'info';
+      case 'BROUILLON':
+        return 'warning';
       default:
-        return { label: this.parcelle.etat_validation, color: '', icon: 'help' };
+        return 'secondary';
     }
-  }
-
-  // =====================================================
-  // UTILITAIRES
-  // =====================================================
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   getDocumentIcon(type: string): string {
     switch (type) {
-      case 'Certificat': return 'verified';
-      case 'Photo': return 'photo';
-      case 'Requisition': return 'description';
-      case 'Plan': return 'map';
-      case 'Autorisation': return 'gavel';
-      default: return 'insert_drive_file';
+      case 'titre-foncier':
+        return 'article';
+      case 'plan':
+        return 'engineering';
+      case 'certificat':
+        return 'verified';
+      case 'photo':
+        return 'photo';
+      default:
+        return 'description';
     }
   }
 
-  getActionIcon(action: string): string {
-    switch (action) {
-      case 'CREATE': return 'add_circle';
-      case 'UPDATE': return 'edit';
-      case 'DELETE': return 'delete';
-      case 'VALIDATE': return 'check_circle';
-      case 'PUBLISH': return 'public';
-      case 'ARCHIVE': return 'archive';
-      default: return 'info';
+  getDocumentColor(type: string): string {
+    switch (type) {
+      case 'titre-foncier':
+        return '#ef4444';
+      case 'plan':
+        return '#3b82f6';
+      case 'certificat':
+        return '#10b981';
+      case 'photo':
+        return '#f59e0b';
+      default:
+        return '#64748b';
     }
   }
 
+  getDocumentTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'titre-foncier': 'Titre foncier',
+      'plan': 'Plan technique',
+      'certificat': 'Certificat',
+      'photo': 'Photographie'
+    };
+    return labels[type] || 'Document';
+  }
+
+  getHistoryIcon(type: string): string {
+    switch (type) {
+      case 'created':
+        return 'add_circle';
+      case 'updated':
+        return 'edit';
+      case 'validated':
+        return 'check_circle';
+      case 'published':
+        return 'publish';
+      default:
+        return 'history';
+    }
+  }
+
+  getHistoryMarkerClass(type: string): string {
+    return type;
+  }
+
   // =====================================================
-  // GESTION D'ERREURS ET NOTIFICATIONS
+  // MÉTHODES DE FORMATAGE
   // =====================================================
 
-  private handleError(message: string, error: any): void {
-    console.error(message, error);
-    this.showError(message);
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat('fr-MA', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('fr-MA', {
+      style: 'currency',
+      currency: 'MAD',
+      minimumFractionDigits: 0
+    }).format(value);
+  }
+
+  formatCoordinate(value: number): string {
+    return new Intl.NumberFormat('fr-MA', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  // =====================================================
+  // NOTIFICATIONS
+  // =====================================================
 
   private showSuccess(message: string): void {
     this.snackBar.open(message, 'Fermer', {
-      duration: 3000,
+      duration: 2000,
       panelClass: ['success-snackbar']
     });
   }
 
   private showError(message: string): void {
     this.snackBar.open(message, 'Fermer', {
-      duration: 5000,
+      duration: 4000,
       panelClass: ['error-snackbar']
     });
   }

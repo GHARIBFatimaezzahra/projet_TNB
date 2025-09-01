@@ -577,7 +577,7 @@ export class ValidationPanelComponent implements OnInit, OnDestroy {
         break;
       default:
         // Pour les autres actions, utiliser une méthode générique
-        serviceCall = this.parcelleService.executeWorkflowAction(this.parcelle!.id, request);
+        serviceCall = this.parcelleService.executeWorkflowAction(this.parcelle!.id, request.action, request.comment);
     }
 
     serviceCall.pipe(takeUntil(this.destroy$)).subscribe({

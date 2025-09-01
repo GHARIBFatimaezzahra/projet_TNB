@@ -12,7 +12,7 @@ export type CoordinateFormat = 'decimal' | 'dms' | 'utm' | 'lambert';
   standalone: true
 })
 export class CoordinateFormatPipe implements PipeTransform {
-  
+
   /**
    * Formate des coordonnées selon le système spécifié
    * @param value - Coordonnées [longitude, latitude] ou [x, y]

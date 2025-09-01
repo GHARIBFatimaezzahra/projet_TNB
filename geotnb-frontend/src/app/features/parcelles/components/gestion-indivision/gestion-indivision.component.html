@@ -1,0 +1,208 @@
+<!-- ========================================
+     GESTION DES INDIVISIONS - TNB
+     ======================================== -->
+
+<div class="indivision-container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1><i class="fas fa-users"></i> Gestion des Indivisions</h1>
+        <p>Gestion des propriétaires multiples et répartition des quote-parts</p>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" (click)="nouvelleIndivision()">
+          <i class="fas fa-plus"></i> Nouvelle Indivision
+        </button>
+        <button class="btn btn-secondary" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques rapides -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.totalIndivisions }}</h3>
+        <p>Indivisions actives</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-user-friends"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.totalProprietaires }}</h3>
+        <p>Propriétaires concernés</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-map-marked-alt"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.totalParcelles }}</h3>
+        <p>Parcelles en indivision</p>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.tnbTotale | number:'1.0-0' }} DH</h3>
+        <p>TNB totale</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <!-- Filtres de recherche -->
+    <div class="search-filters">
+      <div class="filter-group">
+        <label>Parcelle :</label>
+        <input type="text" placeholder="Référence foncière" [(ngModel)]="filters.referenceFonciere">
+      </div>
+      
+      <div class="filter-group">
+        <label>Propriétaire :</label>
+        <input type="text" placeholder="Nom du propriétaire" [(ngModel)]="filters.proprietaire">
+      </div>
+      
+      <div class="filter-group">
+        <label>Statut :</label>
+        <select [(ngModel)]="filters.statut">
+          <option value="">Tous</option>
+          <option value="actif">Actif</option>
+          <option value="historique">Historique</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label>Quote-part :</label>
+        <select [(ngModel)]="filters.quotePart">
+          <option value="">Toutes</option>
+          <option value="25">25%</option>
+          <option value="50">50%</option>
+          <option value="75">75%</option>
+          <option value="100">100%</option>
+        </select>
+      </div>
+      
+      <button class="btn btn-primary" (click)="appliquerFiltres()">
+        <i class="fas fa-search"></i> Rechercher
+      </button>
+      
+      <button class="btn btn-secondary" (click)="reinitialiserFiltres()">
+        <i class="fas fa-undo"></i> Réinitialiser
+      </button>
+    </div>
+
+    <!-- Tableau des indivisions -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3><i class="fas fa-list"></i> Liste des Indivisions</h3>
+        <div class="table-actions">
+          <button class="btn btn-outline" (click)="exporterExcel()">
+            <i class="fas fa-file-excel"></i> Excel
+          </button>
+          <button class="btn btn-outline" (click)="exporterPDF()">
+            <i class="fas fa-file-pdf"></i> PDF
+          </button>
+        </div>
+      </div>
+      
+      <div class="table-content">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>
+                <input type="checkbox" (change)="toggleSelection($event)">
+              </th>
+              <th>Référence</th>
+              <th>Propriétaire</th>
+              <th>Quote-part</th>
+              <th>Type titre</th>
+              <th>Date début</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let indivision of indivisions; trackBy: trackByIndivisionId">
+              <td>
+                <input type="checkbox" [checked]="isSelected(indivision.id)" (change)="toggleIndivisionSelection(indivision.id)">
+              </td>
+              <td>
+                <span class="reference">{{ indivision.referenceFonciere }}</span>
+                <small class="surface">{{ indivision.surface }} m²</small>
+              </td>
+              <td>
+                <div class="proprietaire-info">
+                  <strong>{{ indivision.proprietaire.nom }}</strong>
+                  <small *ngIf="indivision.proprietaire.cin">CIN: {{ indivision.proprietaire.cin }}</small>
+                  <small *ngIf="indivision.proprietaire.rc">RC: {{ indivision.proprietaire.rc }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="quote-part">{{ indivision.quotePart }}%</span>
+              </td>
+              <td>
+                <span class="type-titre">{{ indivision.typeTitre }}</span>
+              </td>
+              <td>
+                <span class="date">{{ indivision.dateDebut | date:'dd/MM/yyyy' }}</span>
+              </td>
+              <td>
+                <span class="statut" [class]="indivision.statut">
+                  {{ indivision.statut }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button class="btn-icon" (click)="voirDetail(indivision.id)" title="Voir détail">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn-icon" (click)="modifierIndivision(indivision.id)" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn-icon" (click)="supprimerIndivision(indivision.id)" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="pagination.totalPages > 1">
+        <button class="btn-page" [disabled]="pagination.page <= 1" (click)="pagePrecedente()">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <span class="page-info">
+          Page {{ pagination.page }} sur {{ pagination.totalPages }}
+        </span>
+        
+        <button class="btn-page" [disabled]="pagination.page >= pagination.totalPages" (click)="pageSuivante()">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+

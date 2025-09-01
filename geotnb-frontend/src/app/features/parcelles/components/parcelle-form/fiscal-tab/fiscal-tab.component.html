@@ -36,7 +36,7 @@
             Surface doit être positive
           </mat-error>
         </mat-form-field>
-
+  
         <!-- Surface Imposable -->
         <mat-form-field appearance="outline" class="surface-field">
           <mat-label>Surface Imposable (m²) *</mat-label>
@@ -56,7 +56,7 @@
           </mat-error>
         </mat-form-field>
       </div>
-
+  
       <!-- Indicateur de pourcentage -->
       <div class="surface-indicator" *ngIf="pourcentageSurfaceImposable > 0">
         <div class="indicator-header">
@@ -148,22 +148,22 @@
 
   <!-- Section Exonération -->
   <mat-card class="section-card exoneration-section">
-    <mat-card-header>
-      <mat-card-title>
+        <mat-card-header>
+          <mat-card-title>
         <mat-icon>schedule</mat-icon>
         Exonération TNB
-      </mat-card-title>
+          </mat-card-title>
       <mat-card-subtitle>
         Gestion des exonérations temporaires
       </mat-card-subtitle>
-    </mat-card-header>
+        </mat-card-header>
     
-    <mat-card-content>
+        <mat-card-content>
       <!-- Case à cocher exonération -->
       <div class="exoneration-toggle">
         <mat-checkbox formControlName="exonere_tnb" 
                       [disabled]="isViewMode"
-                      (change)="onExonerationChange()"
+                             (change)="onExonerationChange()"
                       class="exoneration-checkbox">
           <span class="checkbox-label">
             <strong>Parcelle exonérée de la TNB</strong>
@@ -179,7 +179,7 @@
         <div class="exoneration-form">
           <!-- Date du permis -->
           <mat-form-field appearance="outline" class="date-field">
-            <mat-label>Date du Permis</mat-label>
+                  <mat-label>Date du Permis</mat-label>
             <input matInput 
                    [matDatepicker]="permisDatePicker" 
                    formControlName="date_permis"
@@ -189,26 +189,26 @@
             <mat-datepicker #permisDatePicker></mat-datepicker>
             <mat-error *ngIf="formGroup.get('date_permis')?.hasError('required')">
               Date du permis requise pour l'exonération
-            </mat-error>
-          </mat-form-field>
-
+                  </mat-error>
+                </mat-form-field>
+  
           <!-- Durée d'exonération -->
           <mat-form-field appearance="outline" class="duration-field">
-            <mat-label>Durée d'Exonération</mat-label>
+                  <mat-label>Durée d'Exonération</mat-label>
             <mat-select formControlName="duree_exoneration" [disabled]="isViewMode">
               <mat-option *ngFor="let option of dureeExonerationOptions" [value]="option.value">
                 <div class="duration-option">
                   <span class="duration-label">{{ option.label }}</span>
                   <small class="duration-description">{{ option.description }}</small>
                 </div>
-              </mat-option>
-            </mat-select>
+                    </mat-option>
+                  </mat-select>
             <mat-error *ngIf="formGroup.get('duree_exoneration')?.hasError('required')">
               Durée d'exonération requise
-            </mat-error>
-          </mat-form-field>
-        </div>
-
+                  </mat-error>
+                </mat-form-field>
+              </div>
+  
         <!-- Statut de l'exonération -->
         <div class="exoneration-status" *ngIf="formGroup.get('date_permis')?.value && formGroup.get('duree_exoneration')?.value">
           <div class="status-card" [class]="getExonerationStatus().active ? 'active' : 'expired'">
@@ -233,16 +233,16 @@
                    'L\'exonération TNB de cette parcelle a expiré.' }}
               </p>
             </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
+        </mat-card-content>
+      </mat-card>
+  
   <!-- Résumé Fiscal -->
   <div class="fiscal-summary" *ngIf="calculEffectue || isViewMode">
     <mat-card class="summary-card">
-      <mat-card-content>
+          <mat-card-content>
         <div class="summary-header">
           <mat-icon class="summary-icon" [color]="getTnbStatusColor()">account_balance</mat-icon>
           <h3>Résumé Fiscal {{ getCurrentYear() }}</h3>
@@ -252,30 +252,30 @@
           <div class="summary-row">
             <span class="summary-label">Surface Imposable:</span>
             <span class="summary-value">{{ formatSurface(formGroup.get('surface_imposable')?.value || 0) }}</span>
-          </div>
-          
+              </div>
+  
           <div class="summary-row">
             <span class="summary-label">Tarif Applicable:</span>
             <span class="summary-value">{{ formatMontant(tarifUnitaire) }}/m²</span>
-          </div>
-          
+              </div>
+  
           <div class="summary-row total-row">
             <span class="summary-label"><strong>Montant TNB Dû:</strong></span>
             <span class="summary-value total" [class.exonerated]="isExonere">
               <strong>{{ formatMontant(montantTnbCalcule) }}</strong>
-            </span>
-          </div>
-          
+                </span>
+              </div>
+  
           <div class="summary-row" *ngIf="isExonere">
             <span class="summary-label">Statut:</span>
             <span class="summary-value status exonerated">
               <mat-icon>block</mat-icon>
               Exonérée
-            </span>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+                </span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
 
-</div>
+  </div>

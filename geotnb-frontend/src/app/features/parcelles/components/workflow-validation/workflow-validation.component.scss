@@ -1,0 +1,494 @@
+/* =====================================================
+   WORKFLOW DE VALIDATION - STYLES COMPLETS
+   ===================================================== */
+
+// Variables couleurs
+:root {
+  --primary-blue: #4a90e2;
+  --success-green: #28a745;
+  --warning-orange: #ffc107;
+  --danger-red: #dc3545;
+  --info-blue: #17a2b8;
+  --light-gray: #f8f9fa;
+  --border-gray: #dee2e6;
+  --text-dark: #343a40;
+  --text-muted: #6c757d;
+}
+
+.workflow-container {
+  padding: 2rem;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* =====================================================
+   HEADER WORKFLOW
+   ===================================================== */
+
+.workflow-header {
+  margin-bottom: 3rem;
+  
+  .workflow-title {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  }
+}
+
+/* =====================================================
+   PROGRESSION DES ÉTAPES
+   ===================================================== */
+
+.steps-progression {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 3rem;
+  position: relative;
+  
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 120px;
+    
+    .step-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 1rem;
+      
+      mat-icon {
+        display: none;
+      }
+      
+      .step-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+      }
+    }
+    
+    .step-label {
+      font-size: 0.9rem;
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    .step-connector {
+      position: absolute;
+      top: 30px;
+      left: calc(100% - 20px);
+      width: 80px;
+      height: 2px;
+      background: #dee2e6;
+    }
+    
+    // États des étapes
+    &.step-completed {
+      .step-circle {
+        background: var(--success-green);
+      }
+      
+      .step-label {
+        color: var(--success-green);
+      }
+      
+      .step-connector {
+        background: var(--success-green);
+      }
+    }
+    
+    &.step-current {
+      .step-circle {
+        background: var(--primary-blue);
+        box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2);
+      }
+      
+      .step-label {
+        color: var(--primary-blue);
+        font-weight: 600;
+      }
+    }
+    
+    &.step-pending {
+      .step-circle {
+        background: #dee2e6;
+      }
+      
+      .step-label {
+        color: var(--text-muted);
+      }
+    }
+  }
+}
+
+/* =====================================================
+   CONTENU WORKFLOW
+   ===================================================== */
+
+.workflow-content {
+  .current-step-section {
+    margin-bottom: 2rem;
+    
+    .step-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin: 0;
+    }
+  }
+}
+
+.main-section {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+/* =====================================================
+   COLONNE GAUCHE
+   ===================================================== */
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.action-card {
+  border-left: 4px solid var(--warning-orange);
+  background: #fff8e1;
+  border-radius: 8px;
+  
+  .action-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    
+    .warning-icon {
+      color: var(--warning-orange);
+      font-size: 2rem;
+    }
+    
+    h3 {
+      margin: 0;
+      color: var(--text-dark);
+      font-weight: 600;
+    }
+  }
+  
+  .action-description {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+.calcul-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .calcul-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    
+    .calcul-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      
+      label {
+        font-weight: 500;
+        color: var(--text-muted);
+      }
+      
+      .calcul-value {
+        font-weight: 600;
+        color: var(--text-dark);
+      }
+      
+      &.total {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, #e8f5e8, #d4edda);
+        border: 2px solid var(--success-green);
+        
+        .calcul-value.total-amount {
+          color: var(--success-green);
+          font-size: 1.2rem;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+}
+
+.comments-card,
+.documents-ref-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .full-width {
+    width: 100%;
+  }
+  
+  .documents-list {
+    mat-chip-set {
+      mat-chip {
+        margin: 0.25rem;
+        
+        &.active {
+          background: var(--primary-blue);
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+/* =====================================================
+   BOUTONS D'ACTION
+   ===================================================== */
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  
+  button {
+    flex: 1;
+    min-width: 200px;
+    height: 48px;
+    font-weight: 500;
+    
+    mat-icon {
+      margin-right: 0.5rem;
+    }
+  }
+  
+  .btn-validate {
+    background: var(--success-green);
+    color: white;
+    
+    &:hover {
+      background: #1e7e34;
+    }
+  }
+  
+  .btn-corrections {
+    background: var(--warning-orange);
+    color: var(--text-dark);
+    
+    &:hover {
+      background: #e0a800;
+    }
+  }
+  
+  .btn-reject {
+    border: 2px solid var(--danger-red);
+    color: var(--danger-red);
+    
+    &:hover {
+      background: var(--danger-red);
+      color: white;
+    }
+  }
+  
+  .btn-previous {
+    border: 2px solid var(--text-muted);
+    color: var(--text-muted);
+    
+    &:hover {
+      background: var(--text-muted);
+      color: white;
+    }
+  }
+}
+
+/* =====================================================
+   COLONNE DROITE
+   ===================================================== */
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.summary-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  .summary-info {
+    margin-bottom: 2rem;
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      label {
+        font-weight: 500;
+        color: var(--text-muted);
+      }
+      
+      span {
+        font-weight: 600;
+        color: var(--text-dark);
+      }
+    }
+  }
+  
+  .tnb-summary {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #e8f5e8, #d4edda);
+    border-radius: 8px;
+    border: 2px solid var(--success-green);
+    
+    .tnb-title {
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    
+    .tnb-amount {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--success-green);
+    }
+  }
+}
+
+.back-button {
+  width: 100%;
+  height: 48px;
+  font-weight: 500;
+  border: 2px solid var(--primary-blue);
+  color: var(--primary-blue);
+  
+  &:hover {
+    background: var(--primary-blue);
+    color: white;
+  }
+  
+  mat-icon {
+    margin-right: 0.5rem;
+  }
+}
+
+/* =====================================================
+   CHARGEMENT
+   ===================================================== */
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--text-muted);
+  
+  mat-spinner {
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 1200px) {
+  .main-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .right-column {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-container {
+    padding: 1rem;
+  }
+  
+  .steps-progression {
+    flex-wrap: wrap;
+    gap: 1rem;
+    
+    .step-item {
+      min-width: 80px;
+      
+      .step-connector {
+        display: none;
+      }
+    }
+  }
+  
+  .calcul-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    
+    button {
+      min-width: unset;
+    }
+  }
+}
+
+/* =====================================================
+   ANIMATIONS
+   ===================================================== */
+
+.workflow-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-item {
+  transition: all 0.3s ease;
+}
+
+button {
+  transition: all 0.2s ease;
+}

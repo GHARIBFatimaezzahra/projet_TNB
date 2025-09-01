@@ -1,0 +1,341 @@
+<!-- =====================================================
+   INTERFACE MODIFICATION PARCELLE - ONGLETS ET PANNEAU
+   ===================================================== -->
+
+<div class="modification-parcelle-container" *ngIf="!loading">
+  
+  <!-- Header principal -->
+  <div class="modification-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>Modification Parcelle : {{parcelleData?.reference_fonciere}}</h1>
+        <p class="header-subtitle">{{parcelleData?.proprietaire_principal}} - Zone {{parcelleData?.zone_urbanistique}} - État: 
+          <span class="etat-badge" [class]="getEtatBadgeClass(currentInfo.etatWorkflow)">
+            {{currentInfo.etatWorkflow}}
+          </span>
+        </p>
+      </div>
+      
+      <!-- Message de validation -->
+      <div class="validation-message">
+        <mat-icon>check_circle</mat-icon>
+        <span>Parcelle validée - Modifications soumises à approbation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal avec onglets et panneau latéral -->
+  <div class="main-content">
+    
+    <!-- Section des onglets (colonne principale) -->
+    <div class="tabs-section">
+      <mat-tab-group animationDuration="300ms" class="modification-tabs">
+        
+        <!-- Onglet Général -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>info</mat-icon>
+            <span>Général</span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <form [formGroup]="generalForm" class="general-form">
+              
+              <!-- Référence et statut -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Référence foncière *</mat-label>
+                  <input matInput formControlName="reference_fonciere" readonly>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Statut foncier *</mat-label>
+                  <mat-select formControlName="statut_foncier">
+                    <mat-option value="TF">TF - Titre Foncier</mat-option>
+                    <mat-option value="R">R - Réquisition</mat-option>
+                    <mat-option value="NI">NI - Non Immatriculé</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Surfaces -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Surface totale (m²) *</mat-label>
+                  <input matInput type="number" formControlName="surface_totale">
+                  <span matSuffix>m²</span>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>Surface imposable (m²) *</mat-label>
+                  <input matInput type="number" formControlName="surface_imposable">
+                  <span matSuffix>m²</span>
+                </mat-form-field>
+              </div>
+
+              <!-- Zone et état -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Zone urbanistique *</mat-label>
+                  <mat-select formControlName="zone_urbanistique">
+                    <mat-option value="R+4">R+4 - Résidentiel</mat-option>
+                    <mat-option value="COM">COM - Commercial</mat-option>
+                    <mat-option value="IND">IND - Industriel</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline">
+                  <mat-label>État d'occupation</mat-label>
+                  <mat-select formControlName="etat_occupation">
+                    <mat-option value="Nu">Nu</mat-option>
+                    <mat-option value="Construit">Construit</mat-option>
+                    <mat-option value="En_Construction">En Construction</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <!-- Adresse -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Adresse/Localisation</mat-label>
+                <input matInput formControlName="adresse">
+              </mat-form-field>
+
+              <!-- Observations -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Observations</mat-label>
+                <textarea matInput rows="3" formControlName="observations"></textarea>
+                <mat-icon matSuffix>edit</mat-icon>
+              </mat-form-field>
+            </form>
+          </div>
+        </mat-tab>
+
+        <!-- Onglet Fiscal -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>monetization_on</mat-icon>
+            <span>Fiscal</span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <form [formGroup]="fiscalForm" class="fiscal-form">
+              <!-- Contenu fiscal à implémenter -->
+              <p>Données fiscales - À implémenter</p>
+            </form>
+          </div>
+        </mat-tab>
+
+        <!-- Onglet Géométrie -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>map</mat-icon>
+            <span>Géométrie</span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <!-- Contenu géométrie à implémenter -->
+            <p>Géométrie - À implémenter</p>
+          </div>
+        </mat-tab>
+
+        <!-- Onglet Propriétaires -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>people</mat-icon>
+            <span>Propriétaires</span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <!-- Contenu propriétaires à implémenter -->
+            <p>Propriétaires - À implémenter</p>
+          </div>
+        </mat-tab>
+
+        <!-- Onglet Documents -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>folder</mat-icon>
+            <span>Documents</span>
+          </ng-template>
+          
+          <div class="tab-content">
+            <!-- Contenu documents à implémenter -->
+            <p>Documents - À implémenter</p>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+
+      <!-- Boutons d'action principaux -->
+      <div class="main-actions">
+        <button mat-raised-button 
+                color="warn" 
+                class="btn-delete"
+                (click)="onSupprimer()">
+          <mat-icon>delete</mat-icon>
+          Supprimer
+        </button>
+        
+        <button mat-stroked-button 
+                class="btn-cancel"
+                (click)="onAnnuler()">
+          <mat-icon>cancel</mat-icon>
+          Annuler
+        </button>
+        
+        <button mat-stroked-button 
+                class="btn-draft"
+                (click)="onSauvegarderBrouillon()">
+          <mat-icon>save</mat-icon>
+          Sauvegarder brouillon
+        </button>
+        
+        <button mat-raised-button 
+                color="primary" 
+                class="btn-save"
+                (click)="onEnregistrerModifications()">
+          <mat-icon>check</mat-icon>
+          Enregistrer modifications
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneau latéral droit -->
+    <div class="sidebar-panel">
+      
+      <!-- Informations actuelles -->
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>info</mat-icon>
+            Informations Actuelles
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-item">
+            <span class="info-label">Créée le :</span>
+            <span class="info-value">{{currentInfo.dateCreation}}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-label">Modifiée le :</span>
+            <span class="info-value">{{currentInfo.dateModification}}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-label">Créée par :</span>
+            <span class="info-value">{{currentInfo.createurNom}}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-label">Version :</span>
+            <span class="info-value">{{currentInfo.version}}</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="info-label">État workflow :</span>
+            <span class="info-value etat-badge" [class]="getEtatBadgeClass(currentInfo.etatWorkflow)">
+              {{currentInfo.etatWorkflow}}
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Calcul TNB -->
+      <mat-card class="tnb-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>calculate</mat-icon>
+            Calcul TNB
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="tnb-item">
+            <span class="tnb-label">Surface imposable :</span>
+            <span class="tnb-value">{{calculatedTnb.surfaceImposable | number:'1.0-0'}} m²</span>
+          </div>
+          
+          <div class="tnb-item">
+            <span class="tnb-label">Tarif appliqué :</span>
+            <span class="tnb-value">{{calculatedTnb.tarifApplique | number:'1.0-0'}} DH/m²</span>
+          </div>
+          
+          <div class="tnb-item">
+            <span class="tnb-label">Quote-part :</span>
+            <span class="tnb-value">100%</span>
+          </div>
+          
+          <mat-divider></mat-divider>
+          
+          <div class="tnb-item total">
+            <span class="tnb-label">TNB annuel 2024:</span>
+            <span class="tnb-value total-amount">{{calculatedTnb.montantAnnuel | number:'1.0-0'}} DH</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Localisation -->
+      <mat-card class="location-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>place</mat-icon>
+            Localisation
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="map-placeholder">
+            <mat-icon>map</mat-icon>
+            <p>Carte de la parcelle</p>
+            <small>{{parcelleData?.reference_fonciere}} | 1,250 m²</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Actions Rapides -->
+      <mat-card class="actions-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flash_on</mat-icon>
+            Actions Rapides
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="quick-actions">
+            <button mat-stroked-button 
+                    class="quick-action-btn"
+                    (click)="onGenererFicheTNB()">
+              <mat-icon>description</mat-icon>
+              Générer Fiche TNB
+            </button>
+            
+            <button mat-stroked-button 
+                    class="quick-action-btn"
+                    (click)="onVoirSurCarte()">
+              <mat-icon>map</mat-icon>
+              Voir sur Carte SIG
+            </button>
+            
+            <button mat-stroked-button 
+                    class="quick-action-btn"
+                    (click)="onDocumentsJoints()">
+              <mat-icon>attach_file</mat-icon>
+              Documents Joints
+            </button>
+            
+            <button mat-stroked-button 
+                    class="quick-action-btn"
+                    (click)="onHistorique()">
+              <mat-icon>history</mat-icon>
+              Historique
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<!-- État de chargement -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Chargement de la parcelle...</p>
+</div>

@@ -1,0 +1,355 @@
+<!-- Interface 4 - Édition de Géométrie SIG - Design exact fourni -->
+<div class="container">
+  <div class="interface-section">
+    <div class="section-header">
+      <mat-icon>edit_location</mat-icon>
+      4. Édition et Modification de Géométrie SIG
+    </div>
+    <div class="section-content">
+      
+      <!-- Informations parcelle -->
+      <div class="parcel-info-card">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Parcelle en cours d'édition</mat-card-title>
+            <div class="card-actions">
+              <span class="badge info">{{ currentParcel.reference }}</span>
+              <span class="badge secondary">{{ currentParcel.statut }}</span>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="parcel-summary">
+              <div class="summary-item">
+                <strong>Référence:</strong> {{ currentParcel.reference }}
+              </div>
+              <div class="summary-item">
+                <strong>Surface actuelle:</strong> {{ formatNumber(currentParcel.surface) }} m²
+              </div>
+              <div class="summary-item">
+                <strong>Propriétaire:</strong> {{ currentParcel.proprietaire }}
+              </div>
+              <div class="summary-item">
+                <strong>Zone:</strong> {{ currentParcel.zone }}
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Barre d'outils de dessin -->
+      <div class="drawing-tools-panel">
+        <h3>Outils d'édition géométrique</h3>
+        <div class="tools-grid">
+          <div class="tool-group">
+            <h4>Sélection</h4>
+            <button mat-raised-button 
+                    [color]="selectedTool === 'select' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'select'"
+                    (click)="selectTool('select')">
+              <mat-icon>mouse</mat-icon>
+              Sélection
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'move' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'move'"
+                    (click)="selectTool('move')">
+              <mat-icon>open_with</mat-icon>
+              Déplacer
+            </button>
+          </div>
+
+          <div class="tool-group">
+            <h4>Édition Points</h4>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'add-point' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'add-point'"
+                    (click)="selectTool('add-point')">
+              <mat-icon>add_location</mat-icon>
+              Ajouter point
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'move-point' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'move-point'"
+                    (click)="selectTool('move-point')">
+              <mat-icon>control_camera</mat-icon>
+              Déplacer point
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'delete-point' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'delete-point'"
+                    (click)="selectTool('delete-point')">
+              <mat-icon>remove_circle</mat-icon>
+              Supprimer point
+            </button>
+          </div>
+
+          <div class="tool-group">
+            <h4>Géométrie</h4>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'split' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'split'"
+                    (click)="selectTool('split')">
+              <mat-icon>call_split</mat-icon>
+              Diviser
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'merge' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'merge'"
+                    (click)="selectTool('merge')">
+              <mat-icon>merge</mat-icon>
+              Fusionner
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'buffer' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'buffer'"
+                    (click)="selectTool('buffer')">
+              <mat-icon>radio_button_checked</mat-icon>
+              Zone tampon
+            </button>
+          </div>
+
+          <div class="tool-group">
+            <h4>Actions</h4>
+            <button mat-raised-button color="warn" (click)="undoLastAction()">
+              <mat-icon>undo</mat-icon>
+              Annuler
+            </button>
+            <button mat-raised-button color="accent" (click)="redoLastAction()">
+              <mat-icon>redo</mat-icon>
+              Refaire
+            </button>
+            <button mat-raised-button (click)="resetGeometry()">
+              <mat-icon>refresh</mat-icon>
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout principal avec carte et informations -->
+      <div class="editor-layout">
+        <!-- Sidebar informations -->
+        <div class="geometry-sidebar">
+          <h4>Informations géométriques</h4>
+          
+          <!-- Propriétés calculées -->
+          <div class="geometry-info">
+            <div class="info-section">
+              <div class="info-title">Propriétés calculées</div>
+              <div class="info-items">
+                <div class="info-item">
+                  <span class="label">Nombre de points:</span>
+                  <span class="value">{{ geometryInfo.nombrePoints }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Surface:</span>
+                  <span class="value primary">{{ formatNumber(geometryInfo.surface) }} m²</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Périmètre:</span>
+                  <span class="value">{{ formatNumber(geometryInfo.perimetre) }} m</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Centroïde X:</span>
+                  <span class="value">{{ formatCoordinate(geometryInfo.centroide.x) }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Centroïde Y:</span>
+                  <span class="value">{{ formatCoordinate(geometryInfo.centroide.y) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation géométrique -->
+            <div class="info-section">
+              <div class="info-title">Validation</div>
+              <div class="validation-items">
+                <div class="validation-item" [class]="getValidationClass('isValid')">
+                  <mat-icon>{{ geometryValidation.isValid ? 'check_circle' : 'error' }}</mat-icon>
+                  <span>Géométrie valide</span>
+                </div>
+                <div class="validation-item" [class]="getValidationClass('isClosed')">
+                  <mat-icon>{{ geometryValidation.isClosed ? 'check_circle' : 'error' }}</mat-icon>
+                  <span>Polygone fermé</span>
+                </div>
+                <div class="validation-item" [class]="getValidationClass('isSimple')">
+                  <mat-icon>{{ geometryValidation.isSimple ? 'check_circle' : 'error' }}</mat-icon>
+                  <span>Géométrie simple</span>
+                </div>
+                <div class="validation-item" [class]="getValidationClass('hasMinimumArea')">
+                  <mat-icon>{{ geometryValidation.hasMinimumArea ? 'check_circle' : 'error' }}</mat-icon>
+                  <span>Surface minimale ({{ minSurface }} m²)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Coordonnées des points -->
+            <div class="info-section">
+              <div class="info-title">Points de la géométrie</div>
+              <div class="coordinates-list">
+                <div *ngFor="let point of coordinates; let i = index" 
+                     class="coordinate-item"
+                     [class.selected]="selectedPointIndex === i"
+                     (click)="selectPoint(i)">
+                  <div class="point-info">
+                    <strong>Point {{ i + 1 }}</strong>
+                    <div class="point-coords">
+                      X: {{ formatCoordinate(point.x) }}<br>
+                      Y: {{ formatCoordinate(point.y) }}
+                    </div>
+                  </div>
+                  <div class="point-actions">
+                    <button mat-icon-button color="primary" (click)="editPoint(i)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deletePoint(i)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Historique des modifications -->
+            <div class="info-section">
+              <div class="info-title">Historique</div>
+              <div class="history-list">
+                <div *ngFor="let action of editHistory; let i = index" class="history-item">
+                  <mat-icon>{{ getActionIcon(action.type) }}</mat-icon>
+                  <div class="history-content">
+                    <div class="action-name">{{ action.description }}</div>
+                    <div class="action-time">{{ formatTime(action.timestamp) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vue carte d'édition -->
+        <div class="editor-map" #mapContainer>
+          <!-- Contrôles d'édition flottants -->
+          <div class="map-controls">
+            <button mat-mini-fab color="primary" (click)="zoomIn()" matTooltip="Zoom avant">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-mini-fab color="primary" (click)="zoomOut()" matTooltip="Zoom arrière">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <button mat-mini-fab (click)="zoomToGeometry()" matTooltip="Zoom sur la parcelle">
+              <mat-icon>center_focus_strong</mat-icon>
+            </button>
+            <button mat-mini-fab (click)="toggleSnapping()" 
+                    [color]="snappingEnabled ? 'accent' : ''"
+                    matTooltip="Accrochage">
+              <mat-icon>grid_on</mat-icon>
+            </button>
+          </div>
+
+          <!-- Informations d'édition -->
+          <div class="editing-info" *ngIf="isEditing">
+            <div class="editing-panel">
+              <mat-icon>edit</mat-icon>
+              <span>Mode édition: {{ getCurrentToolLabel() }}</span>
+              <span class="editing-instruction">{{ getCurrentInstruction() }}</span>
+            </div>
+          </div>
+
+          <!-- Placeholder pour la carte OpenLayers -->
+          <div class="map-content" *ngIf="!mapInitialized">
+            <div class="map-placeholder">
+              <mat-icon>edit_location</mat-icon>
+              <h3>Éditeur de Géométrie OpenLayers</h3>
+              <p>Éditeur SIG pour la modification de parcelles TNB</p>
+              <div class="map-info">
+                <p>Projection: EPSG:26191 (Lambert Maroc)</p>
+                <p>Accrochage: {{ snappingEnabled ? 'Activé' : 'Désactivé' }}</p>
+              </div>
+              <button mat-raised-button color="primary" (click)="initializeMap()">
+                <mat-icon>map</mat-icon>
+                Initialiser l'éditeur
+              </button>
+            </div>
+          </div>
+
+          <!-- Barre de statut -->
+          <div class="map-status-bar">
+            <div class="coordinates">
+              Curseur: X: {{ currentCursor.x }}, Y: {{ currentCursor.y }}
+            </div>
+            <div class="scale">
+              Échelle: 1:{{ currentScale }} | Zoom: {{ currentZoom }}
+            </div>
+            <div class="editing-mode">
+              {{ isEditing ? 'MODE ÉDITION' : 'MODE VISUALISATION' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panneau de saisie coordonnées directe -->
+      <div class="coordinate-input-panel" *ngIf="showCoordinateInput">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Saisie de coordonnées</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="coordinate-form">
+              <mat-form-field appearance="outline">
+                <mat-label>Coordonnée X</mat-label>
+                <input matInput type="number" [(ngModel)]="inputCoordinates.x" step="0.01">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Coordonnée Y</mat-label>
+                <input matInput type="number" [(ngModel)]="inputCoordinates.y" step="0.01">
+              </mat-form-field>
+              <div class="coordinate-actions">
+                <button mat-raised-button color="primary" (click)="addCoordinatePoint()">
+                  <mat-icon>add_location</mat-icon>
+                  Ajouter point
+                </button>
+                <button mat-stroked-button (click)="hideCoordinateInput()">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Actions de sauvegarde -->
+      <div class="save-actions">
+        <div class="save-buttons">
+          <button mat-raised-button color="primary" 
+                  [disabled]="!isGeometryValid()"
+                  (click)="saveGeometry()">
+            <mat-icon>save</mat-icon>
+            Sauvegarder les modifications
+          </button>
+          <button mat-stroked-button (click)="previewChanges()">
+            <mat-icon>preview</mat-icon>
+            Aperçu des changements
+          </button>
+          <button mat-stroked-button (click)="showCoordinateInput = true">
+            <mat-icon>edit_location</mat-icon>
+            Saisie manuelle
+          </button>
+          <button mat-stroked-button color="warn" (click)="cancelEditing()">
+            <mat-icon>cancel</mat-icon>
+            Annuler l'édition
+          </button>
+        </div>
+
+        <div class="save-info" *ngIf="geometryInfo.surface !== currentParcel.surface">
+          <div class="change-summary">
+            <mat-icon>info</mat-icon>
+            <span>Surface modifiée: {{ formatNumber(currentParcel.surface) }} m² → {{ formatNumber(geometryInfo.surface) }} m²</span>
+            <span class="change-delta" [class]="getSurfaceChangeClass()">
+              ({{ getSurfaceChangeDelta() }})
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

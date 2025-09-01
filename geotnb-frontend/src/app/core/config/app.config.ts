@@ -50,7 +50,7 @@ export const APP_CONFIG: AppConfig = {
     allowedTypes: [
       'application/pdf',
       'image/jpeg',
-      'image/png',
+      'image/png', 
       'image/gif',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/csv',
@@ -85,5 +85,5 @@ export const getConfig = (): AppConfig => {
     }
   }
   
-  return baseConfig;
+      return baseConfig;
 };

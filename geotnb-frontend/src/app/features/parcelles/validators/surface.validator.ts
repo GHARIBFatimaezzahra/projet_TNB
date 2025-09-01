@@ -5,7 +5,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, FormGroup } from '@angular/forms';
 
 export class SurfaceValidator {
-  
+
   /**
    * Valide qu'une surface est positive
    */
@@ -21,10 +21,10 @@ export class SurfaceValidator {
     if (isNaN(numValue) || numValue <= 0) {
       return { surfacePositive: { value, message: 'La surface doit être positive' } };
     }
-    
+
     return null;
   }
-  
+
   /**
    * Valide qu'une surface est dans une plage acceptable
    */
@@ -53,42 +53,42 @@ export class SurfaceValidator {
       }
       
       if (numValue > max) {
-        return { 
+        return {
           surfaceMax: { 
             value, 
             max, 
             message: `Surface maximum: ${max} m²` 
-          } 
+          }
         };
       }
-      
+
       return null;
     };
   }
-  
+
   /**
    * Valide le format d'une surface (nombre décimal)
    */
   static format(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
-    
+
     if (value === null || value === undefined || value === '') {
       return null;
     }
-    
+      
     // Accepter nombres entiers et décimaux
     const surfacePattern = /^\d+(\.\d{1,4})?$/;
-    
+
     if (!surfacePattern.test(value.toString())) {
-      return { 
+        return {
         surfaceFormat: { 
           value, 
           message: 'Format invalide (ex: 1500 ou 1500.50)' 
-        } 
-      };
-    }
-    
-    return null;
+          }
+        };
+      }
+
+      return null;
   }
   
   /**
@@ -146,9 +146,9 @@ export class SurfaceValidator {
       const geometry = group.get('geometry')?.value;
       
       if (!surfaceDeclaree || !geometry) {
-        return null;
+          return null;
       }
-      
+
       const surfaceCalculee = SurfaceValidator.calculateGeometryArea(geometry);
       
       if (surfaceCalculee === null) {
@@ -159,7 +159,7 @@ export class SurfaceValidator {
       const pourcentageDifference = (difference / surfaceDeclaree) * 100;
       
       if (pourcentageDifference > tolerancePercent) {
-        return { 
+        return {
           surfaceGeometryMismatch: {
             surfaceDeclaree,
             surfaceCalculee: Math.round(surfaceCalculee * 100) / 100,
@@ -170,11 +170,11 @@ export class SurfaceValidator {
           }
         };
       }
-      
+
       return null;
     };
   }
-  
+
   /**
    * Valide la précision d'une surface
    */
@@ -192,7 +192,7 @@ export class SurfaceValidator {
       if (decimalIndex !== -1) {
         const decimals = strValue.substring(decimalIndex + 1).length;
         if (decimals > maxDecimals) {
-          return { 
+        return {
             surfacePrecision: { 
               value,
               maxDecimals,
@@ -202,11 +202,11 @@ export class SurfaceValidator {
           };
         }
       }
-      
+
       return null;
     };
   }
-  
+
   /**
    * Valide une surface selon le type de parcelle
    */
@@ -301,7 +301,7 @@ export class SurfaceValidator {
       const percentDifference = (difference / averageSize) * 100;
       
       if (percentDifference > tolerancePercent) {
-        return { 
+        return {
           surfaceNeighborMismatch: {
             surface: numValue,
             averageNeighbor: averageSize,

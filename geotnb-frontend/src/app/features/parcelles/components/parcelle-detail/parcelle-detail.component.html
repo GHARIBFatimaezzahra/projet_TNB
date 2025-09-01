@@ -1,490 +1,713 @@
-<!-- ===================================================== -->
-<!-- COMPOSANT DÉTAIL PARCELLE - AFFICHAGE COMPLET -->
-<!-- ===================================================== -->
-
-<div class="parcelle-detail">
-  <!-- En-tête avec informations principales -->
-  <div class="header" *ngIf="parcelle">
-    <div class="title-section">
-      <h2>
-        <mat-icon>map</mat-icon>
-        Parcelle {{ parcelle.reference_fonciere | referenceFonciere }}
-      </h2>
-      <div class="status-badge">
-        <mat-chip [color]="parcelleStatus.color">
-          <mat-icon matChipAvatar>{{ parcelleStatus.icon }}</mat-icon>
-          {{ parcelleStatus.label }}
-        </mat-chip>
-      </div>
+<!-- Interface 5 - Fiche Détaillée d'une Parcelle - Design exact fourni -->
+<div class="container">
+  <div class="interface-section">
+    <div class="section-header">
+      <mat-icon>description</mat-icon>
+      5. Fiche Détaillée d'une Parcelle
     </div>
-
-    <div class="quick-info">
-      <div class="info-card">
-        <mat-icon>crop_landscape</mat-icon>
-        <div class="info-content">
-          <span class="label">Surface totale</span>
-          <span class="value">{{ parcelle.surface_totale | surfaceFormat }}</span>
-        </div>
-      </div>
-
-      <div class="info-card">
-        <mat-icon>account_balance</mat-icon>
-        <div class="info-content">
-          <span class="label">Montant TNB</span>
-          <span class="value">{{ parcelle.montant_total_tnb | currency:'MAD':'symbol':'1.2-2':'fr' }}</span>
-        </div>
-      </div>
-
-      <div class="info-card">
-        <mat-icon>group</mat-icon>
-        <div class="info-content">
-          <span class="label">Propriétaires</span>
-          <span class="value">{{ proprietaires.length }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions principales -->
-    <div class="main-actions">
-      <button mat-raised-button color="primary" (click)="editParcelle()" 
-             [disabled]="!canEdit">
-        <mat-icon>edit</mat-icon>
-        Modifier
-      </button>
-
-      <button mat-raised-button color="accent" (click)="viewOnMap()">
-        <mat-icon>map</mat-icon>
-        Voir sur la carte
-      </button>
-
-      <button mat-button [matMenuTriggerFor]="actionsMenu">
-        <mat-icon>more_vert</mat-icon>
-        Plus d'actions
-      </button>
-
-      <mat-menu #actionsMenu="matMenu">
-        <button mat-menu-item (click)="duplicateParcelle()" [disabled]="!canCreate">
-          <mat-icon>content_copy</mat-icon>
-          <span>Dupliquer</span>
-        </button>
-
-        <button mat-menu-item (click)="generateFiche()" [disabled]="!canGenerateFiche">
-          <mat-icon>description</mat-icon>
-          <span>Générer fiche fiscale</span>
-        </button>
-
-        <mat-divider></mat-divider>
-
-        <button mat-menu-item (click)="validateParcelle()" [disabled]="!canValidate">
-          <mat-icon>check_circle</mat-icon>
-          <span>Valider</span>
-        </button>
-
-        <button mat-menu-item (click)="publishParcelle()" [disabled]="!canPublish">
-          <mat-icon>public</mat-icon>
-          <span>Publier</span>
-        </button>
-
-        <button mat-menu-item (click)="archiveParcelle()" [disabled]="!canArchive">
-          <mat-icon>archive</mat-icon>
-          <span>Archiver</span>
-        </button>
-
-        <mat-divider></mat-divider>
-
-        <button mat-menu-item (click)="deleteParcelle()" [disabled]="!canDelete" class="delete-action">
-          <mat-icon>delete</mat-icon>
-          <span>Supprimer</span>
-        </button>
-      </mat-menu>
-    </div>
-  </div>
-
-  <!-- Spinner de chargement -->
-  <div class="loading-container" *ngIf="isLoading">
-    <mat-spinner diameter="50"></mat-spinner>
-    <p>Chargement des détails de la parcelle...</p>
-  </div>
-
-  <!-- Contenu principal avec onglets -->
-  <div class="content" *ngIf="!isLoading && parcelle">
-    <mat-tab-group [(selectedIndex)]="selectedTabIndex" (selectedTabChange)="onTabChange($event)">
+    <div class="section-content">
       
-      <!-- Onglet Général -->
-      <mat-tab label="Général">
-        <ng-template matTabContent>
-          <div class="tab-content general-tab">
-            <div class="info-grid">
+      <!-- En-tête parcelle -->
+      <div class="parcel-header">
+        <div class="header-main">
+          <button mat-icon-button class="back-btn" (click)="retourListe()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          
+          <div class="parcel-title">
+            <h1>{{ parcelleDetails.reference }}</h1>
+            <p class="parcel-subtitle">
+              {{ parcelleDetails.proprietaire }} • Zone {{ parcelleDetails.zone }}
+            </p>
+          </div>
+          
+          <div class="header-actions">
+            <span class="badge" [class]="getStatusBadgeClass(parcelleDetails.statut)">
+              {{ parcelleDetails.statut }}
+            </span>
+            <button mat-raised-button color="primary" (click)="editParcel()">
+              <mat-icon>edit</mat-icon>
+              Modifier
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistiques rapides -->
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>square_foot</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatNumber(parcelleDetails.surface) }}</h3>
+              <p>Surface totale (m²)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>area_chart</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatNumber(parcelleDetails.surfaceImposable) }}</h3>
+              <p>Surface imposable (m²)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>attach_money</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatCurrency(parcelleDetails.tnb) }}</h3>
+              <p>TNB calculée</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card info">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>trending_up</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ getCalculatedPercentage() }}%</h3>
+              <p>Taux d'occupation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout principal avec onglets -->
+      <div class="detail-layout">
+        <!-- Navigation onglets -->
+        <div class="detail-tabs">
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'general'"
+                  (click)="switchTab('general')">
+            <mat-icon>info</mat-icon>
+            Informations générales
+          </button>
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'fiscal'"
+                  (click)="switchTab('fiscal')">
+            <mat-icon>calculate</mat-icon>
+            Calcul fiscal
+          </button>
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'proprietaires'"
+                  (click)="switchTab('proprietaires')">
+            <mat-icon>people</mat-icon>
+            Propriétaires
+          </button>
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'geometrie'"
+                  (click)="switchTab('geometrie')">
+            <mat-icon>map</mat-icon>
+            Géométrie
+          </button>
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'documents'"
+                  (click)="switchTab('documents')">
+            <mat-icon>folder</mat-icon>
+            Documents
+          </button>
+          <button class="tab-btn" 
+                  [class.active]="activeTab === 'historique'"
+                  (click)="switchTab('historique')">
+            <mat-icon>history</mat-icon>
+            Historique
+          </button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="tab-content">
+          
+          <!-- Onglet Informations générales -->
+          <div *ngIf="activeTab === 'general'" class="tab-pane active">
+            <div class="info-sections">
               <div class="info-section">
-                <h3>Informations Foncières</h3>
-                <div class="info-list">
+                <h3>Identification</h3>
+                <div class="info-grid">
                   <div class="info-item">
-                    <span class="label">Référence foncière :</span>
-                    <span class="value">{{ parcelle.reference_fonciere }}</span>
+                    <label>Référence foncière:</label>
+                    <span class="value primary">{{ parcelleDetails.reference }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="label">Statut foncier :</span>
-                    <span class="value">{{ parcelle.statut_foncier }}</span>
+                    <label>Statut foncier:</label>
+                    <span class="value">{{ parcelleDetails.statutFoncier }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="label">Statut d'occupation :</span>
-                    <span class="value">{{ parcelle.statut_occupation }}</span>
+                    <label>Zone urbanistique:</label>
+                    <span class="value">{{ parcelleDetails.zone }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="label">Zonage :</span>
-                    <span class="value">{{ parcelle.zonage }}</span>
+                    <label>Statut d'occupation:</label>
+                    <span class="value">{{ parcelleDetails.statutOccupation }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="info-section">
-                <h3>Surfaces</h3>
-                <div class="info-list">
+                <h3>Localisation</h3>
+                <div class="info-grid">
                   <div class="info-item">
-                    <span class="label">Surface totale :</span>
-                    <span class="value">{{ parcelle.surface_totale | surfaceFormat }}</span>
+                    <label>Adresse:</label>
+                    <span class="value">{{ parcelleDetails.adresse }}</span>
                   </div>
                   <div class="info-item">
-                    <span class="label">Surface imposable :</span>
-                    <span class="value">{{ parcelle.surface_imposable | surfaceFormat }}</span>
+                    <label>Commune:</label>
+                    <span class="value">Oujda</span>
                   </div>
                   <div class="info-item">
-                    <span class="label">Prix unitaire :</span>
-                    <span class="value">{{ parcelle.prix_unitaire_m2 | currency:'MAD':'symbol':'1.2-2':'fr' }}/m²</span>
+                    <label>Secteur:</label>
+                    <span class="value">{{ parcelleDetails.secteur }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Coordonnées:</label>
+                    <span class="value">{{ parcelleDetails.coordonnees }}</span>
                   </div>
                 </div>
               </div>
 
               <div class="info-section">
-                <h3>Exonération TNB</h3>
-                <div class="info-list">
+                <h3>Dimensions</h3>
+                <div class="info-grid">
                   <div class="info-item">
-                    <span class="label">Exonérée :</span>
-                    <span class="value">
-                      <mat-chip [color]="parcelle.exonere_tnb ? 'accent' : ''">
-                        {{ parcelle.exonere_tnb ? 'OUI' : 'NON' }}
-                      </mat-chip>
+                    <label>Surface totale:</label>
+                    <span class="value primary">{{ formatNumber(parcelleDetails.surface) }} m²</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Surface imposable:</label>
+                    <span class="value">{{ formatNumber(parcelleDetails.surfaceImposable) }} m²</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Périmètre:</label>
+                    <span class="value">{{ formatNumber(parcelleDetails.perimetre) }} m</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Forme géométrique:</label>
+                    <span class="value">{{ parcelleDetails.formeGeometrique }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet Calcul fiscal -->
+          <div *ngIf="activeTab === 'fiscal'" class="tab-pane active">
+            <div class="fiscal-sections">
+              <div class="fiscal-section">
+                <h3>Paramètres fiscaux</h3>
+                <div class="fiscal-grid">
+                  <div class="fiscal-item">
+                    <label>Prix unitaire au m²:</label>
+                    <span class="value primary">{{ formatCurrency(parcelleDetails.prixUnitaire) }}/m²</span>
+                  </div>
+                  <div class="fiscal-item">
+                    <label>Coefficient d'abattement:</label>
+                    <span class="value">{{ parcelleDetails.coefficientAbattement }}%</span>
+                  </div>
+                  <div class="fiscal-item">
+                    <label>Année fiscale:</label>
+                    <span class="value">{{ parcelleDetails.anneeFiscale }}</span>
+                  </div>
+                  <div class="fiscal-item">
+                    <label>Exonération TNB:</label>
+                    <span class="badge" [class]="parcelleDetails.exonere ? 'success' : 'secondary'">
+                      {{ parcelleDetails.exonere ? 'Exonéré' : 'Non exonéré' }}
                     </span>
                   </div>
-                  <div class="info-item" *ngIf="parcelle.exonere_tnb && parcelle.date_permis">
-                    <span class="label">Date permis :</span>
-                    <span class="value">{{ parcelle.date_permis | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+
+              <div class="fiscal-section">
+                <h3>Calcul détaillé</h3>
+                <div class="calculation-table">
+                  <div class="calc-row">
+                    <span class="calc-label">Surface imposable:</span>
+                    <span class="calc-value">{{ formatNumber(parcelleDetails.surfaceImposable) }} m²</span>
                   </div>
-                  <div class="info-item" *ngIf="parcelle.exonere_tnb && parcelle.duree_exoneration">
-                    <span class="label">Durée d'exonération :</span>
-                    <span class="value">{{ parcelle.duree_exoneration }} ans</span>
+                  <div class="calc-row">
+                    <span class="calc-label">Prix unitaire:</span>
+                    <span class="calc-value">{{ formatCurrency(parcelleDetails.prixUnitaire) }}/m²</span>
+                  </div>
+                  <div class="calc-row">
+                    <span class="calc-label">Montant brut:</span>
+                    <span class="calc-value">{{ formatCurrency(getMontantBrut()) }}</span>
+                  </div>
+                  <div class="calc-row">
+                    <span class="calc-label">Abattement ({{ parcelleDetails.coefficientAbattement }}%):</span>
+                    <span class="calc-value negative">-{{ formatCurrency(getAbattement()) }}</span>
+                  </div>
+                  <div class="calc-row total">
+                    <span class="calc-label">TNB à payer:</span>
+                    <span class="calc-value primary">{{ formatCurrency(parcelleDetails.tnb) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fiscal-section" *ngIf="parcelleDetails.exonere">
+                <h3>Informations d'exonération</h3>
+                <div class="exoneration-info">
+                  <div class="exoneration-item">
+                    <label>Date d'exonération:</label>
+                    <span class="value">{{ parcelleDetails.dateExoneration | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div class="exoneration-item">
+                    <label>Durée d'exonération:</label>
+                    <span class="value">{{ parcelleDetails.dureeExoneration }} ans</span>
+                  </div>
+                  <div class="exoneration-item">
+                    <label>Motif:</label>
+                    <span class="value">{{ parcelleDetails.motifExoneration }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </ng-template>
-      </mat-tab>
 
-      <!-- Onglet Cartographie -->
-      <mat-tab label="Cartographie">
-        <ng-template matTabContent>
-          <div class="tab-content map-tab">
-            <app-parcelle-map [parcelle]="parcelle" [readonly]="true"></app-parcelle-map>
-          </div>
-        </ng-template>
-      </mat-tab>
-
-      <!-- Onglet Propriétaires -->
-      <mat-tab label="Propriétaires">
-        <ng-template matTabContent>
-          <div class="tab-content proprietaires-tab">
-            <div class="loading-spinner" *ngIf="loadingProprietaires">
-              <mat-spinner diameter="30"></mat-spinner>
-            </div>
-
-            <div *ngIf="!loadingProprietaires">
-              <div class="section-header">
-                <h3>Liste des Propriétaires</h3>
-                <mat-chip>{{ proprietaires.length }} propriétaire(s)</mat-chip>
+          <!-- Onglet Propriétaires -->
+          <div *ngIf="activeTab === 'proprietaires'" class="tab-pane active">
+            <div class="proprietaires-section">
+              <div class="proprietaires-header">
+                <h3>Propriétaires en indivision ({{ parcelleDetails.proprietaires.length }})</h3>
+                <button mat-raised-button color="primary" (click)="addProprietaire()">
+                  <mat-icon>person_add</mat-icon>
+                  Ajouter propriétaire
+                </button>
               </div>
 
-              <table mat-table [dataSource]="proprietaires" class="proprietaires-table">
-                <ng-container matColumnDef="nom">
-                  <th mat-header-cell *matHeaderCellDef>Nom</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    {{ proprietaire.proprietaire?.nom }} {{ proprietaire.proprietaire?.prenom || '' }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="nature">
-                  <th mat-header-cell *matHeaderCellDef>Nature</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    <mat-chip [color]="proprietaire.proprietaire?.nature === 'Physique' ? 'primary' : 'accent'">
-                      {{ proprietaire.proprietaire?.nature }}
-                    </mat-chip>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="cin_ou_rc">
-                  <th mat-header-cell *matHeaderCellDef>CIN/RC</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    {{ proprietaire.proprietaire?.cin_ou_rc }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="quote_part">
-                  <th mat-header-cell *matHeaderCellDef>Quote-part</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    <strong>{{ (proprietaire.quote_part * 100).toFixed(2) }}%</strong>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="montant_individuel">
-                  <th mat-header-cell *matHeaderCellDef>Montant TNB</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    {{ proprietaire.montant_individuel | currency:'MAD':'symbol':'1.2-2':'fr' }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let proprietaire">
-                    <button mat-icon-button matTooltip="Voir détails">
-                      <mat-icon>visibility</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="proprietairesColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: proprietairesColumns;"></tr>
-              </table>
-
-              <app-validation-summary [quoteParts]="proprietaires" *ngIf="proprietaires.length > 0">
-              </app-validation-summary>
-            </div>
-          </div>
-        </ng-template>
-      </mat-tab>
-
-      <!-- Onglet Fiscal -->
-      <mat-tab label="Fiscal">
-        <ng-template matTabContent>
-          <div class="tab-content fiscal-tab">
-            <div class="loading-spinner" *ngIf="loadingFiches">
-              <mat-spinner diameter="30"></mat-spinner>
-            </div>
-
-            <div *ngIf="!loadingFiches">
-              <app-tax-calculator 
-                [surfaceTotale]="parcelle.surface_totale"
-                [surfaceImposable]="parcelle.surface_imposable"
-                [zonage]="parcelle.zonage"
-                [exonereTnb]="parcelle.exonere_tnb"
-                [datePermis]="parcelle.date_permis"
-                [dureeExoneration]="parcelle.duree_exoneration"
-                [readonly]="true">
-              </app-tax-calculator>
-
-              <div class="fiches-section">
-                <div class="section-header">
-                  <h3>Fiches Fiscales</h3>
-                  <button mat-raised-button color="primary" (click)="generateFiche()" 
-                         [disabled]="!canGenerateFiche">
-                    <mat-icon>add</mat-icon>
-                    Générer fiche
-                  </button>
-                </div>
-
-                <table mat-table [dataSource]="fichesFiscales" class="fiches-table" *ngIf="fichesFiscales.length > 0">
-                  <ng-container matColumnDef="code_unique">
-                    <th mat-header-cell *matHeaderCellDef>Code unique</th>
-                    <td mat-cell *matCellDef="let fiche">{{ fiche.code_unique }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="annee">
-                    <th mat-header-cell *matHeaderCellDef>Année</th>
-                    <td mat-cell *matCellDef="let fiche">{{ fiche.annee }}</td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="montant_tnb">
-                    <th mat-header-cell *matHeaderCellDef>Montant</th>
-                    <td mat-cell *matCellDef="let fiche">
-                      {{ fiche.montant_tnb | currency:'MAD':'symbol':'1.2-2':'fr' }}
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="statut_payment">
-                    <th mat-header-cell *matHeaderCellDef>Statut</th>
-                    <td mat-cell *matCellDef="let fiche">
-                      <mat-chip [color]="fiche.statut_payment === 'Paye' ? 'primary' : 'warn'">
-                        {{ fiche.statut_payment }}
-                      </mat-chip>
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="date_generation">
-                    <th mat-header-cell *matHeaderCellDef>Date génération</th>
-                    <td mat-cell *matCellDef="let fiche">
-                      {{ fiche.date_generation | date:'dd/MM/yyyy HH:mm' }}
-                    </td>
-                  </ng-container>
-
-                  <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef>Actions</th>
-                    <td mat-cell *matCellDef="let fiche">
-                      <button mat-icon-button (click)="downloadFiche(fiche)" 
-                             matTooltip="Télécharger PDF">
-                        <mat-icon>download</mat-icon>
+              <div class="proprietaires-list">
+                <div *ngFor="let prop of parcelleDetails.proprietaires; let i = index" 
+                     class="proprietaire-card">
+                  <div class="proprietaire-info">
+                    <div class="proprietaire-identity">
+                      <div class="proprietaire-name">{{ prop.nom }} {{ prop.prenom }}</div>
+                      <div class="proprietaire-type">
+                        <span class="badge" [class]="prop.type === 'physique' ? 'info' : 'warning'">
+                          {{ prop.type === 'physique' ? 'Personne physique' : 'Personne morale' }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="proprietaire-details">
+                      <div class="detail-item">
+                        <label>{{ prop.type === 'physique' ? 'CIN:' : 'RC:' }}</label>
+                        <span>{{ prop.type === 'physique' ? prop.cin : prop.rc }}</span>
+                      </div>
+                      <div class="detail-item" *ngIf="prop.adresse">
+                        <label>Adresse:</label>
+                        <span>{{ prop.adresse }}</span>
+                      </div>
+                      <div class="detail-item" *ngIf="prop.telephone">
+                        <label>Téléphone:</label>
+                        <span>{{ prop.telephone }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="proprietaire-quote">
+                    <div class="quote-info">
+                      <div class="quote-percentage">{{ prop.quotePart }}%</div>
+                      <div class="quote-amount">{{ formatCurrency(calculateQuoteAmount(prop.quotePart)) }}</div>
+                    </div>
+                    <div class="quote-actions">
+                      <button mat-icon-button color="primary" (click)="editProprietaire(i)">
+                        <mat-icon>edit</mat-icon>
                       </button>
-                    </td>
-                  </ng-container>
+                      <button mat-icon-button color="warn" (click)="deleteProprietaire(i)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                  <tr mat-header-row *matHeaderRowDef="fichesColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: fichesColumns;"></tr>
-                </table>
-
-                <div class="no-data" *ngIf="fichesFiscales.length === 0">
-                  <mat-icon>description</mat-icon>
-                  <p>Aucune fiche fiscale générée</p>
+              <div class="quotes-summary">
+                <div class="summary-item">
+                  <span class="label">Total des quote-parts:</span>
+                  <span class="value" [class]="getTotalQuotesClass()">{{ getTotalQuotes() }}%</span>
+                </div>
+                <div class="summary-item">
+                  <span class="label">TNB total répartie:</span>
+                  <span class="value">{{ formatCurrency(parcelleDetails.tnb) }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </ng-template>
-      </mat-tab>
 
-      <!-- Onglet Documents -->
-      <mat-tab label="Documents">
-        <ng-template matTabContent>
-          <div class="tab-content documents-tab">
-            <div class="loading-spinner" *ngIf="loadingDocuments">
-              <mat-spinner diameter="30"></mat-spinner>
+          <!-- Onglet Géométrie -->
+          <div *ngIf="activeTab === 'geometrie'" class="tab-pane active">
+            <div class="geometry-section">
+              <div class="geometry-info">
+                <h3>Informations géométriques</h3>
+                <div class="geometry-grid">
+                  <div class="geometry-item">
+                    <label>Nombre de points:</label>
+                    <span class="value">{{ parcelleDetails.geometry.nombrePoints }}</span>
+                  </div>
+                  <div class="geometry-item">
+                    <label>Surface calculée:</label>
+                    <span class="value primary">{{ formatNumber(parcelleDetails.surface) }} m²</span>
+                  </div>
+                  <div class="geometry-item">
+                    <label>Périmètre:</label>
+                    <span class="value">{{ formatNumber(parcelleDetails.perimetre) }} m</span>
+                  </div>
+                  <div class="geometry-item">
+                    <label>Centroïde X:</label>
+                    <span class="value">{{ formatCoordinate(parcelleDetails.geometry.centroide.x) }}</span>
+                  </div>
+                  <div class="geometry-item">
+                    <label>Centroïde Y:</label>
+                    <span class="value">{{ formatCoordinate(parcelleDetails.geometry.centroide.y) }}</span>
+                  </div>
+                  <div class="geometry-item">
+                    <label>Géométrie valide:</label>
+                    <span class="badge" [class]="parcelleDetails.geometry.valide ? 'success' : 'error'">
+                      {{ parcelleDetails.geometry.valide ? 'Valide' : 'Invalide' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="geometry-map">
+                <div class="map-placeholder">
+                  <mat-icon>map</mat-icon>
+                  <h4>Visualisation géométrique</h4>
+                  <p>Aperçu de la forme de la parcelle</p>
+                </div>
+              </div>
+
+              <div class="geometry-actions">
+                <button mat-raised-button color="primary" (click)="editGeometry()">
+                  <mat-icon>edit_location</mat-icon>
+                  Modifier géométrie
+                </button>
+                <button mat-stroked-button (click)="viewOnMap()">
+                  <mat-icon>map</mat-icon>
+                  Voir sur carte
+                </button>
+                <button mat-stroked-button (click)="exportGeometry()">
+                  <mat-icon>download</mat-icon>
+                  Exporter géométrie
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div *ngIf="!loadingDocuments">
-              <div class="section-header">
-                <h3>Documents Joints</h3>
+          <!-- Onglet Documents -->
+          <div *ngIf="activeTab === 'documents'" class="tab-pane active">
+            <div class="documents-section">
+              <div class="documents-header">
+                <h3>Documents associés ({{ parcelleDetails.documents.length }})</h3>
                 <button mat-raised-button color="primary" (click)="uploadDocument()">
-                  <mat-icon>upload</mat-icon>
+                  <mat-icon>upload_file</mat-icon>
                   Ajouter document
                 </button>
               </div>
 
-              <table mat-table [dataSource]="documents" class="documents-table" *ngIf="documents.length > 0">
-                <ng-container matColumnDef="nom_fichier">
-                  <th mat-header-cell *matHeaderCellDef>Nom du fichier</th>
-                  <td mat-cell *matCellDef="let document">
-                    <div class="file-info">
-                      <mat-icon>{{ getDocumentIcon(document.type_doc) }}</mat-icon>
-                      <span>{{ document.nom_fichier }}</span>
+              <div class="documents-grid">
+                <div *ngFor="let doc of parcelleDetails.documents" class="document-card">
+                  <div class="document-icon" [style.background-color]="getDocumentColor(doc.type)">
+                    <mat-icon>{{ getDocumentIcon(doc.type) }}</mat-icon>
+                  </div>
+                  <div class="document-info">
+                    <div class="document-name">{{ doc.nom }}</div>
+                    <div class="document-meta">
+                      <span class="document-size">{{ doc.taille }}</span>
+                      <span class="document-date">{{ doc.dateAjout | date:'dd/MM/yyyy' }}</span>
                     </div>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="type_doc">
-                  <th mat-header-cell *matHeaderCellDef>Type</th>
-                  <td mat-cell *matCellDef="let document">
-                    <mat-chip>{{ document.type_doc }}</mat-chip>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="taille_fichier">
-                  <th mat-header-cell *matHeaderCellDef>Taille</th>
-                  <td mat-cell *matCellDef="let document">
-                    {{ formatFileSize(document.taille_fichier) }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="date_ajout">
-                  <th mat-header-cell *matHeaderCellDef>Date d'ajout</th>
-                  <td mat-cell *matCellDef="let document">
-                    {{ document.date_ajout | date:'dd/MM/yyyy HH:mm' }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Actions</th>
-                  <td mat-cell *matCellDef="let document">
-                    <button mat-icon-button (click)="downloadDocument(document)" 
-                           matTooltip="Télécharger">
+                    <div class="document-type">{{ getDocumentTypeLabel(doc.type) }}</div>
+                  </div>
+                  <div class="document-actions">
+                    <button mat-icon-button color="primary" (click)="viewDocument(doc)" matTooltip="Voir">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button mat-icon-button color="accent" (click)="downloadDocument(doc)" matTooltip="Télécharger">
                       <mat-icon>download</mat-icon>
                     </button>
-                    <button mat-icon-button color="warn" (click)="deleteDocument(document)" 
-                           matTooltip="Supprimer">
+                    <button mat-icon-button color="warn" (click)="deleteDocument(doc)" matTooltip="Supprimer">
                       <mat-icon>delete</mat-icon>
                     </button>
-                  </td>
-                </ng-container>
+                  </div>
+                </div>
+              </div>
 
-                <tr mat-header-row *matHeaderRowDef="documentsColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: documentsColumns;"></tr>
-              </table>
-
-              <div class="no-data" *ngIf="documents.length === 0">
+              <div class="documents-summary" *ngIf="parcelleDetails.documents.length === 0">
                 <mat-icon>folder_open</mat-icon>
-                <p>Aucun document joint</p>
+                <p>Aucun document associé à cette parcelle</p>
+                <button mat-raised-button color="primary" (click)="uploadDocument()">
+                  <mat-icon>upload_file</mat-icon>
+                  Ajouter le premier document
+                </button>
               </div>
             </div>
           </div>
-        </ng-template>
-      </mat-tab>
 
-      <!-- Onglet Historique -->
-      <mat-tab label="Historique">
-        <ng-template matTabContent>
-          <div class="tab-content history-tab">
-            <div class="loading-spinner" *ngIf="loadingJournal">
-              <mat-spinner diameter="30"></mat-spinner>
-            </div>
-
-            <div *ngIf="!loadingJournal">
-              <div class="section-header">
-                <h3>Journal des Actions</h3>
-              </div>
-
-              <table mat-table [dataSource]="journalActions" class="journal-table" *ngIf="journalActions.length > 0">
-                <ng-container matColumnDef="action">
-                  <th mat-header-cell *matHeaderCellDef>Action</th>
-                  <td mat-cell *matCellDef="let action">
-                    <div class="action-info">
-                      <mat-icon>{{ getActionIcon(action.action) }}</mat-icon>
-                      <span>{{ action.action }}</span>
+          <!-- Onglet Historique -->
+          <div *ngIf="activeTab === 'historique'" class="tab-pane active">
+            <div class="historique-section">
+              <h3>Historique des modifications</h3>
+              
+              <div class="historique-timeline">
+                <div *ngFor="let entry of parcelleDetails.historique" class="timeline-entry">
+                  <div class="timeline-marker" [class]="getHistoryMarkerClass(entry.type)">
+                    <mat-icon>{{ getHistoryIcon(entry.type) }}</mat-icon>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <h4>{{ entry.action }}</h4>
+                      <span class="timeline-date">{{ entry.date | date:'dd/MM/yyyy HH:mm' }}</span>
                     </div>
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="date_heure">
-                  <th mat-header-cell *matHeaderCellDef>Date</th>
-                  <td mat-cell *matCellDef="let action">
-                    {{ action.date_heure | date:'dd/MM/yyyy HH:mm:ss' }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="utilisateur">
-                  <th mat-header-cell *matHeaderCellDef>Utilisateur</th>
-                  <td mat-cell *matCellDef="let action">
-                    {{ action.utilisateur?.nom || 'Système' }}
-                  </td>
-                </ng-container>
-
-                <ng-container matColumnDef="details">
-                  <th mat-header-cell *matHeaderCellDef>Détails</th>
-                  <td mat-cell *matCellDef="let action">
-                    <button mat-icon-button *ngIf="action.details" 
-                           matTooltip="Voir détails">
-                      <mat-icon>info</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="journalColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: journalColumns;"></tr>
-              </table>
-
-              <div class="no-data" *ngIf="journalActions.length === 0">
-                <mat-icon>history</mat-icon>
-                <p>Aucun historique disponible</p>
+                    <div class="timeline-details">{{ entry.details }}</div>
+                    <div class="timeline-user">Par {{ entry.utilisateur }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
+        </div>
+
+        <!-- Actions rapides flottantes -->
+        <div class="quick-actions">
+          <button mat-fab color="primary" (click)="generateFicheTNB()" matTooltip="Générer fiche TNB">
+            <mat-icon>description</mat-icon>
+          </button>
+          <button mat-mini-fab color="accent" (click)="printParcel()" matTooltip="Imprimer">
+            <mat-icon>print</mat-icon>
+          </button>
+          <button mat-mini-fab (click)="shareParcel()" matTooltip="Partager">
+            <mat-icon>share</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
+</div>
+
+<!-- État de chargement -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Chargement des détails de la parcelle...</p>
+</div>
+  <!-- Métriques principales -->
+  <div class="metrics-section">
+    <mat-card class="metric-card surface">
+      <div class="metric-value">{{parcelleDetails.surface | number:'1.2-2'}}</div>
+      <div class="metric-label">Surface totale (m²)</div>
+    </mat-card>
+    
+    <mat-card class="metric-card surface-imposable">
+      <div class="metric-value">{{parcelleDetails.surfaceImposable | number:'1.2-2'}}</div>
+      <div class="metric-label">Surface imposable (m²)</div>
+    </mat-card>
+    
+    <mat-card class="metric-card montant">
+      <div class="metric-value">{{parcelleDetails.tnb | number:'1.2-2'}} DH</div>
+      <div class="metric-label">Montant TNB (DH)</div>
+    </mat-card>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    
+    <!-- Colonne principale -->
+    <div class="main-column">
+      
+      <!-- Informations de base -->
+      <mat-card class="info-section">
+        <mat-card-header>
+          <mat-card-title>Informations de base</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Statut foncier</label>
+              <span>{{parcelleDetails.statutFoncier}} - Titre Foncier</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Prix unitaire</label>
+              <span>{{parcelleDetails.prixUnitaire | number:'1.2-2'}} DH/m²</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Zone urbanistique</label>
+              <span>{{parcelleDetails.zone}}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Exonération</label>
+              <span>{{parcelleDetails.exonere ? 'Exonéré' : 'Non exonéré'}}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Statut occupation</label>
+              <span>{{parcelleDetails.statutOccupation}}</span>
+            </div>
+            
+            <div class="info-item">
+              <label>Année fiscale</label>
+              <span>2024</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Propriétaires -->
+      <mat-card class="proprietaires-section">
+        <mat-card-header>
+          <mat-card-title>Propriétaires ({{parcelleDetails.proprietaires.length}} - Indivision)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="proprietaires-list">
+            <div class="proprietaire-item" *ngFor="let prop of parcelleDetails.proprietaires">
+              <div class="proprietaire-info">
+                <div class="proprietaire-nom">
+                  {{prop.nom}} {{prop.prenom || ''}}
+                </div>
+                <div class="proprietaire-details">
+                  {{prop.type === 'physique' ? 'CIN: ' + prop.cin : 'RC: ' + prop.rc}} • 
+                  {{prop.type === 'physique' ? 'Personne physique' : 'Personne morale'}}
+                </div>
+              </div>
+              <div class="proprietaire-quote">
+                <div class="quote-percentage">{{prop.quotePart}}%</div>
+                <div class="quote-amount">{{(parcelleDetails!.tnb * prop.quotePart / 100) | number:'1.2-2'}} DH</div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Historique des modifications -->
+      <mat-card class="historique-section">
+        <mat-card-header>
+          <mat-card-title>Historique des modifications</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="historique-list">
+            <div class="historique-item" *ngFor="let item of parcelleDetails.historique">
+              <div class="historique-date">{{item.date}}</div>
+              <div class="historique-action">{{item.action}}</div>
+              <div class="historique-details">{{item.details}}</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Sidebar droite -->
+    <div class="sidebar">
+      
+      <!-- Actions rapides -->
+      <mat-card class="actions-card">
+        <mat-card-header>
+          <mat-card-title>Actions rapides</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="actions-list">
+            <button mat-raised-button class="action-btn modifier" (click)="modifierParcelle()">
+              <mat-icon>edit</mat-icon>
+              Modifier la parcelle
+            </button>
+            
+            <button mat-raised-button class="action-btn generer" (click)="genererFicheTnb()">
+              <mat-icon>description</mat-icon>
+              Générer fiche TNB
+            </button>
+            
+            <button mat-stroked-button class="action-btn voir-carte" (click)="voirSurCarte()">
+              <mat-icon>map</mat-icon>
+              Voir sur la carte
+            </button>
+            
+            <button mat-stroked-button class="action-btn imprimer" (click)="imprimerDetails()">
+              <mat-icon>print</mat-icon>
+              Imprimer détails
+            </button>
+            
+            <button mat-stroked-button class="action-btn changer-statut" (click)="changerStatut()">
+              <mat-icon>swap_horiz</mat-icon>
+              Changer statut
+            </button>
+            
+            <button mat-stroked-button class="action-btn archiver" (click)="archiverParcelle()">
+              <mat-icon>archive</mat-icon>
+              Archiver
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Localisation -->
+      <mat-card class="localisation-card">
+        <mat-card-header>
+          <mat-card-title>Localisation</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="map-placeholder">
+            <div class="map-info">
+              <mat-icon class="map-icon">place</mat-icon>
+              <p>Miniature carte</p>
+            </div>
+          </div>
+          
+          <div class="coordinates-info">
+            <div class="coord-item">
+              <label>Coordonnées:</label>
+              <span>{{parcelleDetails.coordonnees}}</span>
+            </div>
+            <div class="coord-item">
+              <label>Secteur:</label>
+              <span>Nord-Est Oujda</span>
+            </div>
+            <div class="coord-item">
+              <label>Commune:</label>
+              <span>Oujda</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Documents -->
+      <mat-card class="documents-card">
+        <mat-card-header>
+          <mat-card-title>Documents ({{parcelleDetails.documents.length}})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="documents-list">
+            <div class="document-item" *ngFor="let doc of parcelleDetails.documents">
+              <div class="document-icon" [style.background-color]="getDocumentColor(doc.type)">
+                <mat-icon>{{getDocumentIcon(doc.type)}}</mat-icon>
+              </div>
+              <div class="document-info">
+                <div class="document-name">{{doc.nom}}</div>
+                <div class="document-details">{{doc.taille}}</div>
+              </div>
+              <button mat-icon-button class="document-action">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </div>
+          </div>
+          
+          <button mat-raised-button class="add-document-btn" (click)="ajouterDocument()">
+            <mat-icon>add</mat-icon>
+            Ajouter document
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+<!-- État de chargement -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Chargement des détails de la parcelle...</p>
 </div>

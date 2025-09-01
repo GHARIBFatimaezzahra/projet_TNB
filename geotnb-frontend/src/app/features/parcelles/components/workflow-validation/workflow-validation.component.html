@@ -1,0 +1,212 @@
+<!-- =====================================================
+   WORKFLOW DE VALIDATION DES PARCELLES - INTERFACE COMPLÈTE
+   ===================================================== -->
+
+<div class="workflow-container" *ngIf="!loading && workflowData">
+  
+  <!-- Header principal -->
+  <div class="workflow-header">
+    <h1 class="workflow-title">7. Workflow de Validation des Parcelles</h1>
+  </div>
+
+  <!-- Progression des étapes -->
+  <div class="steps-progression">
+    <div class="step-item" 
+         *ngFor="let step of workflowData.etapes; let i = index"
+         [ngClass]="getStepClass(step)">
+      <div class="step-circle">
+        <mat-icon>{{getStepIcon(step)}}</mat-icon>
+        <span class="step-number">{{step.numero}}</span>
+      </div>
+      <div class="step-label">{{step.nom}}</div>
+      
+      <!-- Ligne de connexion -->
+      <div class="step-connector" *ngIf="i < workflowData!.etapes.length - 1"></div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="workflow-content">
+    
+    <!-- Étape actuelle -->
+    <div class="current-step-section">
+      <h2 class="step-title">
+        Étape {{workflowData.etapeActuelle}}: {{getCurrentStepTitle()}} - Parcelle {{workflowData.parcelleReference}}
+      </h2>
+    </div>
+
+    <!-- Section principale avec deux colonnes -->
+    <div class="main-section">
+      
+      <!-- Colonne gauche -->
+      <div class="left-column">
+        
+        <!-- Action requise -->
+        <mat-card class="action-card">
+          <div class="action-header">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            <h3>Action requise: Vérification du calcul TNB</h3>
+          </div>
+          <p class="action-description">
+            Veuillez vérifier les calculs du montant TNB avant de passer à l'étape de validation finale. 
+            Tous les éléments doivent être cohérents avec les tarifs en vigueur.
+          </p>
+        </mat-card>
+
+        <!-- Détail du calcul -->
+        <mat-card class="calcul-card">
+          <mat-card-header>
+            <mat-card-title>Détail du calcul:</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="calcul-grid">
+              <div class="calcul-item">
+                <label>Surface imposable</label>
+                <span class="calcul-value">{{workflowData.calculTnb.surfaceImposable | number:'1.2-2'}} m²</span>
+              </div>
+              
+              <div class="calcul-item">
+                <label>Tarif zone R+4</label>
+                <span class="calcul-value">{{workflowData.calculTnb.tarifZone | number:'1.2-2'}} DH/m²</span>
+              </div>
+              
+              <div class="calcul-item">
+                <label>Calcul base</label>
+                <span class="calcul-value">{{workflowData.calculTnb.calculBase}}</span>
+              </div>
+              
+              <div class="calcul-item total">
+                <label>Montant total</label>
+                <span class="calcul-value total-amount">{{workflowData.calculTnb.montantTotal | number:'1.2-2'}} DH</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Commentaires de validation -->
+        <mat-card class="comments-card">
+          <mat-card-header>
+            <mat-card-title>Commentaires de validation</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Ajoutez vos commentaires...</mat-label>
+              <textarea matInput 
+                        rows="4"
+                        [(ngModel)]="commentaires"
+                        placeholder="Calculs vérifiés et cohérents avec les tarifs 2024. Surface imposable calculée après déduction des zones d'équipements publics."></textarea>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Documents de référence -->
+        <mat-card class="documents-ref-card">
+          <mat-card-header>
+            <mat-card-title>Documents de référence</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="documents-list">
+              <mat-chip-set>
+                <mat-chip *ngFor="let doc of documentsReference" 
+                          [class.active]="doc.actif">
+                  {{doc.nom}}
+                </mat-chip>
+              </mat-chip-set>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Boutons d'action -->
+        <div class="action-buttons">
+          <button mat-raised-button 
+                  class="btn-validate"
+                  (click)="validerEtapeSuivante()"
+                  [disabled]="loading">
+            <mat-icon>check_circle</mat-icon>
+            Valider et passer à l'étape suivante
+          </button>
+
+          <button mat-raised-button 
+                  class="btn-corrections"
+                  (click)="demanderCorrections()"
+                  [disabled]="loading">
+            <mat-icon>edit</mat-icon>
+            Demander des corrections
+          </button>
+
+          <button mat-stroked-button 
+                  class="btn-reject"
+                  (click)="rejeterParcelle()"
+                  [disabled]="loading">
+            <mat-icon>cancel</mat-icon>
+            Rejeter la parcelle
+          </button>
+
+          <button mat-stroked-button 
+                  class="btn-previous"
+                  (click)="retourEtapePrecedente()"
+                  [disabled]="loading">
+            <mat-icon>arrow_back</mat-icon>
+            Retourner à l'étape précédente
+          </button>
+        </div>
+      </div>
+
+      <!-- Colonne droite - Résumé -->
+      <div class="right-column">
+        <mat-card class="summary-card">
+          <mat-card-header>
+            <mat-card-title>Résumé de la parcelle</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="summary-info">
+              <div class="info-item">
+                <label>Référence:</label>
+                <span>{{workflowData.parcelleReference}}</span>
+              </div>
+              
+              <div class="info-item">
+                <label>Zone:</label>
+                <span>R+4 Résidentiel</span>
+              </div>
+              
+              <div class="info-item">
+                <label>Surface totale:</label>
+                <span>1,250.75 m²</span>
+              </div>
+              
+              <div class="info-item">
+                <label>Surface imposable:</label>
+                <span>1,120.50 m²</span>
+              </div>
+              
+              <div class="info-item">
+                <label>Propriétaires:</label>
+                <span>3 (Indivision)</span>
+              </div>
+            </div>
+
+            <div class="tnb-summary">
+              <div class="tnb-title">Montant TNB:</div>
+              <div class="tnb-amount">{{workflowData.calculTnb.montantTotal | number:'1.2-2'}} DH</div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Bouton retour -->
+        <button mat-stroked-button 
+                class="back-button"
+                (click)="retourDetail()">
+          <mat-icon>arrow_back</mat-icon>
+          Retour au détail
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- État de chargement -->
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner diameter="50"></mat-spinner>
+  <p>Chargement du workflow de validation...</p>
+</div>

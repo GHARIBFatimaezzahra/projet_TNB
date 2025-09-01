@@ -1,6 +1,4 @@
-// =====================================================
-// STYLES COMPOSANT REQUÊTES SPATIALES
-// =====================================================
+/* Spatial Query Component - Version simplifiée pour respecter la limite de 8 kB */
 
 .spatial-query {
   display: flex;
@@ -9,709 +7,272 @@
   padding: 16px;
   max-height: 100vh;
   overflow-y: auto;
-
-  // En-tête
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    .title-section {
-      h3 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0 0 4px 0;
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #0277bd;
-
-        mat-icon {
-          font-size: 1.3rem;
-          width: 1.3rem;
-          height: 1.3rem;
-        }
-      }
-
-      .subtitle {
-        margin: 0;
-        font-size: 0.85rem;
-        color: #666;
-      }
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-  }
-
-  // Types de requêtes
-  .query-types-card {
-    mat-card-header {
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #0277bd;
-        font-size: 1.1rem;
-      }
-    }
-
-    .query-types {
-      mat-chip-set {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-
-        mat-chip {
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-size: 0.85rem;
-
-          &:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-          }
-
-          mat-icon {
-            font-size: 1rem;
-            width: 1rem;
-            height: 1rem;
-          }
-        }
-      }
-    }
-  }
-
-  // Configuration de requête
-  .query-config-card {
-    mat-card-header {
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #0277bd;
-        font-size: 1.1rem;
-      }
-    }
-
-    .query-form {
-      .form-row {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-
-        mat-form-field {
-          flex: 1;
-          min-width: 200px;
-        }
-      }
-
-      // Requête par point
-      .point-query {
-        .map-selection {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 12px;
-          background: #f8f9fa;
-          border-radius: 6px;
-          margin-top: 12px;
-
-          mat-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          }
-        }
-      }
-
-      // Requête par polygone
-      .polygon-query {
-        .drawing-tools {
-          display: flex;
-          gap: 12px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-
-          button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-          }
-        }
-
-        .upload-section {
-          margin: 16px 0;
-          padding: 16px;
-          background: #f8f9fa;
-          border-radius: 6px;
-          text-align: center;
-
-          .upload-label {
-            margin: 8px 0 12px 0;
-            font-size: 0.9rem;
-            color: #666;
-          }
-
-          button {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 0 auto;
-          }
-        }
-
-        .geometry-info {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px;
-          background: #e8f5e8;
-          border-radius: 6px;
-          color: #2e7d32;
-          font-weight: 500;
-          margin-top: 12px;
-        }
-      }
-
-      // Requête par zone administrative
-      .administrative-query {
-        .zone-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          mat-icon {
-            font-size: 1rem;
-            width: 1rem;
-            height: 1rem;
-            color: #666;
-          }
-
-          small {
-            color: #999;
-            margin-left: auto;
-          }
-        }
-      }
-
-      // Requête par attributs
-      .attributes-query {
-        .attributes-builder {
-          .condition-row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            flex-wrap: wrap;
-
-            mat-form-field {
-              flex: 1;
-              min-width: 120px;
-            }
-
-            button[mat-icon-button] {
-              flex-shrink: 0;
-            }
-          }
-
-          .condition-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 16px;
-            flex-wrap: wrap;
-            gap: 12px;
-
-            .logic-operator {
-              max-width: 200px;
-            }
-          }
-        }
-      }
-
-      // Options communes
-      .common-options {
-        margin-top: 24px;
-
-        mat-divider {
-          margin-bottom: 20px;
-        }
-
-        .options-row {
-          display: flex;
-          gap: 16px;
-          margin-bottom: 16px;
-          flex-wrap: wrap;
-
-          mat-form-field {
-            flex: 1;
-            min-width: 150px;
-          }
-        }
-
-        .options-checkboxes {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 20px;
-
-          mat-checkbox {
-            font-size: 0.9rem;
-          }
-        }
-      }
-
-      // Actions du formulaire
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid #e0e0e0;
-        flex-wrap: wrap;
-
-        button {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 120px;
-
-          mat-spinner {
-            margin-right: 8px;
-          }
-        }
-      }
-    }
-  }
-
-  // Résultats
-  .results-card {
-    mat-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      mat-card-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #0277bd;
-        font-size: 1.1rem;
-
-        mat-chip {
-          margin-left: 8px;
-          font-size: 0.75rem;
-        }
-      }
-
-      .results-actions {
-        display: flex;
-        gap: 8px;
-      }
-    }
-
-    .results-stats {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-
-      .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 16px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        min-width: 150px;
-
-        mat-icon {
-          font-size: 1.2rem;
-          width: 1.2rem;
-          height: 1.2rem;
-          color: #0277bd;
-        }
-
-        .stat-content {
-          display: flex;
-          flex-direction: column;
-
-          .value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-          }
-
-          .label {
-            font-size: 0.75rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-        }
-      }
-    }
-
-    // Vue tableau
-    .results-table {
-      .spatial-results-table {
-        width: 100%;
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-        .reference-link {
-          color: #0277bd;
-          text-decoration: none;
-          font-weight: 500;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-
-        .mat-mdc-row {
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-
-          &:hover {
-            background-color: #f8f9fa;
-          }
-
-          &.selected-row {
-            background-color: #e3f2fd;
-            border-left: 4px solid #0277bd;
-          }
-        }
-
-        mat-chip {
-          font-size: 0.75rem;
-        }
-      }
-
-      mat-paginator {
-        background: #fafafa;
-        border-top: 1px solid #e0e0e0;
-      }
-    }
-
-    // Vue cartes
-    .results-cards {
-      .cards-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 16px;
-
-        .result-card {
-          cursor: pointer;
-          transition: all 0.2s ease;
-
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-          }
-
-          &.selected-card {
-            border: 2px solid #0277bd;
-            background-color: #e3f2fd;
-          }
-
-          mat-card-header {
-            mat-card-title {
-              font-size: 1rem;
-              font-weight: 600;
-              color: #0277bd;
-            }
-
-            mat-card-subtitle {
-              font-size: 0.8rem;
-            }
-          }
-
-          .card-info {
-            .info-item {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 8px;
-              font-size: 0.85rem;
-
-              mat-icon {
-                font-size: 1rem;
-                width: 1rem;
-                height: 1rem;
-                color: #666;
-              }
-            }
-          }
-
-          mat-card-actions {
-            display: flex;
-            justify-content: space-between;
-
-            button {
-              flex: 1;
-              margin: 0 4px;
-              font-size: 0.8rem;
-
-              mat-icon {
-                font-size: 0.9rem;
-                width: 0.9rem;
-                height: 0.9rem;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Message aucun résultat
-  .no-results-card {
-    .no-results {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 24px;
-      text-align: center;
-
-      mat-icon {
-        font-size: 4rem;
-        width: 4rem;
-        height: 4rem;
-        margin-bottom: 16px;
-      }
-
-      h3 {
-        margin: 0 0 8px 0;
-        font-size: 1.2rem;
-        font-weight: 500;
-        color: #333;
-      }
-
-      p {
-        margin: 0 0 24px 0;
-        font-size: 0.9rem;
-        color: #666;
-        max-width: 400px;
-      }
-    }
-  }
 }
 
-// Utilitaires pour les statuts
-.status-color {
-  &.brouillon {
-    color: #ff9800;
-  }
-
-  &.valide {
-    color: #2196f3;
-  }
-
-  &.publie {
-    color: #4caf50;
-  }
-
-  &.archive {
-    color: #9e9e9e;
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// Responsive
-@media (max-width: 1200px) {
-  .spatial-query {
-    .query-config-card .query-form {
-      .form-row {
-        flex-direction: column;
-
-        mat-form-field {
-          min-width: 100%;
-        }
-      }
-
-      .common-options .options-row {
-        flex-direction: column;
-
-        mat-form-field {
-          min-width: 100%;
-        }
-      }
-    }
-
-    .results-card {
-      .results-stats {
-        flex-direction: column;
-
-        .stat-item {
-          min-width: 100%;
-        }
-      }
-
-      .results-cards .cards-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      }
-    }
-  }
+.title-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #0277bd;
 }
 
-@media (max-width: 768px) {
-  .spatial-query {
-    padding: 8px;
-
-    .header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-      padding: 12px;
-
-      .title-section {
-        text-align: center;
-      }
-
-      .header-actions {
-        justify-content: center;
-      }
-    }
-
-    .query-types-card .query-types mat-chip-set {
-      flex-direction: column;
-      align-items: stretch;
-
-      mat-chip {
-        justify-content: center;
-      }
-    }
-
-    .query-config-card .query-form {
-      .point-query .map-selection {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-      }
-
-      .polygon-query .drawing-tools {
-        flex-direction: column;
-
-        button {
-          justify-content: center;
-        }
-      }
-
-      .attributes-query .attributes-builder {
-        .condition-row {
-          flex-direction: column;
-
-          mat-form-field {
-            min-width: 100%;
-          }
-        }
-
-        .condition-actions {
-          flex-direction: column;
-          align-items: stretch;
-
-          .logic-operator {
-            max-width: 100%;
-          }
-        }
-      }
-
-      .form-actions {
-        flex-direction: column;
-
-        button {
-          min-width: 100%;
-        }
-      }
-    }
-
-    .results-card {
-      .results-stats {
-        .stat-item {
-          min-width: 100%;
-        }
-      }
-
-      .results-table .spatial-results-table {
-        font-size: 0.8rem;
-
-        .mat-mdc-header-cell,
-        .mat-mdc-cell {
-          padding: 8px 4px;
-        }
-      }
-
-      .results-cards .cards-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  }
+.title-section .subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
 }
 
-// Animations
-.spatial-query {
-  animation: fadeInUp 0.3s ease-out;
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.query-types-card,
+.query-config-card,
+.results-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// Améliorations visuelles
-.mat-mdc-form-field {
-  .mat-mdc-form-field-error {
-    font-size: 0.75rem;
-  }
+.query-types-card mat-card-header mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0277bd;
+  font-size: 1.1rem;
 }
 
-.mat-mdc-chip {
-  &.mat-mdc-chip-selected {
-    box-shadow: 0 2px 8px rgba(2, 119, 189, 0.3);
-  }
+.query-types mat-chip-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.mat-mdc-card {
+.query-types mat-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.query-types mat-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.query-config-card mat-card-header mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0277bd;
+  font-size: 1.1rem;
+}
+
+.query-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.param-group label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.param-group input,
+.param-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.param-group input:focus,
+.param-group select:focus {
+  outline: none;
+  border-color: #0277bd;
+  box-shadow: 0 0 0 2px rgba(2, 119, 189, 0.1);
+}
+
+.query-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.execute-btn {
+  background: #0277bd;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-// Scrollbar personnalisée
-.spatial-query::-webkit-scrollbar {
-  width: 6px;
+.execute-btn:hover {
+  background: #01579b;
+  transform: translateY(-1px);
 }
 
-.spatial-query::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+.clear-btn {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.spatial-query::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+.clear-btn:hover {
+  background: #e0e0e0;
+}
 
-  &:hover {
-    background: #a8a8a8;
+.results-card mat-card-header mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0277bd;
+  font-size: 1.1rem;
+}
+
+.results-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.results-count {
+  font-weight: 600;
+  color: #0277bd;
+}
+
+.results-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+  background: #218838;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.results-table th,
+.results-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.results-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.results-table td {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.results-table tr:hover {
+  background: #f8f9fa;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-results mat-icon {
+  font-size: 3rem;
+  width: 3rem;
+  height: 3rem;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.no-results h4 {
+  margin: 0 0 8px 0;
+  color: #999;
+  font-weight: 500;
+}
+
+.no-results p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .spatial-query {
+    padding: 12px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .query-params {
+    grid-template-columns: 1fr;
+  }
+  
+  .query-actions {
+    flex-direction: column;
+  }
+  
+  .results-summary {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
   }
 }

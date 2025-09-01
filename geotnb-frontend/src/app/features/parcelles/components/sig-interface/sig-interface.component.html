@@ -1,0 +1,349 @@
+<!-- Interface 3 - Interface SIG - Visualisation et Navigation - Design exact fourni -->
+<div class="container">
+  <div class="interface-section">
+    <div class="section-header">
+      <mat-icon>map</mat-icon>
+      3. Interface SIG - Visualisation et Navigation
+    </div>
+    <div class="section-content">
+      
+      <!-- Statistiques rapides -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon primary">
+              <mat-icon>map</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatNumber(mapStats.parcellesVisibles) }}</h3>
+              <p>Parcelles visibles</p>
+              <div class="stat-trend positive">
+                <mat-icon>trending_up</mat-icon>
+                +12 cette semaine
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon success">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatNumber(mapStats.parcellesPubliees) }}</h3>
+              <p>Parcelles publiées</p>
+              <div class="stat-trend positive">
+                <mat-icon>trending_up</mat-icon>
+                {{ getPublishedPercentage() }}% du total
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon warning">
+              <mat-icon>square_foot</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatSurface(mapStats.surfaceImposable) }}</h3>
+              <p>Surface imposable</p>
+              <div class="stat-trend positive">
+                <mat-icon>trending_up</mat-icon>
+                +3.2 Ha ce mois
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon info">
+              <mat-icon>attach_money</mat-icon>
+            </div>
+            <div class="stat-info">
+              <h3>{{ formatCurrency(mapStats.tnbCalculee) }}</h3>
+              <p>TNB calculée</p>
+              <div class="stat-trend positive">
+                <mat-icon>trending_up</mat-icon>
+                +156K DH
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barre d'outils cartographique -->
+      <div class="filters-panel">
+        <h3>Outils de Navigation et Analyse</h3>
+        <div class="tools-row">
+          <div class="tool-group">
+            <button mat-raised-button 
+                    [color]="selectedTool === 'select' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'select'"
+                    (click)="selectTool('select')">
+              <mat-icon>mouse</mat-icon>
+              Sélection
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'info' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'info'"
+                    (click)="selectTool('info')">
+              <mat-icon>info</mat-icon>
+              Information
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'measure' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'measure'"
+                    (click)="selectTool('measure')">
+              <mat-icon>straighten</mat-icon>
+              Mesure
+            </button>
+            <button mat-stroked-button
+                    [color]="selectedTool === 'draw' ? 'primary' : ''"
+                    [class.active]="selectedTool === 'draw'"
+                    (click)="selectTool('draw')">
+              <mat-icon>edit</mat-icon>
+              Dessiner
+            </button>
+          </div>
+          
+          <div class="tool-group">
+            <button mat-raised-button color="accent" (click)="showSpatialQuery()">
+              <mat-icon>search</mat-icon>
+              Requête spatiale
+            </button>
+            <button mat-raised-button color="warn" (click)="showBufferAnalysis()">
+              <mat-icon>radio_button_checked</mat-icon>
+              Zone tampon
+            </button>
+            <button mat-raised-button (click)="exportMap()">
+              <mat-icon>file_download</mat-icon>
+              Export carte
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout carte avec sidebar -->
+      <div class="map-layout">
+        <!-- Sidebar outils -->
+        <div class="map-sidebar">
+          <h4>Outils cartographiques</h4>
+          
+          <div class="tool-section">
+            <div class="tool-title">Navigation</div>
+            <div class="tool-buttons">
+              <button class="tool-btn" 
+                      [class.active]="selectedTool === 'pan'"
+                      (click)="selectTool('pan')">
+                🖱️ Navigation (Pan)
+              </button>
+              <button class="tool-btn" (click)="selectTool('zoom')">
+                🔍 Zoom fenêtre
+              </button>
+              <button class="tool-btn" (click)="selectTool('info')">
+                📍 Information parcelle
+              </button>
+              <button class="tool-btn" (click)="zoomToExtent()">
+                🏠 Vue d'ensemble
+              </button>
+            </div>
+          </div>
+          
+          <div class="tool-section">
+            <div class="tool-title">Sélection</div>
+            <div class="tool-buttons">
+              <button class="tool-btn" (click)="selectTool('select-point')">
+                👆 Sélectionner une parcelle
+              </button>
+              <button class="tool-btn" (click)="selectTool('select-rectangle')">
+                🔲 Sélection rectangle
+              </button>
+              <button class="tool-btn" (click)="selectTool('select-circle')">
+                ⭕ Sélection cercle
+              </button>
+              <button class="tool-btn" (click)="selectTool('select-polygon')">
+                🖊️ Sélection polygone
+              </button>
+            </div>
+          </div>
+          
+          <div class="tool-section">
+            <div class="tool-title">Mesures</div>
+            <div class="tool-buttons">
+              <button class="tool-btn" (click)="selectTool('measure-distance')">
+                📏 Mesurer distance
+              </button>
+              <button class="tool-btn" (click)="selectTool('measure-area')">
+                📐 Mesurer surface
+              </button>
+              <button class="tool-btn" (click)="selectTool('measure-perimeter')">
+                📊 Calculer périmètre
+              </button>
+            </div>
+          </div>
+          
+          <div class="tool-section">
+            <div class="tool-title">Couches</div>
+            <div class="layers-list">
+              <mat-checkbox *ngFor="let layer of mapLayers" 
+                           [checked]="layer.visible"
+                           (change)="toggleLayer(layer.id, $event.checked)">
+                {{ layer.name }}
+                <span class="layer-count" *ngIf="layer.count">{{ layer.count }}</span>
+              </mat-checkbox>
+            </div>
+          </div>
+          
+          <!-- Parcelle sélectionnée -->
+          <div class="selected-parcel-info" *ngIf="selectedParcel">
+            <div class="info-header">Parcelle sélectionnée</div>
+            <div class="parcel-details">
+              <strong>{{ selectedParcel.reference }}</strong><br>
+              Surface: {{ formatNumber(selectedParcel.surface) }} m²<br>
+              Zone: {{ selectedParcel.zone }}<br>
+              Propriétaire: {{ selectedParcel.proprietaire }}
+            </div>
+            <div class="parcel-actions">
+              <button mat-raised-button color="primary" (click)="viewParcelDetails()">
+                Voir détails
+              </button>
+              <button mat-stroked-button (click)="centerOnParcel()">
+                Centrer
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Vue carte principale -->
+        <div class="map-view" #mapContainer>
+          <!-- Contrôles de navigation flottants -->
+          <div class="map-controls">
+            <button mat-mini-fab color="primary" (click)="zoomIn()" matTooltip="Zoom avant">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-mini-fab color="primary" (click)="zoomOut()" matTooltip="Zoom arrière">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <button mat-mini-fab (click)="zoomToExtent()" matTooltip="Vue d'ensemble">
+              <mat-icon>home</mat-icon>
+            </button>
+            <button mat-mini-fab (click)="toggleFullscreen()" matTooltip="Plein écran">
+              <mat-icon>fullscreen</mat-icon>
+            </button>
+          </div>
+
+          <!-- Panneau des couches flottant -->
+          <div class="map-layers-panel">
+            <h4>Couches cartographiques</h4>
+            <div class="layers-compact">
+              <div *ngFor="let layer of mapLayers" class="layer-item">
+                <mat-checkbox [checked]="layer.visible"
+                             (change)="toggleLayer(layer.id, $event.checked)">
+                  {{ layer.name }}
+                </mat-checkbox>
+                <span class="badge" [class]="getLayerBadgeClass(layer.type)">
+                  {{ layer.count }}
+                </span>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+            
+            <h5>Légende - Parcelles TNB</h5>
+            <div class="legend">
+              <div class="legend-item">
+                <div class="legend-color published"></div>
+                <span>Publié (1923)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color validated"></div>
+                <span>Validé (681)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color draft"></div>
+                <span>Brouillon (243)</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color exonerated"></div>
+                <span>Exonéré (156)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contenu de la carte - placeholder pour OpenLayers -->
+          <div class="map-content" *ngIf="!mapInitialized">
+            <div class="map-placeholder">
+              <mat-icon>public</mat-icon>
+              <h3>Carte Interactive OpenLayers</h3>
+              <p>Visualisation des parcelles TNB - Commune d'Oujda</p>
+              <div class="map-info">
+                <p>Projection: EPSG:26191 (Lambert Maroc) | Fond: OpenStreetMap</p>
+                <p>{{ formatNumber(mapStats.parcellesVisibles) }} parcelles chargées</p>
+              </div>
+              <button mat-raised-button color="primary" (click)="initializeMap()">
+                <mat-icon>map</mat-icon>
+                Initialiser la carte
+              </button>
+            </div>
+          </div>
+
+          <!-- Indicateurs de position et échelle -->
+          <div class="map-status-bar">
+            <div class="coordinates">
+              Position: X: {{ currentCoordinates.x }}, Y: {{ currentCoordinates.y }}
+            </div>
+            <div class="scale">
+              Échelle: 1:{{ currentScale }} | Zoom: {{ currentZoom }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations parcelle sélectionnée (détaillées) -->
+      <div class="selected-parcel-detail" *ngIf="selectedParcel">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Parcelle sélectionnée: {{ selectedParcel.reference }}</mat-card-title>
+            <div class="card-actions">
+              <button mat-raised-button color="primary" routerLink="/parcelles/detail/{{ selectedParcel.id }}">
+                <mat-icon>visibility</mat-icon>
+                Détail complet
+              </button>
+              <button mat-stroked-button routerLink="/parcelles/edit/{{ selectedParcel.id }}">
+                <mat-icon>edit</mat-icon>
+                Modifier
+              </button>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="parcel-summary">
+              <div class="summary-item">
+                <strong>Référence:</strong>
+                <span class="badge info">{{ selectedParcel.reference }}</span>
+              </div>
+              <div class="summary-item">
+                <strong>Surface:</strong>
+                {{ formatNumber(selectedParcel.surface) }} m² 
+                ({{ formatNumber(selectedParcel.surfaceImposable) }} m² imposable)
+              </div>
+              <div class="summary-item">
+                <strong>Zone:</strong>
+                <span class="badge secondary">{{ selectedParcel.zone }} - {{ getZoneLabel(selectedParcel.zone) }}</span>
+              </div>
+              <div class="summary-item">
+                <strong>TNB:</strong>
+                <strong class="tnb-amount">{{ formatCurrency(selectedParcel.tnb) }}</strong>
+              </div>
+            </div>
+            <div class="proprietaires-info">
+              <strong>Propriétaires:</strong> {{ selectedParcel.proprietaire }}
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>

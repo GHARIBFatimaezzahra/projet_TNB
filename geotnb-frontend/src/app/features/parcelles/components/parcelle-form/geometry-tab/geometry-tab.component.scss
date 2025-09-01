@@ -59,7 +59,7 @@
   .main-container {
     display: flex;
     flex: 1;
-    gap: 1rem;
+  gap: 1rem;
     min-height: 0;
 
     // Section carte
@@ -87,8 +87,8 @@
             left: 1rem;
             right: 1rem;
             z-index: 1000;
-            display: flex;
-            flex-direction: column;
+    display: flex;
+    flex-direction: column;
             gap: 0.5rem;
 
             .status-item {
@@ -97,8 +97,8 @@
               border-radius: 0.5rem;
               padding: 0.75rem 1rem;
               display: flex;
-              align-items: center;
-              gap: 0.5rem;
+    align-items: center;
+    gap: 0.5rem;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
               font-size: 0.875rem;
 
@@ -120,7 +120,7 @@
                 color: #388E3C;
               }
 
-              mat-icon {
+    mat-icon {
                 font-size: 1.25rem;
                 width: 1.25rem;
                 height: 1.25rem;
@@ -191,14 +191,14 @@
               min-width: 200px;
 
               .geometry-type {
-                display: flex;
-                align-items: center;
+    display: flex;
+    align-items: center;
                 gap: 0.5rem;
                 margin-bottom: 0.75rem;
                 font-weight: 500;
                 color: var(--mdc-theme-primary);
 
-                mat-icon {
+    mat-icon {
                   font-size: 1.5rem;
                   width: 1.5rem;
                   height: 1.5rem;
@@ -206,8 +206,8 @@
               }
 
               .quick-stats {
-                display: flex;
-                flex-direction: column;
+      display: flex;
+      flex-direction: column;
                 gap: 0.5rem;
 
                 .stat-item {
@@ -242,12 +242,12 @@
       .info-card {
         mat-card-header {
           mat-card-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
             font-size: 1.1rem;
 
-            mat-icon {
+    mat-icon {
               font-size: 1.25rem;
               width: 1.25rem;
               height: 1.25rem;
@@ -378,7 +378,7 @@
               border-radius: 0.5rem;
               display: flex;
               align-items: center;
-              gap: 0.5rem;
+    gap: 0.5rem;
               font-size: 0.875rem;
 
               &.good {

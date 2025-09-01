@@ -155,6 +155,8 @@ export interface CreateParcelleDto {
 
 export interface UpdateParcelleDto extends Partial<CreateParcelleDto> {
   id: number;
+  etat_validation?: EtatValidation;
+  derniere_mise_a_jour?: Date;
 }
 
 export interface SearchParcelleDto {

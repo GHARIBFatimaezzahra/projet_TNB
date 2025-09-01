@@ -1,0 +1,894 @@
+<!-- ===================================================== -->
+<!-- HEADER PRINCIPAL -->
+<!-- ===================================================== -->
+<div class="header">
+  <div class="header-content">
+    <div>
+      <h1>
+        <i class="fas fa-plus-circle"></i>
+        Création d'une nouvelle parcelle
+      </h1>
+      <p style="color: rgba(255,255,255,0.8); margin-top: 0.5rem;">Suivez les étapes pour enregistrer une parcelle TNB complète</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+      <button class="btn btn-info" (click)="importShapefile()">
+        <i class="fas fa-upload"></i> Import shapefile
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- ===================================================== -->
+  <!-- WORKFLOW PROGRESS -->
+  <!-- ===================================================== -->
+  <div class="workflow-container">
+    <div class="workflow-stepper">
+      <div class="step" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 1"></i>
+          <span *ngIf="currentStep <= 1">1</span>
+        </div>
+        <div class="step-title">Informations générales</div>
+      </div>
+      <div class="step" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 2"></i>
+          <span *ngIf="currentStep <= 2">2</span>
+        </div>
+        <div class="step-title">Géométrie SIG</div>
+      </div>
+      <div class="step" [class.completed]="currentStep > 3" [class.active]="currentStep === 3">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 3"></i>
+          <span *ngIf="currentStep <= 3">3</span>
+        </div>
+        <div class="step-title">Propriétaires & Indivision</div>
+      </div>
+      <div class="step" [class.completed]="currentStep > 4" [class.active]="currentStep === 4">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 4"></i>
+          <span *ngIf="currentStep <= 4">4</span>
+        </div>
+        <div class="step-title">Documents joints</div>
+      </div>
+      <div class="step" [class.completed]="currentStep > 5" [class.active]="currentStep === 5">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 5"></i>
+          <span *ngIf="currentStep <= 5">5</span>
+        </div>
+        <div class="step-title">Fiscalité TNB</div>
+      </div>
+      <div class="step" [class.completed]="currentStep > 6" [class.active]="currentStep === 6">
+        <div class="step-icon">
+          <i class="fas fa-check" *ngIf="currentStep > 6"></i>
+          <span *ngIf="currentStep <= 6">6</span>
+        </div>
+        <div class="step-title">Validation & Publication</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="(currentStep / 6) * 100"></div>
+      </div>
+      <div style="text-align: center; margin-top: 0.5rem; font-size: 0.875rem; color: var(--gray-600);">
+        Étape {{ currentStep }} sur 6 ({{ getProgressPercentage() }}% completé)
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- NAVIGATION DES ONGLETS -->
+  <!-- ===================================================== -->
+  <div class="nav-tabs">
+    <button class="nav-tab" 
+            [class.active]="currentStep === 1" 
+            [class.completed]="currentStep > 1"
+            (click)="switchStep(1)">
+      <i class="fas fa-info-circle"></i>
+      Général
+    </button>
+    <button class="nav-tab" 
+            [class.active]="currentStep === 2" 
+            [class.completed]="currentStep > 2"
+            (click)="switchStep(2)">
+      <i class="fas fa-map"></i>
+      Géométrie
+    </button>
+    <button class="nav-tab" 
+            [class.active]="currentStep === 3" 
+            [class.completed]="currentStep > 3"
+            (click)="switchStep(3)">
+      <i class="fas fa-users"></i>
+      Propriétaires
+    </button>
+    <button class="nav-tab" 
+            [class.active]="currentStep === 4" 
+            [class.completed]="currentStep > 4"
+            (click)="switchStep(4)">
+      <i class="fas fa-paperclip"></i>
+      Documents
+    </button>
+    <button class="nav-tab" 
+            [class.active]="currentStep === 5" 
+            [class.completed]="currentStep > 5"
+            (click)="switchStep(5)">
+      <i class="fas fa-calculator"></i>
+      Fiscalité
+    </button>
+    <button class="nav-tab" 
+            [class.active]="currentStep === 6" 
+            [class.completed]="currentStep > 6"
+            (click)="switchStep(6)">
+      <i class="fas fa-check-circle"></i>
+      Validation
+    </button>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- CONTENU DES ÉTAPES -->
+  <!-- ===================================================== -->
+
+  <!-- Étape 1: Informations générales -->
+  <div id="step-1" class="step-content" [class.active]="currentStep === 1">
+    <div class="card">
+      <div class="card-header">
+        <h3>Informations générales de la parcelle</h3>
+        <span class="badge badge-info">Étape 1/6</span>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="generalForm">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label required">Référence foncière</label>
+              <input type="text" class="form-control" formControlName="reference_fonciere" placeholder="TF-123456">
+              <div class="form-help">Format: TF-123456, R-123456, NI-123456</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Statut foncier</label>
+              <select class="form-control" formControlName="statut_foncier">
+                <option value="">Sélectionner...</option>
+                <option value="TF">Titre Foncier (TF)</option>
+                <option value="R">Réquisition (R)</option>
+                <option value="NI">Non Immatriculé (NI)</option>
+                <option value="Domanial">Domanial</option>
+                <option value="Collectif">Collectif</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Surface totale (m²)</label>
+              <input type="number" class="form-control" formControlName="surface_totale" placeholder="0" (input)="onSurfaceTotaleChange()">
+              <div class="form-help">Surface cadastrale officielle</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Surface imposable (m²)</label>
+              <input type="number" class="form-control" formControlName="surface_imposable" placeholder="0">
+              <div class="form-help">Surface soumise à la TNB (≤ surface totale)</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Zone urbanistique</label>
+              <select class="form-control" formControlName="zone_urbanistique">
+                <option value="">Sélectionner...</option>
+                <option value="R1">R1 - Résidentiel dense</option>
+                <option value="R2">R2 - Résidentiel moyen</option>
+                <option value="R3">R3 - Résidentiel faible</option>
+                <option value="I">I - Industriel</option>
+                <option value="C">C - Commercial</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Statut d'occupation</label>
+              <select class="form-control" formControlName="statut_occupation">
+                <option value="Nu">Nu</option>
+                <option value="Construit">Construit</option>
+                <option value="En_Construction">En construction</option>
+                <option value="Partiellement_Construit">Partiellement construit</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Section exonération -->
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 500;">
+              <input type="checkbox" formControlName="exonere_tnb" (change)="onExonerationChange()">
+              Parcelle exonérée de la TNB (permis récent)
+            </label>
+          </div>
+
+          <div *ngIf="generalForm.get('exonere_tnb')?.value" class="exoneration-details">
+            <div class="alert alert-warning">
+              <i class="fas fa-info-circle"></i>
+              L'exonération TNB s'applique selon la loi 47-06 pour les terrains avec permis récent.
+            </div>
+            
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label required">Date du permis</label>
+                <input type="date" class="form-control" formControlName="date_permis">
+                <div class="form-help">Date de délivrance du permis de construire/lotir</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label required">Durée d'exonération</label>
+                <select class="form-control" formControlName="duree_exoneration">
+                  <option value="">Sélectionner...</option>
+                  <option value="3">3 ans (surface ≤ 500 m²)</option>
+                  <option value="5">5 ans (500 < surface ≤ 1000 m²)</option>
+                  <option value="7">7 ans (surface > 1000 m²)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 2: Géométrie SIG -->
+  <div id="step-2" class="step-content" [class.active]="currentStep === 2">
+    <div class="card">
+      <div class="card-header">
+        <h3>Définition de la géométrie de la parcelle</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <span class="badge badge-warning">Étape 2/6</span>
+          <span class="badge badge-info">EPSG:26191</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Outils de géométrie -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+          <button class="btn btn-primary" (click)="activateDrawTool()">
+            <i class="fas fa-draw-polygon"></i>
+            Dessiner polygone
+          </button>
+          <button class="btn btn-secondary" (click)="activateEditTool()">
+            <i class="fas fa-edit"></i>
+            Modifier géométrie
+          </button>
+          <button class="btn btn-warning" (click)="clearGeometry()">
+            <i class="fas fa-trash-alt"></i>
+            Effacer
+          </button>
+          <button class="btn btn-info" (click)="importShapefile()">
+            <i class="fas fa-upload"></i>
+            Import shapefile
+          </button>
+          <button class="btn btn-success" (click)="validateGeometry()">
+            <i class="fas fa-check"></i>
+            Valider géométrie
+          </button>
+        </div>
+
+        <!-- Carte de dessin OpenLayers -->
+        <div class="map-interface">
+          <div #mapContainer id="map-container" style="height: 500px; width: 100%; border: 2px solid var(--gray-200); border-radius: 8px; position: relative; overflow: hidden;"></div>
+          
+          <!-- Outils de carte -->
+          <div class="map-tools">
+            <button class="btn btn-secondary btn-sm" (click)="zoomIn()" title="Zoom +">
+              <i class="fas fa-plus"></i>
+            </button>
+            <button class="btn btn-secondary btn-sm" (click)="zoomOut()" title="Zoom -">
+              <i class="fas fa-minus"></i>
+            </button>
+            <button class="btn btn-secondary btn-sm" (click)="resetView()" title="Vue initiale">
+              <i class="fas fa-home"></i>
+            </button>
+          </div>
+
+          <!-- Couches de carte -->
+          <div class="map-layers">
+            <h5>Couches</h5>
+            <div style="margin-bottom: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" [(ngModel)]="showOpenStreetMap" (change)="toggleLayer('osm')">
+                OpenStreetMap
+              </label>
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" [(ngModel)]="showCadastre" (change)="toggleLayer('cadastre')">
+                Cadastre
+              </label>
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" [(ngModel)]="showParcelles" (change)="toggleLayer('parcelles')">
+                Parcelles TNB
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations géométriques calculées -->
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-body" style="text-align: center;">
+              <h4 style="color: var(--primary-color);">Surface calculée</h4>
+              <p style="font-size: 1.5rem; font-weight: bold; margin: 0;" id="calculated-surface">{{ calculatedSurface }} m²</p>
+              <small style="color: var(--gray-500);">Calculée par SIG</small>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-body" style="text-align: center;">
+              <h4 style="color: var(--success-color);">Périmètre</h4>
+              <p style="font-size: 1.5rem; font-weight: bold; margin: 0;" id="calculated-perimeter">{{ calculatedPerimeter }} m</p>
+              <small style="color: var(--gray-500);">Contour total</small>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-body" style="text-align: center;">
+              <h4 style="color: var(--info-color);">Points</h4>
+              <p style="font-size: 1.5rem; font-weight: bold; margin: 0;" id="vertices-count">{{ verticesCount }}</p>
+              <small style="color: var(--gray-500);">Sommets du polygone</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 3: Propriétaires et Indivision -->
+  <div id="step-3" class="step-content" [class.active]="currentStep === 3">
+    <div class="card">
+      <div class="card-header">
+        <h3>Gestion des propriétaires et quote-parts</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <span class="badge badge-warning">Étape 3/6</span>
+          <button class="btn btn-primary btn-sm" (click)="addProprietaire()">
+            <i class="fas fa-user-plus"></i> Ajouter propriétaire
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Éditeur de quote-parts -->
+        <div class="quote-parts-container">
+          <h4 style="margin-bottom: 1.5rem;">Répartition des quote-parts</h4>
+          
+          <div *ngIf="proprietaires.length === 0" class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>Aucun propriétaire ajouté</h3>
+            <p>Cliquez sur "Ajouter propriétaire" pour commencer</p>
+            <button class="btn btn-primary" (click)="addProprietaire()">
+              <i class="fas fa-user-plus"></i> Ajouter le premier propriétaire
+            </button>
+          </div>
+
+          <!-- Liste des propriétaires -->
+          <div *ngIf="proprietaires.length > 0">
+            <div *ngFor="let prop of proprietaires; let i = index" class="quote-part-row">
+              <div class="proprietaire-info">
+                <div class="proprietaire-name">{{ prop.nom_complet || prop.raison_sociale }}</div>
+                <div class="proprietaire-details">{{ prop.cin_ou_rc }}</div>
+              </div>
+              
+              <div class="quote-input-group">
+                <input type="number" class="quote-input form-control" 
+                       [(ngModel)]="prop.quote_part" 
+                       (input)="validateQuoteParts()"
+                       min="0" max="100" step="0.1">
+                <span class="quote-percentage">{{ prop.quote_part }}%</span>
+                <span class="quote-amount">{{ (prop.quote_part * surfaceImposable * tarifTnb / 100) | number:'1.2-2' }} DH</span>
+              </div>
+              
+              <button class="btn btn-danger btn-sm" (click)="removeProprietaire(i)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Récapitulatif -->
+          <div *ngIf="proprietaires.length > 0" class="quote-summary">
+            <div>
+              <strong style="font-size: 1.1rem;">Total des quote-parts: <span [style.color]="totalQuoteParts === 100 ? 'var(--success-color)' : 'var(--danger-color)'">{{ totalQuoteParts }}%</span></strong>
+              <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
+                {{ proprietaires.length }} propriétaire(s) • Montant total: {{ totalTnb | number:'1.2-2' }} DH
+              </div>
+            </div>
+            <div class="alert" [class.alert-success]="totalQuoteParts === 100" [class.alert-warning]="totalQuoteParts !== 100" style="margin: 0; padding: 0.5rem 1rem;">
+              <i class="fas" [class.fa-check-circle]="totalQuoteParts === 100" [class.fa-exclamation-triangle]="totalQuoteParts !== 100"></i>
+              {{ totalQuoteParts === 100 ? 'Quote-parts valides' : 'Quote-parts incomplètes' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 4: Documents joints -->
+  <div id="step-4" class="step-content" [class.active]="currentStep === 4">
+    <div class="card">
+      <div class="card-header">
+        <h3>Documents joints à la parcelle</h3>
+        <div style="display: flex; gap: 0.5rem;">
+          <span class="badge badge-warning">Étape 4/6</span>
+          <button class="btn btn-primary btn-sm" (click)="addDocument()">
+            <i class="fas fa-plus"></i> Ajouter document
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Categories de documents -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-header">
+            <h4>Types de documents recommandés</h4>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">Documents fonciers obligatoires</h5>
+                <ul style="font-size: 0.875rem; list-style: none; padding: 0;">
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-file-alt" style="color: var(--primary-color); margin-right: 0.5rem;"></i>Certificat de propriété</li>
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-file-contract" style="color: var(--primary-color); margin-right: 0.5rem;"></i>Réquisition d'immatriculation</li>
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-map" style="color: var(--primary-color); margin-right: 0.5rem;"></i>Plan parcellaire</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">Documents complémentaires</h5>
+                <ul style="font-size: 0.875rem; list-style: none; padding: 0;">
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-building" style="color: var(--success-color); margin-right: 0.5rem;"></i>Permis de construire/lotir</li>
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-camera" style="color: var(--success-color); margin-right: 0.5rem;"></i>Photos géolocalisées</li>
+                  <li style="margin-bottom: 0.25rem;"><i class="fas fa-file-image" style="color: var(--success-color); margin-right: 0.5rem;"></i>Orthophotos/Images satellites</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone d'upload multiple -->
+        <div class="card">
+          <div class="card-header">
+            <h4>Upload de documents</h4>
+          </div>
+          <div class="card-body">
+            <div class="upload-zone" 
+                 (dragover)="onDragOver($event)" 
+                 (drop)="onDrop($event)"
+                 (click)="fileInput.click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <h4>Glissez vos documents ici</h4>
+              <p>ou</p>
+              <button class="btn btn-primary">
+                <i class="fas fa-folder-open"></i> Parcourir les fichiers
+              </button>
+              <input #fileInput type="file" multiple 
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.dwg,.dxf,.shp" 
+                     style="display: none;"
+                     (change)="onFileSelected($event)">
+              <div class="upload-info">
+                Formats supportés: PDF, Images (JPG, PNG, TIFF), CAD (DWG, DXF), SIG (SHP)<br>
+                Taille max: 10 MB par fichier
+              </div>
+            </div>
+
+            <!-- Liste des documents uploadés -->
+            <div *ngIf="documents.length > 0" class="uploaded-documents">
+              <h5>Documents ajoutés <span class="badge badge-success">{{ documents.length }}</span></h5>
+              <div class="documents-preview-list">
+                <div *ngFor="let doc of documents; let i = index" class="document-item">
+                  <div class="document-info">
+                    <i class="fas" [class]="getDocumentIcon(doc.type)"></i>
+                    <div>
+                      <div class="document-name">{{ doc.name }}</div>
+                      <div class="document-size">{{ doc.size | fileSize }}</div>
+                    </div>
+                  </div>
+                  <div class="document-actions">
+                    <button class="btn btn-secondary btn-sm" (click)="previewDocument(i)">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" (click)="removeDocument(i)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- État vide -->
+            <div *ngIf="documents.length === 0" class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              Aucun document n'a encore été ajouté à cette parcelle. Les documents permettent de justifier le statut foncier et facilitent le contrôle fiscal.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 5: Fiscalité TNB -->
+  <div id="step-5" class="step-content" [class.active]="currentStep === 5">
+    <div class="card">
+      <div class="card-header">
+        <h3>Calcul de la Taxe sur les Terrains Non Bâtis</h3>
+        <span class="badge badge-warning">Étape 5/6</span>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="fiscalForm">
+          <div class="grid-2">
+            <!-- Paramètres de calcul -->
+            <div class="card">
+              <div class="card-header">
+                <h4>Paramètres fiscaux</h4>
+                <button type="button" class="btn btn-info btn-sm" (click)="recalculateTNB()">
+                  <i class="fas fa-calculator"></i> Recalculer
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Zone urbanistique</label>
+                  <input type="text" class="form-control" [value]="generalForm.get('zone_urbanistique')?.value" readonly>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Catégorie fiscale</label>
+                  <select class="form-control" formControlName="categorie_fiscale">
+                    <option value="">Sélectionner...</option>
+                    <option>Terrain nu résidentiel</option>
+                    <option>Terrain nu résidentiel (équipé)</option>
+                    <option>Terrain nu résidentiel (non équipé)</option>
+                    <option>Terrain nu industriel</option>
+                    <option>Terrain nu commercial</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Tarif unitaire (DH/m²)</label>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="number" class="form-control" formControlName="tarif_unitaire" placeholder="0" step="0.1" min="0" (input)="recalculateTNB()">
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="showTarifModal()">
+                      <i class="fas fa-cog"></i>
+                    </button>
+                  </div>
+                  <div class="form-help">Tarif officiel commune</div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Surface imposable (m²)</label>
+                  <input type="number" class="form-control" formControlName="surface_imposable" 
+                         placeholder="0" step="0.01" min="0" 
+                         [max]="generalForm.get('surface_totale')?.value"
+                         (input)="onSurfaceImposableChange()">
+                  <div class="form-help">Surface soumise à la TNB (≤ {{ generalForm.get('surface_totale')?.value }} m²)</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Résultats de calcul -->
+            <div class="card">
+              <div class="card-header">
+                <h4>Calcul TNB détaillé</h4>
+                <span class="badge badge-secondary">En attente</span>
+              </div>
+              <div class="card-body">
+                <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                  <h5 style="text-align: center; color: var(--primary-color);">Formule de calcul</h5>
+                  <p style="text-align: center; font-family: monospace;">
+                    TNB = Surface × Tarif × Quote-part
+                  </p>
+                </div>
+                
+                <div *ngIf="!fiscalForm.get('tarif_unitaire')?.value" class="empty-state">
+                  <i class="fas fa-calculator"></i>
+                  <h3>Calcul en attente</h3>
+                  <p>Complétez les paramètres fiscaux pour voir le calcul</p>
+                </div>
+
+                <div *ngIf="fiscalForm.get('tarif_unitaire')?.value && fiscalForm.get('surface_imposable')?.value" class="tnb-calculation">
+                  <div class="calculation-details">
+                    <div class="calculation-row">
+                      <span>Surface imposable:</span>
+                      <span>{{ fiscalForm.get('surface_imposable')?.value }} m²</span>
+                    </div>
+                    <div class="calculation-row">
+                      <span>Tarif unitaire:</span>
+                      <span>{{ fiscalForm.get('tarif_unitaire')?.value }} DH/m²</span>
+                    </div>
+                    <div class="calculation-row">
+                      <span>Quote-part totale:</span>
+                      <span>{{ totalQuoteParts }}%</span>
+                    </div>
+                    <div class="calculation-row">
+                      <span>Calcul de base:</span>
+                      <span>{{ fiscalForm.get('surface_imposable')?.value * fiscalForm.get('tarif_unitaire')?.value | number:'1.2-2' }} DH</span>
+                    </div>
+
+                    <div class="calculation-row total">
+                      <span>TNB totale:</span>
+                      <span>{{ totalTnb | number:'1.2-2' }} DH</span>
+                    </div>
+                    
+                    <div class="calculation-row" *ngIf="proprietaires.length > 0">
+                      <span>TNB par propriétaire:</span>
+                      <span>{{ tnbParProprietaire | number:'1.2-2' }} DH</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Étape 6: Validation et Publication -->
+  <div id="step-6" class="step-content" [class.active]="currentStep === 6">
+    <div class="card">
+      <div class="card-header">
+        <h3>Validation finale et publication</h3>
+        <span class="badge badge-success">Étape 6/6</span>
+      </div>
+      <div class="card-body">
+        <!-- Récapitulatif complet -->
+        <div class="card" style="margin-bottom: 1.5rem; border: 2px solid var(--primary-color);">
+          <div class="card-header" style="background: var(--primary-color); color: white;">
+            <h4 style="margin: 0;">Récapitulatif de la parcelle</h4>
+          </div>
+          <div class="card-body">
+            <div class="recap-grid">
+              <div class="recap-item">
+                <strong>Référence:</strong> {{ generalForm.get('reference_fonciere')?.value }}
+              </div>
+              <div class="recap-item">
+                <strong>Surface:</strong> {{ generalForm.get('surface_totale')?.value }} m²
+              </div>
+              <div class="recap-item">
+                <strong>Zone:</strong> {{ generalForm.get('zone_urbanistique')?.value }}
+              </div>
+              <div class="recap-item">
+                <strong>Propriétaires:</strong> {{ proprietaires.length }}
+              </div>
+              <div class="recap-item">
+                <strong>Documents:</strong> {{ documents.length }}
+              </div>
+              <div class="recap-item">
+                <strong>TNB totale:</strong> {{ totalTnb | number:'1.2-2' }} DH
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contrôles de validation -->
+        <div class="card">
+          <div class="card-header">
+            <h4>Contrôles de validation</h4>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <h5>Validations automatiques:</h5>
+                <div class="validation-checks">
+                  <div class="validation-item" [class.valid]="generalForm.get('reference_fonciere')?.value">
+                    <i class="fas" [class.fa-check-circle]="generalForm.get('reference_fonciere')?.value" [class.fa-clock]="!generalForm.get('reference_fonciere')?.value"></i>
+                    <span>Référence foncière unique</span>
+                  </div>
+                  <div class="validation-item" [class.valid]="calculatedSurface > 0">
+                    <i class="fas" [class.fa-check-circle]="calculatedSurface > 0" [class.fa-clock]="calculatedSurface === 0"></i>
+                    <span>Surfaces cohérentes (cadastre ↔ SIG)</span>
+                  </div>
+                  <div class="validation-item" [class.valid]="geometryValid">
+                    <i class="fas" [class.fa-check-circle]="geometryValid" [class.fa-clock]="!geometryValid"></i>
+                    <span>Géométrie valide</span>
+                  </div>
+                  <div class="validation-item" [class.valid]="totalQuoteParts === 100">
+                    <i class="fas" [class.fa-check-circle]="totalQuoteParts === 100" [class.fa-clock]="totalQuoteParts !== 100"></i>
+                    <span>Quote-parts totalisent 100%</span>
+                  </div>
+                  <div class="validation-item" [class.valid]="documents.length > 0">
+                    <i class="fas" [class.fa-check-circle]="documents.length > 0" [class.fa-clock]="documents.length === 0"></i>
+                    <span>Documents obligatoires présents</span>
+                  </div>
+                  <div class="validation-item" [class.valid]="fiscalForm.get('tarif_unitaire')?.value">
+                    <i class="fas" [class.fa-check-circle]="fiscalForm.get('tarif_unitaire')?.value" [class.fa-clock]="!fiscalForm.get('tarif_unitaire')?.value"></i>
+                    <span>Calcul TNB correct</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h5>Actions post-validation:</h5>
+                <div class="post-validation-actions">
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="generateFichesTnb" checked>
+                    Générer automatiquement les fiches TNB
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="notifyProprietaires">
+                    Envoyer notification aux propriétaires
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="integrateRoleTnb" checked>
+                    Intégrer automatiquement dans le rôle TNB
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="archiveDocuments" checked>
+                    Archiver les documents dans le dossier parcelle
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- BOUTONS D'ACTION DE LA DERNIÈRE ÉTAPE -->
+        <!-- ===================================================== -->
+        <div class="final-actions" style="margin-top: 2rem; padding: 2rem; background: var(--gray-50); border-radius: 12px; border: 2px solid var(--gray-200);">
+          <h4 style="margin-bottom: 1.5rem; color: var(--gray-800); text-align: center;">Actions finales</h4>
+          
+          <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+            <!-- Bouton Enregistrer brouillon -->
+            <button class="btn btn-secondary btn-lg" (click)="saveDraft()" style="min-width: 200px;">
+              <i class="fas fa-lock" style="margin-right: 0.5rem;"></i>
+              Enregistrer brouillon
+            </button>
+            
+            <!-- Bouton Valider parcelle -->
+            <button class="btn btn-warning btn-lg" 
+                    (click)="validateParcelle()" 
+                    style="min-width: 200px;"
+                    [disabled]="!allStepsCompleted()">
+              <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>
+              Valider parcelle
+            </button>
+            
+            <!-- Bouton Publier parcelle -->
+            <button class="btn btn-success btn-lg" 
+                    (click)="publishParcelle()" 
+                    style="min-width: 200px;"
+                    [disabled]="!allStepsCompleted()">
+              <i class="fas fa-upload" style="margin-right: 0.5rem;"></i>
+              Publier parcelle
+            </button>
+          </div>
+          
+          <!-- Message d'information -->
+          <div class="alert alert-info" style="margin-top: 1.5rem; text-align: center;">
+            <i class="fas fa-info-circle"></i>
+            <strong>Note :</strong> La validation et la publication ne sont possibles que lorsque toutes les étapes sont complétées.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- BOUTONS DE NAVIGATION ENTRE ÉTAPES -->
+  <!-- ===================================================== -->
+  <div class="card-footer" style="background: var(--gray-50); border-top: 2px solid var(--gray-200);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button class="btn btn-secondary" 
+              [disabled]="currentStep === 1"
+              (click)="previousStep()">
+        <i class="fas fa-chevron-left"></i>
+        Étape précédente
+      </button>
+      
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-secondary" (click)="saveDraft()">
+          <i class="fas fa-save"></i>
+          Enregistrer brouillon
+        </button>
+        
+        <button class="btn btn-warning" 
+                *ngIf="currentStep === 6 && allStepsCompleted()"
+                (click)="validateParcelle()">
+          <i class="fas fa-check-circle"></i>
+          Valider parcelle
+        </button>
+        
+        <button class="btn btn-success" 
+                *ngIf="currentStep === 6 && allStepsCompleted()"
+                (click)="publishParcelle()">
+          <i class="fas fa-upload"></i>
+          Publier parcelle
+        </button>
+      </div>
+      
+      <button class="btn btn-primary" 
+              *ngIf="currentStep < 6"
+              (click)="nextStep()">
+        Étape suivante
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- MODAL "AJOUTER UN PROPRIÉTAIRE" -->
+  <!-- ===================================================== -->
+  <div class="modal-overlay" *ngIf="showProprietaireModal" (click)="closeProprietaireModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un propriétaire</h3>
+        <button class="modal-close" (click)="closeProprietaireModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <form [formGroup]="proprietaireModalForm" (ngSubmit)="submitProprietaire()">
+        <div class="modal-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label required">Type de propriétaire</label>
+              <select class="form-control" formControlName="type_proprietaire" (change)="onTypeProprietaireChange()">
+                <option value="">Sélectionner...</option>
+                <option value="personne_physique">Personne physique</option>
+                <option value="personne_morale">Personne morale</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Nom complet / Raison sociale</label>
+              <input type="text" class="form-control" formControlName="nom_complet" placeholder="Nom complet ou raison sociale">
+            </div>
+
+            <!-- Champ CIN ou RC/ICE -->
+            <div class="form-group">
+              <label class="form-label required">CIN ou RC/ICE</label>
+              <input type="text" class="form-control" formControlName="cin_ou_rc" 
+                     [placeholder]="proprietaireModalForm.get('type_proprietaire')?.value === 'personne_physique' ? 'M123456' : 'RC123456 ou ICE123456789'"
+                     [maxlength]="proprietaireModalForm.get('type_proprietaire')?.value === 'personne_physique' ? '10' : '20'">
+              <div class="form-help">
+                <span *ngIf="proprietaireModalForm.get('type_proprietaire')?.value === 'personne_physique'">
+                  Carte d'Identité Nationale (10 caractères)
+                </span>
+                <span *ngIf="proprietaireModalForm.get('type_proprietaire')?.value === 'personne_morale'">
+                  Registre de Commerce ou Identifiant Commerce Entreprise
+                </span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Adresse</label>
+              <textarea class="form-control" formControlName="adresse" rows="3" placeholder="Adresse complète du propriétaire"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input type="tel" class="form-control" formControlName="telephone" placeholder="+212XXXXXXXXX">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Quote-part (%)</label>
+              <input type="number" class="form-control" formControlName="quote_part" 
+                     placeholder="0" min="0" max="100" step="0.1"
+                     (input)="validateQuotePart()">
+              <div class="form-help">Pourcentage de propriété (0-100%)</div>
+            </div>
+          </div>
+
+          <!-- Validation quote-part -->
+          <div *ngIf="proprietaireModalForm.get('quote_part')?.value" class="alert" 
+               [class.alert-success]="isQuotePartValid()" 
+               [class.alert-warning]="!isQuotePartValid()">
+            <i class="fas" [class.fa-check-circle]="isQuotePartValid()" [class.fa-exclamation-triangle]="!isQuotePartValid()"></i>
+            Quote-part: {{ proprietaireModalForm.get('quote_part')?.value }}% 
+            <span *ngIf="!isQuotePartValid()">- Attention: le total ne doit pas dépasser 100%</span>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeProprietaireModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!proprietaireModalForm.valid || !isQuotePartValid()">
+            <i class="fas fa-user-plus"></i>
+            Ajouter propriétaire
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

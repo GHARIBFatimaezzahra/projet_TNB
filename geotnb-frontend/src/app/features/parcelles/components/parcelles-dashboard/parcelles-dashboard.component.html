@@ -1,0 +1,89 @@
+<!-- Header bleu foncé exactement comme dans l'image -->
+<div class="dashboard-header">
+    <div class="header-content">
+        <div class="header-left">
+            <i class="fas fa-map-marked-alt"></i>
+            <h1>GeoTNB - Gestion des Parcelles</h1>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" (click)="showAllInterfaces()">
+                <i class="fas fa-th-large"></i>
+                Voir toutes les interfaces
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container">
+    <!-- Titre principal et badge exactement comme dans l'image -->
+    <div class="dashboard-title-section">
+        <h2 class="main-title">Interfaces de gestion des parcelles</h2>
+        <span class="interfaces-badge">7 interfaces disponibles</span>
+    </div>
+    
+    <!-- Grille 3 colonnes exactement comme dans l'image -->
+    <div class="interfaces-grid">
+        <!-- 1. Carte Interactive -->
+        <div class="interface-card" (click)="navigateToInterface('carte-interactive')">
+            <div class="card-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <h3>Carte Interactive</h3>
+            <p>Visualisation cartographique avec outils SIG avancés</p>
+        </div>
+
+        <!-- 2. Recherche Avancée -->
+        <div class="interface-card" (click)="navigateToInterface('recherche-avancee')">
+            <div class="card-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Recherche Avancée</h3>
+            <p>Requêtes multicritères et requêtes spatiales</p>
+        </div>
+
+        <!-- 3. Liste des Parcelles -->
+        <div class="interface-card" (click)="navigateToInterface('liste-parcelles')">
+            <div class="card-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <h3>Liste des Parcelles</h3>
+            <p>Tableau avec filtres et actions en lot</p>
+        </div>
+
+        <!-- 4. Création/Édition -->
+        <div class="interface-card" (click)="navigateToInterface('creation-parcelle')">
+            <div class="card-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h3>Création/Édition</h3>
+            <p>Formulaire multi-étapes avec workflow</p>
+        </div>
+
+        <!-- 5. Détail Parcelle -->
+        <div class="interface-card" (click)="navigateToInterface('detail-parcelle')">
+            <div class="card-icon">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h3>Détail Parcelle</h3>
+            <p>Vue complète avec historique et documents</p>
+        </div>
+
+        <!-- 6. Gestion Indivision -->
+        <div class="interface-card" (click)="navigateToInterface('gestion-indivision')">
+            <div class="card-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>Gestion Indivision</h3>
+            <p>Propriétaires et quote-parts</p>
+        </div>
+
+        <!-- 7. Import/Export -->
+        <div class="interface-card" (click)="navigateToInterface('import-export')">
+            <div class="card-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <h3>Import/Export</h3>
+            <p>Données SIG et fichiers attributaires</p>
+        </div>
+    </div>
+</div>

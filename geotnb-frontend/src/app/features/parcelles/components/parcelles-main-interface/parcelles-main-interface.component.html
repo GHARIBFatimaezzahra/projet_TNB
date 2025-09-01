@@ -1,0 +1,755 @@
+<!-- Interface principale des parcelles - Design exact des images -->
+<div class="parcelles-main-container">
+  <!-- Header principal - bleu comme l'image -->
+  <div class="main-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>
+          <i class="fas fa-map-marked-alt"></i>
+          GeoTNB - Gestion des Parcelles
+        </h1>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-light">
+          <i class="fas fa-th-large"></i>
+          Voir toutes les interfaces
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation principale des 7 interfaces -->
+  <div class="main-navigation">
+    <div class="nav-container">
+      <button class="nav-item" [class.active]="activeInterface === 'carte'" (click)="navigateToInterface('carte')">
+        <i class="fas fa-map"></i>
+        Carte Interactive
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'recherche'" (click)="navigateToInterface('recherche')">
+        <i class="fas fa-search"></i>
+        Recherche Avancée
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'liste'" (click)="navigateToInterface('liste')">
+        <i class="fas fa-list"></i>
+        Liste des Parcelles
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'creation'" (click)="navigateToInterface('creation')">
+        <i class="fas fa-plus-circle"></i>
+        Création/Édition Parcelle
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'indivision'" (click)="navigateToInterface('indivision')">
+        <i class="fas fa-users"></i>
+        Gestion Indivision
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'import-export'" (click)="navigateToInterface('import-export')">
+        <i class="fas fa-exchange-alt"></i>
+        Import/Export
+      </button>
+      <button class="nav-item" [class.active]="activeInterface === 'detail'" (click)="navigateToInterface('detail')">
+        <i class="fas fa-info-circle"></i>
+        Détail Parcelle
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenu des interfaces -->
+  <div class="interface-content">
+
+    <!-- INTERFACE 1: Carte Interactive -->
+    <div *ngIf="activeInterface === 'carte'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Carte Interactive des Parcelles</h2>
+        <p>Visualisez et gérez les parcelles sur une carte interactive</p>
+      </div>
+
+      <div class="map-controls">
+        <div class="control-group">
+          <button class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            Ajouter Parcelle
+          </button>
+          <button class="btn btn-secondary">
+            <i class="fas fa-edit"></i>
+            Modifier
+          </button>
+          <button class="btn btn-info">
+            <i class="fas fa-search"></i>
+            Rechercher
+          </button>
+        </div>
+        
+        <div class="control-group">
+          <select class="form-control">
+            <option value="">Toutes les parcelles</option>
+            <option value="TF">Titre Foncier</option>
+            <option value="R">Réquisition</option>
+            <option value="NI">Non Immatriculé</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="map-container">
+        <div class="map-placeholder">
+          <div class="map-info">
+            <strong>Carte des parcelles TNB</strong>
+            <p>Cliquez sur une parcelle pour voir les détails</p>
+          </div>
+          <div class="map-content">
+            <!-- Ici sera intégrée la carte OpenLayers -->
+            <div class="map-loading">
+              <i class="fas fa-spinner fa-spin"></i>
+              Chargement de la carte...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-legend">
+        <div class="legend-item">
+          <div class="legend-color tf"></div>
+          <span>Titre Foncier</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color r"></div>
+          <span>Réquisition</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color ni"></div>
+          <span>Non Immatriculé</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 2: Recherche Avancée -->
+    <div *ngIf="activeInterface === 'recherche'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Recherche Avancée de Parcelles</h2>
+        <p>Trouvez rapidement les parcelles selon vos critères</p>
+      </div>
+
+      <div class="search-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Référence foncière</label>
+            <input type="text" class="form-control" [(ngModel)]="searchCriteria.reference" placeholder="TF-123456">
+          </div>
+          
+          <div class="form-group">
+            <label>Statut foncier</label>
+            <select class="form-control" [(ngModel)]="searchCriteria.statut_foncier">
+              <option value="">Tous</option>
+              <option value="TF">Titre Foncier</option>
+              <option value="R">Réquisition</option>
+              <option value="NI">Non Immatriculé</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Zone urbanistique</label>
+            <select class="form-control" [(ngModel)]="searchCriteria.zonage">
+              <option value="">Toutes</option>
+              <option value="R1">R1 - Résidentiel dense</option>
+              <option value="R2">R2 - Résidentiel moyen</option>
+              <option value="R3">R3 - Résidentiel faible</option>
+              <option value="I">I - Industriel</option>
+              <option value="C">C - Commercial</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Surface minimale (m²)</label>
+            <input type="number" class="form-control" [(ngModel)]="searchCriteria.surface_min" placeholder="0">
+          </div>
+          
+          <div class="form-group">
+            <label>Surface maximale (m²)</label>
+            <input type="number" class="form-control" [(ngModel)]="searchCriteria.surface_max" placeholder="10000">
+          </div>
+          
+          <div class="form-group">
+            <label>Propriétaire</label>
+            <input type="text" class="form-control" [(ngModel)]="searchCriteria.proprietaire" placeholder="Nom du propriétaire">
+          </div>
+        </div>
+        
+        <div class="search-actions">
+          <button class="btn btn-primary" (click)="searchParcelles()">
+            <i class="fas fa-search"></i>
+            Rechercher
+          </button>
+          <button class="btn btn-secondary" (click)="clearSearch()">
+            <i class="fas fa-times"></i>
+            Effacer
+          </button>
+        </div>
+      </div>
+
+      <div class="search-results" *ngIf="parcelles.length > 0">
+        <h3>Résultats de la recherche</h3>
+        <div class="results-summary">
+          {{ parcelles.length }} parcelle(s) trouvée(s)
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 3: Liste des Parcelles -->
+    <div *ngIf="activeInterface === 'liste'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Liste des Parcelles</h2>
+        <p>Gérez et consultez toutes les parcelles enregistrées</p>
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="createParcelle()">
+            <i class="fas fa-plus"></i>
+            Nouvelle Parcelle
+          </button>
+          <button class="btn btn-secondary">
+            <i class="fas fa-download"></i>
+            Exporter
+          </button>
+        </div>
+      </div>
+
+      <div class="filters-section">
+        <div class="filter-group">
+          <label>Statut foncier:</label>
+          <select class="form-control" [(ngModel)]="filters.statut_foncier">
+            <option value="">Tous</option>
+            <option value="TF">Titre Foncier</option>
+            <option value="R">Réquisition</option>
+            <option value="NI">Non Immatriculé</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Zone:</label>
+          <select class="form-control" [(ngModel)]="filters.zonage">
+            <option value="">Toutes</option>
+            <option value="R1">R1 - Résidentiel dense</option>
+            <option value="R2">R2 - Résidentiel moyen</option>
+            <option value="R3">R3 - Résidentiel faible</option>
+            <option value="I">I - Industriel</option>
+            <option value="C">C - Commercial</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label>Occupation:</label>
+          <select class="form-control" [(ngModel)]="filters.statut_occupation">
+            <option value="">Tous</option>
+            <option value="Nu">Nu</option>
+            <option value="Construit">Construit</option>
+            <option value="En_Construction">En construction</option>
+          </select>
+        </div>
+        
+        <button class="btn btn-primary" (click)="applyFilters()">
+          <i class="fas fa-filter"></i>
+          Appliquer
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th (click)="sortData('reference')">
+                Référence
+                <i class="fas fa-sort"></i>
+              </th>
+              <th (click)="sortData('statut_foncier')">
+                Statut
+                <i class="fas fa-sort"></i>
+              </th>
+              <th (click)="sortData('surface_totale')">
+                Surface (m²)
+                <i class="fas fa-sort"></i>
+              </th>
+              <th (click)="sortData('zonage')">
+                Zone
+                <i class="fas fa-sort"></i>
+              </th>
+              <th>Propriétaires</th>
+              <th (click)="sortData('tnb_calculee')">
+                TNB (DH)
+                <i class="fas fa-sort"></i>
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let parcelle of parcelles">
+              <td>{{ parcelle.reference }}</td>
+              <td>
+                <span class="badge" [class]="'badge-' + parcelle.statut_foncier.toLowerCase()">
+                  {{ parcelle.statut_foncier }}
+                </span>
+              </td>
+              <td>{{ formatNumber(parcelle.surface_totale) }}</td>
+              <td>{{ parcelle.zonage }}</td>
+              <td>{{ parcelle.proprietaires?.length || 0 }} propriétaire(s)</td>
+              <td>{{ formatNumber(parcelle.tnb_calculee) }}</td>
+              <td class="actions">
+                <button class="btn btn-sm btn-info" (click)="viewParcelle(parcelle.id)">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning" (click)="editParcelle(parcelle.id)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="deleteParcelle(parcelle.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div class="pagination" *ngIf="totalItems > itemsPerPage">
+          <button class="btn btn-sm" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span class="page-info">Page {{ currentPage }} sur {{ Math.ceil(totalItems / itemsPerPage) }}</span>
+          <button class="btn btn-sm" [disabled]="currentPage >= Math.ceil(totalItems / itemsPerPage)" (click)="onPageChange(currentPage + 1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 4: Création/Édition Parcelle -->
+    <div *ngIf="activeInterface === 'creation'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Création/Édition de Parcelle</h2>
+        <p>Créez ou modifiez une parcelle TNB complète</p>
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="createParcelle()">
+            <i class="fas fa-plus"></i>
+            Nouvelle Parcelle
+          </button>
+          <button class="btn btn-secondary">
+            <i class="fas fa-upload"></i>
+            Import Shapefile
+          </button>
+        </div>
+      </div>
+
+      <div class="creation-workflow">
+        <div class="workflow-steps">
+          <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Informations générales</div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Géométrie SIG</div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-label">Propriétaires</div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-label">Fiscalité</div>
+          </div>
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-label">Validation</div>
+          </div>
+        </div>
+
+        <div class="workflow-content">
+          <div class="step-panel">
+            <h3>Informations générales</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="required">Référence foncière *</label>
+                <input type="text" class="form-control" placeholder="TF-123456">
+                <small>Format: TF-123456, R-123456, NI-123456</small>
+              </div>
+              
+              <div class="form-group">
+                <label class="required">Statut foncier *</label>
+                <select class="form-control">
+                  <option value="">Sélectionner</option>
+                  <option value="TF">Titre Foncier (TF)</option>
+                  <option value="R">Réquisition (R)</option>
+                  <option value="NI">Non Immatriculé (NI)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="required">Surface totale (m²) *</label>
+                <input type="number" class="form-control" placeholder="0">
+                <small>Surface cadastrale officielle</small>
+              </div>
+              
+              <div class="form-group">
+                <label class="required">Surface imposable (m²) *</label>
+                <input type="number" class="form-control" placeholder="0">
+                <small>Surface soumise à la TNB</small>
+              </div>
+              
+              <div class="form-group">
+                <label class="required">Zone urbanistique *</label>
+                <select class="form-control">
+                  <option value="">Sélectionner</option>
+                  <option value="R1">R1 - Résidentiel dense</option>
+                  <option value="R2">R2 - Résidentiel moyen</option>
+                  <option value="R3">R3 - Résidentiel faible</option>
+                  <option value="I">I - Industriel</option>
+                  <option value="C">C - Commercial</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label>Statut d'occupation</label>
+                <select class="form-control">
+                  <option value="">Sélectionner</option>
+                  <option value="Nu">Nu</option>
+                  <option value="Construit">Construit</option>
+                  <option value="En_Construction">En construction</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button class="btn btn-primary">Suivant</button>
+              <button class="btn btn-secondary">Enregistrer brouillon</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 5: Gestion Indivision -->
+    <div *ngIf="activeInterface === 'indivision'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Gestion des Indivisions</h2>
+        <p>Gérez les propriétaires multiples et leurs parts</p>
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="addProprietaire()">
+            <i class="fas fa-plus"></i>
+            Ajouter Propriétaire
+          </button>
+        </div>
+      </div>
+
+      <div class="indivision-content">
+        <div class="parcelle-selector">
+          <label>Sélectionner une parcelle:</label>
+          <select class="form-control">
+            <option value="">Choisir une parcelle...</option>
+            <!-- Options des parcelles -->
+          </select>
+        </div>
+
+        <div class="proprietaires-list">
+          <h3>Propriétaires de la parcelle</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>CIN</th>
+                  <th>Type</th>
+                  <th>Adresse</th>
+                  <th>Téléphone</th>
+                  <th>Quote-part</th>
+                  <th>Montant TNB</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let proprietaire of proprietaires">
+                  <td>{{ proprietaire.nom }}</td>
+                  <td>{{ proprietaire.cin }}</td>
+                  <td>{{ proprietaire.type }}</td>
+                  <td>{{ proprietaire.adresse }}</td>
+                  <td>{{ proprietaire.telephone }}</td>
+                  <td>{{ proprietaire.quote_part * 100 }}%</td>
+                  <td>{{ formatNumber(proprietaire.montant_tnb || 0) }}</td>
+                  <td class="actions">
+                    <button class="btn btn-sm btn-warning" (click)="editProprietaire(proprietaire.id)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="indivision-summary">
+          <div class="summary-card">
+            <h4>Total des parts</h4>
+            <div class="summary-value">{{ getTotalQuoteParts() }}%</div>
+          </div>
+          <div class="summary-card">
+            <h4>Nombre de propriétaires</h4>
+            <div class="summary-value">{{ proprietaires.length }}</div>
+          </div>
+          <div class="summary-card">
+            <h4>TNB totale</h4>
+            <div class="summary-value">{{ formatNumber(getTotalTNB()) }} DH</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 6: Import/Export -->
+    <div *ngIf="activeInterface === 'import-export'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Import et Export de Données</h2>
+        <p>Importez et exportez les données des parcelles</p>
+      </div>
+
+      <div class="import-export-content">
+        <div class="import-section">
+          <h3>Import de données</h3>
+          <div class="import-options">
+            <div class="import-option">
+              <h4>Shapefile (.shp)</h4>
+              <p>Importez des parcelles depuis un fichier Shapefile</p>
+              <div class="file-upload">
+                <input type="file" accept=".shp,.zip" id="shapefile-upload">
+                <label for="shapefile-upload" class="btn btn-primary">
+                  <i class="fas fa-upload"></i>
+                  Choisir fichier
+                </label>
+              </div>
+              <button class="btn btn-success" (click)="importData()">
+                <i class="fas fa-import"></i>
+                Importer
+              </button>
+            </div>
+
+            <div class="import-option">
+              <h4>Excel (.xlsx, .xls)</h4>
+              <p>Importez des données tabulaires depuis Excel</p>
+              <div class="file-upload">
+                <input type="file" accept=".xlsx,.xls" id="excel-upload">
+                <label for="excel-upload" class="btn btn-primary">
+                  <i class="fas fa-upload"></i>
+                  Choisir fichier
+                </label>
+              </div>
+              <button class="btn btn-success" (click)="importData()">
+                <i class="fas fa-import"></i>
+                Importer
+              </button>
+            </div>
+
+            <div class="import-option">
+              <h4>CSV (.csv)</h4>
+              <p>Importez des données depuis un fichier CSV</p>
+              <div class="file-upload">
+                <input type="file" accept=".csv" id="csv-upload">
+                <label for="csv-upload" class="btn btn-primary">
+                  <i class="fas fa-upload"></i>
+                  Choisir fichier
+                </label>
+              </div>
+              <button class="btn btn-success" (click)="importData()">
+                <i class="fas fa-import"></i>
+                Importer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="export-section">
+          <h3>Export de données</h3>
+          <div class="export-options">
+            <div class="export-option">
+              <h4>Export Excel</h4>
+              <p>Exportez les données au format Excel</p>
+              <button class="btn btn-info" (click)="exportData()">
+                <i class="fas fa-download"></i>
+                Exporter Excel
+              </button>
+            </div>
+
+            <div class="export-option">
+              <h4>Export PDF</h4>
+              <p>Générez un rapport PDF</p>
+              <button class="btn btn-info" (click)="exportData()">
+                <i class="fas fa-download"></i>
+                Exporter PDF
+              </button>
+            </div>
+
+            <div class="export-option">
+              <h4>Export Shapefile</h4>
+              <p>Exportez la géométrie au format Shapefile</p>
+              <button class="btn btn-info" (click)="exportData()">
+                <i class="fas fa-download"></i>
+                Exporter SHP
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-history">
+          <h3>Historique des imports</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Fichier</th>
+                  <th>Type</th>
+                  <th>Statut</th>
+                  <th>Résultats</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Historique des imports -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERFACE 7: Détail Parcelle -->
+    <div *ngIf="activeInterface === 'detail'" class="interface-panel">
+      <div class="interface-header">
+        <h2>Détail de la Parcelle</h2>
+        <p>Consultez les informations détaillées d'une parcelle</p>
+        <div class="header-actions">
+          <button class="btn btn-warning" (click)="editParcelle(0)">
+            <i class="fas fa-edit"></i>
+            Modifier
+          </button>
+          <button class="btn btn-danger">
+            <i class="fas fa-trash"></i>
+            Supprimer
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-content">
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h3>Informations générales</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Référence foncière:</label>
+                <span>TF-123456</span>
+              </div>
+              <div class="info-item">
+                <label>Statut foncier:</label>
+                <span class="badge badge-tf">Titre Foncier</span>
+              </div>
+              <div class="info-item">
+                <label>Surface totale:</label>
+                <span>2,450 m²</span>
+              </div>
+              <div class="info-item">
+                <label>Surface imposable:</label>
+                <span>2,200 m²</span>
+              </div>
+              <div class="info-item">
+                <label>Zone urbanistique:</label>
+                <span>R2 - Résidentiel moyen</span>
+              </div>
+              <div class="info-item">
+                <label>Statut d'occupation:</label>
+                <span>Nu</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Géométrie</h3>
+            <div class="geometry-info">
+              <div class="geometry-stats">
+                <div class="stat-item">
+                  <label>Surface calculée:</label>
+                  <span>2,450 m²</span>
+                </div>
+                <div class="stat-item">
+                  <label>Périmètre:</label>
+                  <span>198 m</span>
+                </div>
+                <div class="stat-item">
+                  <label>Nombre de points:</label>
+                  <span>5</span>
+                </div>
+              </div>
+              <div class="geometry-map">
+                <div class="map-placeholder">
+                  <i class="fas fa-map"></i>
+                  <p>Carte de la parcelle</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Fiscalité TNB</h3>
+            <div class="fiscal-info">
+              <div class="info-item">
+                <label>Tarif unitaire:</label>
+                <span>10 DH/m²</span>
+              </div>
+              <div class="info-item">
+                <label>Catégorie fiscale:</label>
+                <span>Terrain nu résidentiel R2</span>
+              </div>
+              <div class="info-item">
+                <label>TNB calculée:</label>
+                <span class="highlight">22,000 DH</span>
+              </div>
+              <div class="info-item">
+                <label>Exonération:</label>
+                <span>Non</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Propriétaires</h3>
+            <div class="proprietaires-detail">
+              <div class="proprietaire-item" *ngFor="let proprietaire of proprietaires">
+                <div class="proprietaire-header">
+                  <h4>{{ proprietaire.nom }}</h4>
+                  <span class="quote-part">{{ proprietaire.quote_part * 100 }}%</span>
+                </div>
+                <div class="proprietaire-details">
+                  <p><strong>CIN:</strong> {{ proprietaire.cin }}</p>
+                  <p><strong>Type:</strong> {{ proprietaire.type }}</p>
+                  <p><strong>Adresse:</strong> {{ proprietaire.adresse }}</p>
+                  <p><strong>Téléphone:</strong> {{ proprietaire.telephone }}</p>
+                  <p><strong>Montant TNB:</strong> {{ formatNumber(proprietaire.montant_tnb || 0) }} DH</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages de succès et d'erreur -->
+  <div class="messages-container" *ngIf="successMessage || errorMessage">
+    <div class="message success" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      {{ successMessage }}
+    </div>
+    <div class="message error" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ errorMessage }}
+    </div>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="loading-content">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Chargement en cours...</p>
+    </div>
+  </div>
+</div>

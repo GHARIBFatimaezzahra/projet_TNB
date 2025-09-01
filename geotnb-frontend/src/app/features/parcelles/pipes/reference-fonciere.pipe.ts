@@ -9,7 +9,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class ReferenceFoncierePipe implements PipeTransform {
-  
+
   /**
    * Formate une référence foncière selon les standards marocains
    * @param value - Référence foncière brute
