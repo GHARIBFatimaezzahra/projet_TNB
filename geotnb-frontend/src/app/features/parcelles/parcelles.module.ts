@@ -26,6 +26,9 @@ import { ParcellesDashboardComponent } from './components/parcelles-dashboard/pa
 import { SigInterfaceComponent } from './components/sig-interface/sig-interface.component';
 import { ParcelleCreateComponent } from './components/parcelle-create/parcelle-create.component';
 
+// Module de carte partagé
+import { MapModule } from '../../shared/components/map/map.module';
+
 // Routes
 const routes = [
   { path: 'dashboard', component: ParcellesDashboardComponent },

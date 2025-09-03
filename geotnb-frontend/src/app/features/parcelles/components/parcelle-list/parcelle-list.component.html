@@ -1,136 +1,128 @@
-<!-- Liste des Parcelles - Design exact de l'image -->
-<div class="parcelle-list-container">
-  <!-- Header principal - bleu comme l'image -->
-  <div class="main-header">
-    <div class="header-content">
-      <div class="header-left">
-        <h1>
-          <i class="fas fa-map-marked-alt"></i>
-          GeoTNB - Gestion des Parcelles
-        </h1>
-      </div>
-      <div class="header-right">
-        <button class="btn btn-light">
-          <i class="fas fa-th-large"></i>
-          Voir toutes les interfaces
+<!-- ===================================================== -->
+<!-- HEADER PRINCIPAL -->
+<!-- ===================================================== -->
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h2>Liste des Parcelles TNB</h2>
+    <div style="display: flex; gap: 1rem;">
+      <button class="btn btn-secondary" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <button class="btn btn-info" (click)="viewMap()">
+        <i class="fas fa-map"></i> Vue carte
+      </button>
+      <button class="btn btn-primary" routerLink="/parcelles/new">
+        <i class="fas fa-plus"></i> Nouvelle parcelle
+      </button>
+              <button class="btn btn-secondary" (click)="refreshData()" [disabled]="loading">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Actualiser
         </button>
+        <button class="btn btn-info" (click)="testAPI()" [disabled]="loading">
+          <i class="fas fa-bug"></i> Test API
+        </button>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- STATISTIQUES EN TEMPS RÉEL -->
+  <!-- ===================================================== -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon" style="background: rgba(30, 64, 175, 0.1); color: var(--primary-color);">
+          <i class="fas fa-bars"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics?.total || 0 | number }}</h3>
+          <p>Parcelles totales</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon" style="background: rgba(5, 150, 105, 0.1); color: var(--success-color);">
+          <i class="fas fa-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics?.publiees || 0 | number }}</h3>
+          <p>Publiées</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon" style="background: rgba(217, 119, 6, 0.1); color: var(--warning-color);">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics?.enValidation || 0 | number }}</h3>
+          <p>En validation</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon" style="background: rgba(100, 116, 139, 0.1); color: var(--gray-500);">
+          <i class="fas fa-pencil-alt"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ statistics?.brouillons || 0 | number }}</h3>
+          <p>Brouillons</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Page content -->
-  <div class="page-content">
-    <!-- Page header -->
-    <div class="page-header">
-      <h2>Liste des Parcelles TNB</h2>
-      <div class="page-actions">
-        <button class="btn btn-secondary" (click)="goBack()">
-          <i class="fas fa-arrow-left"></i>
-          Retour
-        </button>
-        <button class="btn btn-info" (click)="showMap()">
-          <i class="fas fa-map"></i>
-          Vue carte
-        </button>
-        <button class="btn btn-primary" (click)="createNewParcel()">
-          <i class="fas fa-plus"></i>
-          Nouvelle parcelle
-        </button>
-      </div>
-    </div>
-
-    <!-- Statistiques exactement comme l'image -->
-    <div class="stats-grid-image">
-      <div class="stat-card-image totales">
-        <div class="stat-icon-image">
-          <i class="fas fa-list"></i>
-        </div>
-        <div class="stat-info-image">
-          <h3 class="stat-number">2,847</h3>
-          <p class="stat-label">Parcelles totales</p>
-        </div>
-      </div>
-
-      <div class="stat-card-image publiees">
-        <div class="stat-icon-image">
-          <i class="fas fa-check"></i>
-        </div>
-        <div class="stat-info-image">
-          <h3 class="stat-number">1,923</h3>
-          <p class="stat-label">Publiées</p>
-        </div>
-      </div>
-
-      <div class="stat-card-image validation">
-        <div class="stat-icon-image">
-          <i class="fas fa-hourglass-half"></i>
-        </div>
-        <div class="stat-info-image">
-          <h3 class="stat-number">681</h3>
-          <p class="stat-label">En validation</p>
-        </div>
-      </div>
-
-      <div class="stat-card-image brouillons">
-        <div class="stat-icon-image">
-          <i class="fas fa-edit"></i>
-        </div>
-        <div class="stat-info-image">
-          <h3 class="stat-number">243</h3>
-          <p class="stat-label">Brouillons</p>
-        </div>
-      </div>
-    </div>
-
-  <!-- Filtres et recherche -->
+  <!-- ===================================================== -->
+  <!-- FILTRES ET RECHERCHE AVANCÉE -->
+  <!-- ===================================================== -->
   <div class="filters-panel">
     <div class="filters-row">
       <div class="filter-group">
         <label class="form-label">Recherche globale</label>
         <input type="text" 
                class="form-control" 
-               placeholder="Référence, propriétaire, zone..."
-               [(ngModel)]="searchFilters.globalSearch"
-               (input)="onSearchChange()"
-               #globalSearchInput>
+               [(ngModel)]="searchTerm"
+               (keyup)="onSearch()"
+               placeholder="Référence, propriétaire, zone, statut foncier, occupation, quote-part...">
       </div>
 
       <div class="filter-group">
         <label class="form-label">Zone</label>
-        <select class="form-control" 
-                [(ngModel)]="searchFilters.zonage" 
-                (change)="applyFilters()">
+        <select class="form-control" [(ngModel)]="selectedZone" (change)="onZoneChange()">
           <option value="">Toutes les zones</option>
           <option value="R1">R1 - Résidentiel dense</option>
           <option value="R2">R2 - Résidentiel moyen</option>
           <option value="R3">R3 - Résidentiel faible</option>
+          <option value="R4">R4 - Résidentiel très faible</option>
           <option value="I">I - Industriel</option>
           <option value="C">C - Commercial</option>
+          <option value="COM">COM - Commercial</option>
+          <option value="IND">IND - Industriel</option>
         </select>
       </div>
 
       <div class="filter-group">
         <label class="form-label">Statut</label>
-        <select class="form-control" 
-                [(ngModel)]="searchFilters.statut_validation" 
-                (change)="applyFilters()">
+        <select class="form-control" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
           <option value="">Tous les statuts</option>
-          <option value="BROUILLON">Brouillon</option>
-          <option value="VALIDE">Validé</option>
-          <option value="PUBLIE">Publié</option>
-          <option value="ARCHIVE">Archivé</option>
+          <option value="Brouillon">Brouillon</option>
+          <option value="Valide">Validé</option>
+          <option value="Publie">Publié</option>
+          <option value="Archive">Archivé</option>
         </select>
       </div>
 
       <div class="filter-group">
         <label class="form-label">Type foncier</label>
-        <select class="form-control" 
-                [(ngModel)]="searchFilters.statut_foncier" 
-                (change)="applyFilters()">
+        <select class="form-control" [(ngModel)]="selectedStatutFoncier" (change)="onStatutFoncierChange()">
           <option value="">Tous</option>
-          <option value="TF">TF</option>
-          <option value="R">R</option>
-          <option value="NI">NI</option>
+          <option value="TF">TF - Titre foncier</option>
+          <option value="R">R - Réquisition</option>
+          <option value="NI">NI - Non immatriculé</option>
           <option value="Domanial">Domanial</option>
           <option value="Collectif">Collectif</option>
         </select>
@@ -138,39 +130,41 @@
 
       <div class="filter-group">
         <label class="form-label" style="opacity: 0;">Action</label>
-        <button mat-raised-button color="primary" class="btn btn-primary" style="width: 100%;" (click)="applyFilters()">
+        <button class="btn btn-primary" (click)="applyFilters()" style="width: 100%;">
           <i class="fas fa-filter"></i> Filtrer
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Actions en lot -->
-  <div class="card" *ngIf="selectedParcelles.length > 0">
+  <!-- ===================================================== -->
+  <!-- ACTIONS EN LOT -->
+  <!-- ===================================================== -->
+  <div class="card">
     <div class="card-header">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <span>{{ selectedParcelles.length }} parcelle(s) sélectionnée(s)</span>
+          <span>{{ selection.selected.length }} parcelle(s) sélectionnée(s)</span>
         </div>
         <div style="display: flex; gap: 0.5rem;">
-          <button mat-raised-button color="accent" class="btn btn-warning btn-sm" 
-                  [disabled]="selectedParcelles.length === 0"
-                  (click)="bulkValidate()">
-            <i class="fas fa-check-circle"></i> Valider en lot
+          <button class="btn btn-warning btn-sm" 
+                  [disabled]="selection.selected.length === 0"
+                  (click)="validateSelected()">
+            <i class="fas fa-check"></i> Valider en lot
           </button>
-          <button mat-raised-button color="primary" class="btn btn-success btn-sm" 
-                  [disabled]="selectedParcelles.length === 0"
-                  (click)="bulkPublish()">
-            <i class="fas fa-upload"></i> Publier en lot
+          <button class="btn btn-success btn-sm" 
+                  [disabled]="selection.selected.length === 0"
+                  (click)="publishSelected()">
+            <i class="fas fa-arrow-up"></i> Publier en lot
           </button>
-          <button mat-stroked-button class="btn btn-info btn-sm" 
-                  [disabled]="selectedParcelles.length === 0"
-                  (click)="bulkExport()">
-            <i class="fas fa-download"></i> Exporter sélection
+          <button class="btn btn-info btn-sm" 
+                  [disabled]="selection.selected.length === 0"
+                  (click)="exportSelected()">
+            <i class="fas fa-arrow-down"></i> Exporter sélection
           </button>
-          <button mat-stroked-button color="warn" class="btn btn-danger btn-sm" 
-                  [disabled]="selectedParcelles.length === 0"
-                  (click)="bulkDelete()">
+          <button class="btn btn-danger btn-sm" 
+                  [disabled]="selection.selected.length === 0"
+                  (click)="deleteSelected()">
             <i class="fas fa-trash"></i> Supprimer en lot
           </button>
         </div>
@@ -178,12 +172,13 @@
     </div>
   </div>
 
-  <!-- Table principale -->
+  <!-- ===================================================== -->
+  <!-- TABLE PRINCIPALE -->
+  <!-- ===================================================== -->
   <div class="card">
     <div class="card-body" style="padding: 0;">
       <div class="table-container">
-        <table mat-table [dataSource]="dataSource" class="table" matSort 
-               (matSortChange)="onSortChange($event)">
+        <table mat-table [dataSource]="dataSource" class="table" matSort (matSortChange)="onSortChange($event)">
           
           <!-- Colonne de sélection -->
           <ng-container matColumnDef="select">
@@ -204,18 +199,14 @@
           <ng-container matColumnDef="reference">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               Référence
+              <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
             <td mat-cell *matCellDef="let parcelle">
               <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <strong>{{ parcelle.reference_fonciere }}</strong>
-                <i class="fas fa-map-marker-alt" 
-                   *ngIf="parcelle.geometrie" 
-                   title="Géolocalisée" 
-                   style="color: var(--success-color);"></i>
-                <i class="fas fa-exclamation-triangle" 
-                   *ngIf="!parcelle.geometrie" 
-                   title="Géométrie manquante" 
-                   style="color: var(--warning-color);"></i>
+                <i class="fas fa-circle" [ngClass]="getStatusIconClass(parcelle.etatValidation)"></i>
+                <span class="reference-text">
+                  {{ parcelle.referenceFonciere }}
+                </span>
               </div>
             </td>
           </ng-container>
@@ -224,6 +215,7 @@
           <ng-container matColumnDef="zone">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               Zone
+              <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
             <td mat-cell *matCellDef="let parcelle">
               <span class="badge badge-secondary">{{ parcelle.zonage }}</span>
@@ -234,33 +226,34 @@
           <ng-container matColumnDef="surface">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               Surface (m²)
+              <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
             <td mat-cell *matCellDef="let parcelle">
               <div>
-                <strong>{{ formatNumber(parcelle.surface_totale) }}</strong><br>
-                <small style="color: var(--gray-500);">
-                  {{ formatNumber(parcelle.surface_imposable) }} imposable
-                </small>
+                <strong>{{ parcelle.surfaceTotale | number }}</strong><br>
+                <small style="color: var(--gray-500);">{{ parcelle.surfaceImposable | number }} imposable</small>
               </div>
             </td>
           </ng-container>
 
           <!-- Propriétaires -->
           <ng-container matColumnDef="proprietaires">
-            <th mat-header-cell *matHeaderCellDef>Propriétaires</th>
+            <th mat-header-cell *matHeaderCellDef>
+              Propriétaires
+            </th>
             <td mat-cell *matCellDef="let parcelle">
               <div *ngIf="parcelle.proprietaires && parcelle.proprietaires.length > 0">
-                <div *ngFor="let prop of parcelle.proprietaires; let i = index">
-                  <span *ngIf="i < 2">{{ prop.nom }} {{ prop.prenom }} ({{ prop.quote_part }}%)</span>
+                <div *ngFor="let prop of parcelle.proprietaires.slice(0, 2); let i = index">
+                  <span *ngIf="i === 0">{{ prop.nom }} {{ prop.prenom || '' }} ({{ (prop.quote_part * 100) | number:'1.0-1' }}%)</span>
+                  <small *ngIf="i === 1" style="color: var(--gray-500);">{{ prop.nom }} {{ prop.prenom || '' }} ({{ (prop.quote_part * 100) | number:'1.0-1' }}%)</small>
                 </div>
                 <small *ngIf="parcelle.proprietaires.length > 2" style="color: var(--gray-500);">
-                  +{{ parcelle.proprietaires.length - 2 }} autres
+                  +{{ parcelle.proprietaires.length - 2 }} autre(s)
                 </small>
               </div>
-              <span *ngIf="!parcelle.proprietaires || parcelle.proprietaires.length === 0" 
-                    style="color: var(--gray-400);">
-                Aucun propriétaire
-              </span>
+              <div *ngIf="!parcelle.proprietaires || parcelle.proprietaires.length === 0">
+                <span style="color: var(--gray-500);">Aucun propriétaire</span>
+              </div>
             </td>
           </ng-container>
 
@@ -268,20 +261,21 @@
           <ng-container matColumnDef="tnb">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               TNB (DH)
+              <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
             <td mat-cell *matCellDef="let parcelle">
-              <strong style="color: var(--success-color);">
-                {{ formatCurrency(parcelle.tnb_calculee) }}
-              </strong>
+              <strong style="color: var(--success-color);">{{ parcelle.montantTotalTnb | number:'1.0-0' }}</strong>
             </td>
           </ng-container>
 
           <!-- Statut -->
           <ng-container matColumnDef="statut">
-            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <th mat-header-cell *matHeaderCellDef>
+              Statut
+            </th>
             <td mat-cell *matCellDef="let parcelle">
-              <span class="badge" [ngClass]="getStatusBadgeClass(parcelle.statut_validation)">
-                {{ getStatusLabel(parcelle.statut_validation) }}
+              <span class="badge" [ngClass]="getStatusClass(parcelle.etatValidation)">
+                {{ getStatusLabel(parcelle.etatValidation) }}
               </span>
             </td>
           </ng-container>
@@ -290,303 +284,112 @@
           <ng-container matColumnDef="derniere_maj">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>
               Dernière MAJ
+              <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
             <td mat-cell *matCellDef="let parcelle">
               <div>
-                {{ formatDate(parcelle.date_modification) }}<br>
-                <small style="color: var(--gray-500);">
-                  par {{ parcelle.utilisateur_modification || 'système' }}
-                </small>
+                {{ parcelle.dateModification | date:'dd/MM/yyyy' }}<br>
+                <small style="color: var(--gray-500);">par admin</small>
               </div>
             </td>
           </ng-container>
 
           <!-- Actions -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <th mat-header-cell *matHeaderCellDef>
+              Actions
+            </th>
             <td mat-cell *matCellDef="let parcelle">
               <div style="display: flex; gap: 0.25rem;">
-                <button mat-icon-button class="btn btn-secondary btn-sm" 
-                        (click)="viewDetails(parcelle)"
-                        matTooltip="Voir détails">
-                  <mat-icon>visibility</mat-icon>
+                <button class="btn btn-secondary btn-sm" 
+                        (click)="viewParcelle(parcelle)" 
+                        title="Voir détails">
+                  <i class="fas fa-eye"></i>
                 </button>
-                <button mat-icon-button color="primary" class="btn btn-primary btn-sm" 
+                <button class="btn btn-primary btn-sm" 
                         (click)="editParcelle(parcelle)"
-                        matTooltip="Modifier">
-                  <mat-icon>edit</mat-icon>
+                        title="Modifier">
+                  <i class="fas fa-pencil-alt"></i>
                 </button>
-                <button mat-icon-button color="accent" class="btn btn-info btn-sm" 
-                        (click)="localizeParcelle(parcelle)"
-                        matTooltip="Localiser"
-                        [disabled]="!parcelle.geometrie">
-                  <mat-icon>place</mat-icon>
+                <button class="btn btn-info btn-sm" 
+                        [disabled]="!parcelle.geometrie"
+                        (click)="locateParcelle(parcelle)"
+                        [title]="parcelle.geometrie ? 'Localiser' : 'Pas de géométrie'">
+                  <i class="fas fa-map-marker-alt"></i>
                 </button>
-                <button mat-icon-button [matMenuTriggerFor]="actionsMenu" 
-                        class="btn btn-secondary btn-sm"
-                        matTooltip="Plus d'actions">
-                  <mat-icon>more_vert</mat-icon>
+                <button class="btn btn-secondary btn-sm" 
+                        (click)="generatePDF(parcelle)"
+                        title="Fiche PDF">
+                  <i class="fas fa-file-pdf"></i>
                 </button>
-                
-                <!-- Menu d'actions -->
-                <mat-menu #actionsMenu="matMenu">
-                  <button mat-menu-item (click)="generatePDF(parcelle)">
-                    <mat-icon>picture_as_pdf</mat-icon>
-                    <span>Fiche PDF</span>
-                  </button>
-                  <button mat-menu-item (click)="viewHistory(parcelle)">
-                    <mat-icon>history</mat-icon>
-                    <span>Historique</span>
-                  </button>
-                  <button mat-menu-item (click)="duplicateParcelle(parcelle)">
-                    <mat-icon>content_copy</mat-icon>
-                    <span>Dupliquer</span>
-                  </button>
-                  <mat-divider></mat-divider>
-                  <button mat-menu-item (click)="deleteParcelle(parcelle)" class="text-danger">
-                    <mat-icon color="warn">delete</mat-icon>
-                    <span>Supprimer</span>
-                  </button>
-                </mat-menu>
+                <button class="btn btn-secondary btn-sm" 
+                        (click)="viewHistory(parcelle)"
+                        title="Historique">
+                  <i class="fas fa-history"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm" 
+                        (click)="duplicateParcelle(parcelle)"
+                        title="Dupliquer">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button class="btn btn-warning btn-sm" 
+                        *ngIf="parcelle.etatValidation === 'Brouillon'"
+                        (click)="validateParcelle(parcelle)"
+                        title="Valider">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" 
+                        (click)="deleteParcelle(parcelle)"
+                        title="Supprimer">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </td>
           </ng-container>
 
-          <!-- Définition des colonnes affichées -->
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
-              [class.selected-row]="isSelected(row)"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
-
-        <!-- Message si aucune donnée -->
-        <div *ngIf="dataSource.data.length === 0 && !loading" class="no-data">
-          <mat-icon>search_off</mat-icon>
-          <h3>Aucune parcelle trouvée</h3>
-          <p>Aucune parcelle ne correspond aux critères de recherche</p>
-          <button mat-raised-button color="primary" (click)="resetFilters()">
-            <mat-icon>clear_all</mat-icon>
-            Effacer les filtres
-          </button>
-        </div>
-
-        <!-- Loading spinner -->
-        <div *ngIf="loading" class="loading-container">
-          <mat-spinner diameter="40"></mat-spinner>
-          <p>Chargement des parcelles...</p>
-        </div>
       </div>
     </div>
 
     <!-- Pagination -->
-    <div class="card-footer" *ngIf="totalParcelles > 0">
-      <mat-paginator [length]="totalParcelles"
-                     [pageSize]="pageSize"
-                     [pageSizeOptions]="[10, 25, 50, 100]"
-                     [pageIndex]="currentPage"
-                     (page)="onPageChange($event)"
-                     showFirstLastButtons>
-      </mat-paginator>
-    </div>
-  </div>
-
-  <!-- Error display -->
-  <div *ngIf="error" class="alert alert-danger">
-    <mat-icon>error</mat-icon>
-    {{ error }}
-    <button mat-button (click)="retry()" style="margin-left: 1rem;">
-      <mat-icon>refresh</mat-icon>
-      Réessayer
-    </button>
-  </div>
-</div>
-<!-- Interface 1 - Liste et Gestion des Parcelles - Design exact fourni -->
-<div class="container">
-  <div class="interface-section">
-    <div class="section-header">
-      <mat-icon>list_alt</mat-icon>
-      1. Liste et Gestion des Parcelles
-    </div>
-    <div class="section-content">
-      <div class="table-container">
-        <div class="table-header">
-          <div>
-            <h3>Gestion des Parcelles</h3>
-            <p>{{ formatNumber(totalParcelles) }} parcelles recensées</p>
-          </div>
-          <div class="header-actions">
-            <button mat-stroked-button class="btn-outline" (click)="exportToExcel()">
-              <mat-icon>file_download</mat-icon>
-              Export Excel
-            </button>
-            <button mat-raised-button color="primary" routerLink="/parcelles/new">
-              <mat-icon>add</mat-icon>
-              Nouvelle parcelle
-            </button>
-          </div>
+    <div class="card-footer">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="color: var(--gray-600);">
+          Affichage de {{ getDisplayRange() }} sur {{ totalParcelles | number }} parcelles
         </div>
-        
-        <div class="table-filters">
-          <mat-form-field appearance="outline" class="search-field">
-            <input matInput [(ngModel)]="searchTerm" (keyup)="onSearch()" 
-                   placeholder="Rechercher...">
-            <mat-icon matSuffix>search</mat-icon>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>Statut</mat-label>
-            <mat-select [(ngModel)]="selectedStatus">
-              <mat-option value="">Tous statuts</mat-option>
-              <mat-option value="BROUILLON">Brouillon</mat-option>
-              <mat-option value="VALIDE">Validé</mat-option>
-              <mat-option value="PUBLIE">Publié</mat-option>
-            </mat-select>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>Zone</mat-label>
-            <mat-select [(ngModel)]="selectedZone">
-              <mat-option value="">Toutes zones</mat-option>
-              <mat-option value="R4">R+4</mat-option>
-              <mat-option value="R2">R+2</mat-option>
-              <mat-option value="COM">COM</mat-option>
-              <mat-option value="IND">IND</mat-option>
-            </mat-select>
-          </mat-form-field>
-          
-          <button mat-raised-button color="primary" (click)="applyFilters()">
-            Filtrer
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-sm" 
+                  [disabled]="currentPage === 0"
+                  (click)="previousPage()">
+            <i class="fas fa-chevron-left"></i> Précédent
           </button>
-          <button mat-stroked-button (click)="resetFilters()">
-            Reset
+          <button class="btn btn-primary btn-sm" 
+                  *ngFor="let page of getPageNumbers()"
+                  [class.btn-primary]="page === currentPage + 1"
+                  [class.btn-secondary]="page !== currentPage + 1"
+                  (click)="goToPage(page - 1)">
+            {{ page }}
           </button>
-        </div>
-        
-        <table class="data-table mat-elevation-z1">
-          <thead>
-            <tr>
-              <th>
-                <mat-checkbox 
-                  [checked]="isAllSelected()" 
-                  [indeterminate]="isIndeterminate()"
-                  (change)="toggleAllSelection($event.checked)">
-                </mat-checkbox>
-              </th>
-              <th>Référence</th>
-              <th>Propriétaire(s)</th>
-              <th>Surface (m²)</th>
-              <th>Zone</th>
-              <th>Montant TNB</th>
-              <th>État</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let parcelle of parcelles; trackBy: trackByParcelleId" 
-                [class.selected-row]="isSelected(parcelle.id)">
-              <td>
-                <mat-checkbox 
-                  [checked]="isSelected(parcelle.id)"
-                  (change)="toggleSelection(parcelle, $event.checked)">
-                </mat-checkbox>
-              </td>
-              <td>
-                <strong>{{ parcelle.reference_fonciere }}</strong>
-              </td>
-              <td>{{ parcelle.proprietaires?.length || 0 }} propriétaire(s)</td>
-              <td>{{ formatNumber(parcelle.surface_imposable) }}</td>
-              <td>
-                <span class="zone-badge" [ngClass]="getZoneClass(parcelle.zonage)">
-                  {{ parcelle.zonage }}
-                </span>
-              </td>
-              <td>
-                <strong class="montant-tnb">{{ formatCurrency(parcelle.tnb_calculee) }}</strong>
-              </td>
-              <td>
-                <span class="badge" [ngClass]="getStatusClass(parcelle.statut_validation)">
-                  {{ getStatusLabel(parcelle.statut_validation) }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <button mat-stroked-button class="btn-sm" 
-                        (click)="viewParcelle(parcelle)" 
-                        matTooltip="Voir détails">
-                  Voir
-                </button>
-                <button mat-raised-button color="primary" class="btn-sm" 
-                        (click)="editParcelle(parcelle)"
-                        matTooltip="Modifier">
-                  Éditer
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div class="table-footer">
-          <div class="footer-info">
-            <span>Affichage {{ getDisplayRange() }} de {{ formatNumber(totalParcelles) }} résultats</span>
-            <span *ngIf="selectedParcelles.length > 0" class="selection-info">
-              | {{ selectedParcelles.length }} sélectionnée(s)
-            </span>
-          </div>
-          <div class="footer-actions">
-            <button mat-stroked-button class="btn-sm" 
-                    [disabled]="selectedParcelles.length === 0"
-                    (click)="showBulkActions()">
-              Actions groupées
-            </button>
-            <div class="pagination-controls">
-              <button mat-stroked-button class="btn-sm" 
-                      [disabled]="currentPage === 1"
-                      (click)="previousPage()">
-                Précédent
-              </button>
-              <button mat-raised-button color="primary" class="btn-sm page-active">
-                {{ currentPage }}
-              </button>
-              <button mat-stroked-button class="btn-sm" 
-                      [disabled]="currentPage >= totalPages"
-                      (click)="nextPage()">
-                Suivant
-              </button>
-            </div>
-          </div>
+          <button class="btn btn-secondary btn-sm" 
+                  [disabled]="currentPage >= totalPages - 1"
+                  (click)="nextPage()">
+            Suivant <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Actions groupées Modal -->
-<div class="bulk-actions-modal" *ngIf="showBulkActionsModal" (click)="hideBulkActions()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Actions groupées</h3>
-      <button mat-icon-button (click)="hideBulkActions()">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <div class="modal-body">
-      <p>{{ selectedParcelles.length }} parcelle(s) sélectionnée(s)</p>
-      <div class="bulk-action-buttons">
-        <button mat-raised-button color="accent" (click)="bulkValidate()">
-          <mat-icon>check_circle</mat-icon>
-          Valider en lot
-        </button>
-        <button mat-raised-button color="primary" (click)="bulkPublish()">
-          <mat-icon>publish</mat-icon>
-          Publier en lot
-        </button>
-        <button mat-raised-button (click)="bulkExport()">
-          <mat-icon>file_download</mat-icon>
-          Exporter sélection
-        </button>
-        <button mat-raised-button color="warn" (click)="bulkDelete()">
-          <mat-icon>delete</mat-icon>
-          Supprimer en lot
-        </button>
-      </div>
-    </div>
-  </div>
+<!-- Loading spinner -->
+<div *ngIf="loading" class="loading-overlay">
+  <mat-spinner></mat-spinner>
+</div>
+
+<!-- Error message -->
+<div *ngIf="error" class="error-message">
+  <i class="fas fa-exclamation-triangle"></i>
+  {{ error }}
 </div>

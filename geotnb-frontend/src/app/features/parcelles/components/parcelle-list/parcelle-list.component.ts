@@ -5,7 +5,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, MatSort, Sort } from '@angular/material/sort';
@@ -22,7 +22,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { SelectionModel } from '@angular/cdk/collections';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 
 // Services
 import { ParcellesApiService, ParcelleAPI, SearchFilters } from '../../services/parcelles-api.service';
@@ -94,14 +94,15 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
   searchFilters: SearchFilters = {
     page: 1,
     limit: 25,
-    sort_by: 'date_modification',
-    sort_order: 'DESC'
+    sortBy: 'referenceFonciere',
+    sortOrder: 'ASC'
   };
 
   // Propriétés manquantes pour le template
   searchTerm = '';
   selectedStatus = '';
   selectedZone = '';
+  selectedStatutFoncier = '';
   showBulkActionsModal = false;
 
   // Subject pour la destruction et recherche
@@ -129,6 +130,15 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadParcelles();
     this.loadStatistics();
+    
+    // Recharger les données quand on navigue vers cette page
+    this.router.events.pipe(
+      takeUntil(this.destroy$),
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.loadParcelles();
+      this.loadStatistics();
+    });
   }
 
   ngOnDestroy(): void {
@@ -144,20 +154,46 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
+    console.log('Chargement des parcelles avec filtres:', this.searchFilters);
+    console.log('URL API appelée:', `${this.parcellesApiService['apiUrl']}`);
+
     this.parcellesApiService.getParcelles(this.searchFilters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.dataSource.data = response.data || [];
-          this.totalParcelles = response.total || 0;
+          console.log('Réponse API parcelles complète:', response);
+          console.log('Type de réponse:', typeof response);
+          console.log('Propriétés de la réponse:', Object.keys(response || {}));
+          console.log('Nombre de parcelles reçues:', response.data?.length || 0);
+          console.log('Total parcelles:', response.total || 0);
+          console.log('Page actuelle:', response.page || 'non définie');
+          console.log('Limite par page:', response.limit || 'non définie');
+          
+          if (response.data && response.data.length > 0) {
+            console.log('Première parcelle reçue:', response.data[0]);
+            this.dataSource.data = response.data || [];
+            this.totalParcelles = response.total || 0;
+          } else {
+            console.log('Aucune parcelle reçue de l\'API');
+            this.dataSource.data = [];
+            this.totalParcelles = 0;
+          }
+          
           this.totalPages = Math.ceil(this.totalParcelles / this.pageSize);
           this.loading = false;
+          
+          console.log('Données assignées à dataSource:', this.dataSource.data.length);
+          console.log('Total parcelles assigné:', this.totalParcelles);
         },
         error: (error) => {
           console.error('Erreur chargement parcelles:', error);
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Error body:', error.error);
           this.error = 'Erreur lors du chargement des parcelles';
           this.loading = false;
-          this.loadMockData(); // Charger des données de test
+          this.dataSource.data = [];
+          this.totalParcelles = 0;
         }
       });
   }
@@ -189,12 +225,23 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
   }
 
   onStatusChange(): void {
-    this.searchFilters.statut_validation = this.selectedStatus || undefined;
+    this.searchFilters.etatValidation = this.selectedStatus || undefined;
     this.loadParcelles();
   }
 
   onZoneChange(): void {
     this.searchFilters.zonage = this.selectedZone || undefined;
+    this.loadParcelles();
+  }
+
+  onStatutFoncierChange(): void {
+    this.searchFilters.statutFoncier = this.selectedStatutFoncier || undefined;
+    this.loadParcelles();
+  }
+
+  applyFilters(): void {
+    this.searchFilters.page = 1;
+    this.currentPage = 0;
     this.loadParcelles();
   }
 
@@ -281,6 +328,26 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     return `${start}-${end}`;
   }
 
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    const start = Math.max(0, this.currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(this.totalPages, start + maxVisible);
+    
+    for (let i = start; i < end; i++) {
+      pages.push(i + 1);
+    }
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.currentPage = page;
+      this.searchFilters.page = page + 1;
+      this.loadParcelles();
+    }
+  }
+
   // =====================================================
   // ACTIONS
   // =====================================================
@@ -299,6 +366,30 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
 
   localizeParcelle(parcelle: ParcelleAPI): void {
     this.router.navigate(['/parcelles/carte'], { queryParams: { parcelle: parcelle.id } });
+  }
+
+  locateParcelle(parcelle: ParcelleAPI): void {
+    if (parcelle.geometry) {
+      this.router.navigate(['/parcelles/carte'], { queryParams: { parcelle: parcelle.id } });
+    }
+  }
+
+  validateParcelle(parcelle: ParcelleAPI): void {
+    this.parcellesApiService.updateParcelle(parcelle.id, { 
+      etatValidation: 'Valide' 
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: () => {
+        this.snackBar.open('Parcelle validée avec succès', 'Fermer', { duration: 3000 });
+        this.loadParcelles();
+        this.loadStatistics();
+      },
+      error: (error) => {
+        console.error('Erreur validation:', error);
+        this.snackBar.open('Erreur lors de la validation', 'Fermer', { duration: 3000 });
+      }
+    });
   }
 
   generatePDF(parcelle: ParcelleAPI): void {
@@ -339,25 +430,82 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.showBulkActionsModal = false;
   }
 
-  bulkValidate(): void {
-    // TODO: Implémenter la validation en lot
-    this.snackBar.open('Validation en lot en cours...', 'Fermer', { duration: 2000 });
+  validateSelected(): void {
+    if (this.selection.selected.length === 0) return;
+    
+    const selectedIds = this.selection.selected.map(p => p.id);
+    // Mise à jour individuelle pour chaque parcelle
+    const updates = selectedIds.map(id => 
+      this.parcellesApiService.updateParcelle(id, { etatValidation: 'Valide' })
+    );
+    
+    Promise.all(updates).then(() => {
+      this.snackBar.open(`${selectedIds.length} parcelles validées avec succès`, 'Fermer', { duration: 3000 });
+      this.loadParcelles();
+      this.loadStatistics();
+      this.selection.clear();
+    }).catch(error => {
+      console.error('Erreur validation en lot:', error);
+      this.snackBar.open('Erreur lors de la validation en lot', 'Fermer', { duration: 3000 });
+    });
   }
 
-  bulkPublish(): void {
-    // TODO: Implémenter la publication en lot
-    this.snackBar.open('Publication en lot en cours...', 'Fermer', { duration: 2000 });
+  publishSelected(): void {
+    if (this.selection.selected.length === 0) return;
+    
+    const selectedIds = this.selection.selected.map(p => p.id);
+    // Mise à jour individuelle pour chaque parcelle
+    const updates = selectedIds.map(id => 
+      this.parcellesApiService.updateParcelle(id, { etatValidation: 'Publie' })
+    );
+    
+    Promise.all(updates).then(() => {
+      this.snackBar.open(`${selectedIds.length} parcelles publiées avec succès`, 'Fermer', { duration: 3000 });
+      this.loadParcelles();
+      this.loadStatistics();
+      this.selection.clear();
+    }).catch(error => {
+      console.error('Erreur publication en lot:', error);
+      this.snackBar.open('Erreur lors de la publication en lot', 'Fermer', { duration: 3000 });
+    });
   }
 
-  bulkExport(): void {
-    // TODO: Implémenter l'export en lot
-    this.snackBar.open('Export en lot en cours...', 'Fermer', { duration: 2000 });
+  exportSelected(): void {
+    if (this.selection.selected.length === 0) return;
+    
+    // Pour l'instant, export simple des données sélectionnées
+    const data = this.selection.selected.map(p => ({
+      'Référence': p.referenceFonciere,
+      'Zone': p.zonage,
+      'Surface totale': p.surfaceTotale,
+      'Surface imposable': p.surfaceImposable,
+      'TNB calculée': p.montantTotalTnb,
+      'Statut': p.etatValidation,
+      'Date modification': p.dateModification
+    }));
+    
+    const csv = this.convertToCSV(data);
+    this.downloadCSV(csv, `parcelles_export_${new Date().toISOString().split('T')[0]}.csv`);
+    this.snackBar.open('Export terminé avec succès', 'Fermer', { duration: 3000 });
   }
 
-  bulkDelete(): void {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${this.selectedParcelles.length} parcelle(s) ?`)) {
-      // TODO: Implémenter la suppression en lot
-      this.snackBar.open('Suppression en lot en cours...', 'Fermer', { duration: 2000 });
+  deleteSelected(): void {
+    if (this.selection.selected.length === 0) return;
+    
+    const selectedIds = this.selection.selected.map(p => p.id);
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} parcelle(s) ?`)) {
+      // Suppression individuelle pour chaque parcelle
+      const deletions = selectedIds.map(id => this.parcellesApiService.deleteParcelle(id));
+      
+      Promise.all(deletions).then(() => {
+        this.snackBar.open(`${selectedIds.length} parcelles supprimées avec succès`, 'Fermer', { duration: 3000 });
+        this.loadParcelles();
+        this.loadStatistics();
+        this.selection.clear();
+      }).catch(error => {
+        console.error('Erreur suppression en lot:', error);
+        this.snackBar.open('Erreur lors de la suppression en lot', 'Fermer', { duration: 3000 });
+      });
     }
   }
 
@@ -374,12 +522,6 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.onSearch();
   }
 
-  applyFilters(): void {
-    this.searchFilters.page = 1;
-    this.currentPage = 0;
-    this.loadParcelles();
-  }
-
   resetFilters(): void {
     this.searchTerm = '';
     this.selectedStatus = '';
@@ -387,21 +529,71 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.searchFilters = {
       page: 1,
       limit: this.pageSize,
-      sort_by: 'date_modification',
-      sort_order: 'DESC'
+      sortBy: 'referenceFonciere',
+      sortOrder: 'ASC'
     };
     this.loadParcelles();
   }
 
   onSortChange(sort: Sort): void {
-    this.searchFilters.sort_by = sort.active;
-    this.searchFilters.sort_order = sort.direction.toUpperCase() as 'ASC' | 'DESC';
+    this.searchFilters.sortBy = sort.active;
+    this.searchFilters.sortOrder = sort.direction.toUpperCase() as 'ASC' | 'DESC';
     this.loadParcelles();
   }
 
   retry(): void {
     this.error = null;
     this.loadParcelles();
+  }
+
+  refreshData(): void {
+    console.log('Actualisation forcée des données...');
+    this.loadParcelles();
+    this.loadStatistics();
+  }
+
+  testAPI(): void {
+    console.log('🧪 TEST API - Début du test...');
+    console.log('🧪 URL de base:', this.parcellesApiService['apiUrl']);
+    
+    // Test 1: Sans aucun filtre
+    console.log('🧪 TEST 1: Appel API sans filtres');
+    this.parcellesApiService.getParcelles()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('🧪 TEST 1 - Réponse reçue:', response);
+          console.log('🧪 TEST 1 - Nombre de parcelles:', response.data?.length || 0);
+          console.log('🧪 TEST 1 - Total:', response.total || 0);
+          
+          if (response.data && response.data.length > 0) {
+            console.log('🧪 TEST 1 - Première parcelle:', response.data[0]);
+          } else {
+            console.log('🧪 TEST 1 - Aucune parcelle trouvée');
+          }
+          
+          // Test 2: Avec filtres minimaux
+          console.log('🧪 TEST 2: Appel API avec filtres minimaux');
+          const minimalFilters = { page: 1, limit: 10 };
+          this.parcellesApiService.getParcelles(minimalFilters)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (response2) => {
+                console.log('🧪 TEST 2 - Réponse reçue:', response2);
+                console.log('🧪 TEST 2 - Nombre de parcelles:', response2.data?.length || 0);
+                console.log('🧪 TEST 2 - Total:', response2.total || 0);
+              },
+              error: (error2) => {
+                console.error('🧪 TEST 2 - Erreur:', error2);
+              }
+            });
+        },
+        error: (error) => {
+          console.error('🧪 TEST 1 - Erreur:', error);
+          console.error('🧪 TEST 1 - Status:', error.status);
+          console.error('🧪 TEST 1 - Message:', error.message);
+        }
+      });
   }
 
   // =====================================================
@@ -416,8 +608,38 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/parcelles/carte']);
   }
 
+  viewMap(): void {
+    this.router.navigate(['/parcelles/carte']);
+  }
+
   createNewParcel(): void {
     this.router.navigate(['/parcelles/create']);
+  }
+
+
+
+  convertToCSV(data: any[]): string {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+    ].join('\n');
+    
+    return csvContent;
+  }
+
+  downloadCSV(csv: string, filename: string): void {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // =====================================================
@@ -458,11 +680,12 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
 
   getStatusClass(statut: string): string {
     const statusClasses: { [key: string]: string } = {
-      'BROUILLON': 'status-brouillon',
-      'VALIDE': 'status-valide',
-      'PUBLIE': 'status-publie'
+      'Brouillon': 'badge-brouillon', // Gris
+      'Valide': 'badge-valide', // Orange
+      'Publie': 'badge-publie', // Vert
+      'Archive': 'badge-archive' // Gris
     };
-    return statusClasses[statut] || 'status-default';
+    return statusClasses[statut] || 'badge-secondary';
   }
 
   getStatusBadgeClass(statut: string): string {
@@ -471,11 +694,34 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
 
   getStatusLabel(statut: string): string {
     const statusLabels: { [key: string]: string } = {
-      'BROUILLON': 'Brouillon',
-      'VALIDE': 'Validé',
-      'PUBLIE': 'Publié' 
+      'Brouillon': 'Brouillon',
+      'Valide': 'Validé',
+      'Publie': 'Publié',
+      'Archive': 'Archivé'
     };
     return statusLabels[statut] || statut;
+  }
+
+  getReferenceBadgeClass(reference: string): string {
+    if (reference.startsWith('TF-')) {
+      return 'badge-success'; // Vert pour TF
+    } else if (reference.startsWith('R-')) {
+      return 'badge-warning'; // Orange pour R
+    } else if (reference.startsWith('NI-')) {
+      return 'badge-info'; // Bleu pour NI
+    } else {
+      return 'badge-secondary'; // Gris par défaut
+    }
+  }
+
+  getStatusIconClass(statut: string): string {
+    const iconClasses: { [key: string]: string } = {
+      'Brouillon': 'status-icon-blue', // Bleu pour Brouillon
+      'Valide': 'status-icon-orange', // Orange pour Validé
+      'Publie': 'status-icon-green', // Vert pour Publié
+      'Archive': 'status-icon-grey' // Gris pour Archivé
+    };
+    return iconClasses[statut] || 'status-icon-blue';
   }
 
   // Propriété pour le template
@@ -491,61 +737,61 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     const mockParcelles: ParcelleAPI[] = [
       {
         id: 1,
-        reference_fonciere: 'REF001',
-        statut_foncier: 'PRIVEE',
-        surface_totale: 150.5,
-        surface_imposable: 150.5,
+        referenceFonciere: 'REF001',
+        statutFoncier: 'PRIVEE',
+        surfaceTotale: 150.5,
+        surfaceImposable: 150.5,
         zonage: 'R4',
-        statut_occupation: 'NU',
-        statut_validation: 'PUBLIE',
-        tnb_calculee: 2500,
-        tarif_unitaire: 16.6,
-        est_exoneree: false,
-        date_creation: new Date('2024-01-15'),
-        date_modification: new Date('2024-01-15'),
-        utilisateur_creation: 'admin',
-        utilisateur_modification: 'admin',
+        statutOccupation: 'NU',
+        etatValidation: 'Publie',
+        montantTotalTnb: 2500,
+        prixUnitaireM2: 16.6,
+        exonereTnb: false,
+        dateCreation: new Date('2024-01-15'),
+        dateModification: new Date('2024-01-15'),
+        utilisateurCreation: 'admin',
+        utilisateurModification: 'admin',
         proprietaires: [
           {
             id: 1,
-            parcelle_id: 1,
+            parcelleId: 1,
             nom: 'Benali',
             prenom: 'Ahmed',
             type: 'PHYSIQUE',
             cin: 'AB123456',
-            quote_part: 100,
-            montant_tnb: 2500,
-            date_creation: new Date('2024-01-15')
+            quotePart: 100,
+            montantTnb: 2500,
+            dateCreation: new Date('2024-01-15')
           }
         ]
       },
       {
         id: 2,
-        reference_fonciere: 'REF002',
-        statut_foncier: 'PRIVEE',
-        surface_totale: 89.2,
-        surface_imposable: 89.2,
+        referenceFonciere: 'REF002',
+        statutFoncier: 'PRIVEE',
+        surfaceTotale: 89.2,
+        surfaceImposable: 89.2,
         zonage: 'R2',
-        statut_occupation: 'NU',
-        statut_validation: 'VALIDE',
-        tnb_calculee: 1800,
-        tarif_unitaire: 20.2,
-        est_exoneree: false,
-        date_creation: new Date('2024-01-10'),
-        date_modification: new Date('2024-01-10'),
-        utilisateur_creation: 'admin',
-        utilisateur_modification: 'admin',
+        statutOccupation: 'NU',
+        etatValidation: 'Valide',
+        montantTotalTnb: 1800,
+        prixUnitaireM2: 20.2,
+        exonereTnb: false,
+        dateCreation: new Date('2024-01-10'),
+        dateModification: new Date('2024-01-10'),
+        utilisateurCreation: 'admin',
+        utilisateurModification: 'admin',
         proprietaires: [
           {
             id: 2,
-            parcelle_id: 2,
+            parcelleId: 2,
             nom: 'Zahra',
             prenom: 'Fatima',
             type: 'PHYSIQUE',
             cin: 'FZ789012',
-            quote_part: 100,
-            montant_tnb: 1800,
-            date_creation: new Date('2024-01-10')
+            quotePart: 100,
+            montantTnb: 1800,
+            dateCreation: new Date('2024-01-10')
           }
         ]
       }

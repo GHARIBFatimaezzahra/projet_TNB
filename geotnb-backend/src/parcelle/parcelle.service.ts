@@ -53,8 +53,12 @@ export class ParcelleService {
   }
 
   async findAll(searchDto: SearchParcelleDto = {}): Promise<PaginatedParcelles> {
+    console.log('🔍 ParcelleService.findAll - Paramètres reçus:', searchDto);
     const { page = 1, limit = 10, sortBy = 'dateCreation', sortOrder = 'DESC', ...filters } = searchDto;
     const skip = (page - 1) * limit;
+
+    console.log('🔍 ParcelleService.findAll - Filtres extraits:', filters);
+    console.log('🔍 ParcelleService.findAll - Page:', page, 'Limit:', limit, 'Skip:', skip);
 
     const query = this.parcelleRepository.createQueryBuilder('parcelle');
 
@@ -93,13 +97,34 @@ export class ParcelleService {
       });
     }
 
-    // Tri
-    query.orderBy(`parcelle.${sortBy}`, sortOrder);
+    // Tri - convertir camelCase en snake_case
+    const sortColumn = sortBy === 'referenceFonciere' ? 'reference_fonciere' :
+                      sortBy === 'surfaceTotale' ? 'surface_totale' :
+                      sortBy === 'surfaceImposable' ? 'surface_imposable' :
+                      sortBy === 'statutFoncier' ? 'statut_foncier' :
+                      sortBy === 'statutOccupation' ? 'statut_occupation' :
+                      sortBy === 'etatValidation' ? 'etat_validation' :
+                      sortBy === 'dateCreation' ? 'date_creation' :
+                      sortBy === 'dateModification' ? 'date_modification' :
+                      sortBy === 'tnb' ? 'montant_total_tnb' :
+                      sortBy === 'derniere_maj' ? 'derniere_mise_a_jour' :
+                      sortBy === 'zone' ? 'zonage' :
+                      sortBy; // garder tel quel si déjà en snake_case
+    
+    query.orderBy(`parcelle.${sortColumn}`, sortOrder);
 
     // Pagination
     query.skip(skip).take(limit);
 
+    console.log('🔍 ParcelleService.findAll - Requête SQL générée:', query.getSql());
+    console.log('🔍 ParcelleService.findAll - Paramètres de la requête:', query.getParameters());
+
     const [data, total] = await query.getManyAndCount();
+
+    console.log('🔍 ParcelleService.findAll - Résultats trouvés:', data.length, 'sur', total);
+    if (data.length > 0) {
+      console.log('🔍 ParcelleService.findAll - Première parcelle:', data[0]);
+    }
 
     return {
       data,

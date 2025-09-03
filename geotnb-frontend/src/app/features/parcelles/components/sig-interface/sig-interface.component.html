@@ -273,21 +273,19 @@
             </div>
           </div>
 
-          <!-- Contenu de la carte - placeholder pour OpenLayers -->
-          <div class="map-content" *ngIf="!mapInitialized">
-            <div class="map-placeholder">
-              <mat-icon>public</mat-icon>
-              <h3>Carte Interactive OpenLayers</h3>
-              <p>Visualisation des parcelles TNB - Commune d'Oujda</p>
-              <div class="map-info">
-                <p>Projection: EPSG:26191 (Lambert Maroc) | Fond: OpenStreetMap</p>
-                <p>{{ formatNumber(mapStats.parcellesVisibles) }} parcelles chargées</p>
-              </div>
-              <button mat-raised-button color="primary" (click)="initializeMap()">
-                <mat-icon>map</mat-icon>
-                Initialiser la carte
-              </button>
-            </div>
+          <!-- Carte OpenLayers intégrée -->
+          <div class="map-content">
+            <app-map
+              mapId="sig-interface-map"
+              [options]="mapOptions"
+              [parcelles]="parcelles"
+              [showControls]="true"
+              [showLayers]="true"
+              [enableSelection]="true"
+              [enableDrawing]="false"
+              (parcelleSelected)="onParcelleSelected($event)"
+              (mapReady)="onMapReady($event)">
+            </app-map>
           </div>
 
           <!-- Indicateurs de position et échelle -->

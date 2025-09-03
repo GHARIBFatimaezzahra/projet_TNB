@@ -454,6 +454,15 @@ body {
 .map-interface {
   position: relative;
   margin-bottom: 1.5rem;
+  height: 500px;
+  min-height: 500px;
+}
+
+// S'assurer que la carte a une hauteur définie
+.map-interface app-map {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 .map-tools {

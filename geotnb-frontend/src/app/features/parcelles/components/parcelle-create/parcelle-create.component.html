@@ -268,43 +268,17 @@
 
         <!-- Carte de dessin OpenLayers -->
         <div class="map-interface">
-          <div #mapContainer id="map-container" style="height: 500px; width: 100%; border: 2px solid var(--gray-200); border-radius: 8px; position: relative; overflow: hidden;"></div>
-          
-          <!-- Outils de carte -->
-          <div class="map-tools">
-            <button class="btn btn-secondary btn-sm" (click)="zoomIn()" title="Zoom +">
-              <i class="fas fa-plus"></i>
-            </button>
-            <button class="btn btn-secondary btn-sm" (click)="zoomOut()" title="Zoom -">
-              <i class="fas fa-minus"></i>
-            </button>
-            <button class="btn btn-secondary btn-sm" (click)="resetView()" title="Vue initiale">
-              <i class="fas fa-home"></i>
-            </button>
-          </div>
-
-          <!-- Couches de carte -->
-          <div class="map-layers">
-            <h5>Couches</h5>
-            <div style="margin-bottom: 0.5rem;">
-              <label style="display: flex; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" [(ngModel)]="showOpenStreetMap" (change)="toggleLayer('osm')">
-                OpenStreetMap
-              </label>
-            </div>
-            <div style="margin-bottom: 0.5rem;">
-              <label style="display: flex; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" [(ngModel)]="showCadastre" (change)="toggleLayer('cadastre')">
-                Cadastre
-              </label>
-            </div>
-            <div style="margin-bottom: 0.5rem;">
-              <label style="display: flex; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" [(ngModel)]="showParcelles" (change)="toggleLayer('parcelles')">
-                Parcelles TNB
-              </label>
-            </div>
-          </div>
+          <app-map
+            mapId="parcelle-create-map"
+            [options]="mapOptions"
+            [parcelles]="[]"
+            [showControls]="true"
+            [showLayers]="true"
+            [enableSelection]="false"
+            [enableDrawing]="true"
+            (geometryDrawn)="onGeometryDrawn($event)"
+            (mapReady)="onMapReady($event)">
+          </app-map>
         </div>
 
         <!-- Informations géométriques calculées -->

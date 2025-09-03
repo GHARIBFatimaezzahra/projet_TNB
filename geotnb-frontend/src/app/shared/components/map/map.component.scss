@@ -1,37 +1,408 @@
+/* ===================================================== */
+/* STYLES POUR LE COMPOSANT DE CARTE */
+/* ===================================================== */
 
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
 
+// Styles spécifiques pour le mode création
+.map-container[data-mode="create"] {
+  height: 500px;
+  min-height: 500px;
+}
 
+.map {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
+.map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 15px;
+  min-width: 250px;
+  max-width: 300px;
+  z-index: 1000;
+}
 
+.layer-controls {
+  margin-bottom: 20px;
+}
 
+.layer-controls h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
 
+.layer-item {
+  margin-bottom: 8px;
+}
 
+.layer-item label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  margin: 0;
+}
 
+.layer-item input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+}
 
+.drawing-tools {
+  margin-bottom: 20px;
+}
 
+.drawing-tools h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
 
+.drawing-tools .btn {
+  margin-right: 5px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  padding: 4px 8px;
+}
 
+.drawing-tools .btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
 
+.selection-info {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+}
 
+.selection-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
 
+.selection-info p {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #555;
+}
 
+.selection-info .btn {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 4px 8px;
+}
 
+/* Styles pour les contrôles OpenLayers */
+:host ::ng-deep .ol-control {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
 
+:host ::ng-deep .ol-zoom {
+  top: 10px;
+  left: 10px;
+}
 
+:host ::ng-deep .ol-attribution {
+  bottom: 5px;
+  right: 5px;
+  font-size: 10px;
+}
 
+:host ::ng-deep .ol-attribution ul {
+  margin: 0;
+  padding: 0;
+}
 
+/* Styles pour les popups d'information */
+.ol-popup {
+  position: absolute;
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #cccccc;
+  bottom: 12px;
+  left: -50px;
+  min-width: 200px;
+}
 
+.ol-popup:after,
+.ol-popup:before {
+  top: 100%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
 
+.ol-popup:after {
+  border-top-color: white;
+  border-width: 10px;
+  left: 48px;
+  margin-left: -10px;
+}
 
+.ol-popup:before {
+  border-top-color: #cccccc;
+  border-width: 11px;
+  left: 48px;
+  margin-left: -11px;
+}
 
+.ol-popup-closer {
+  text-decoration: none;
+  position: absolute;
+  top: 2px;
+  right: 8px;
+}
 
+.ol-popup-closer:after {
+  content: "✕";
+  font-size: 14px;
+  color: #999;
+}
 
+/* Responsive */
+@media (max-width: 768px) {
+  .map-controls {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .map-container {
+    min-height: 300px;
+  }
+}
 
+/* Animation pour les contrôles */
+.map-controls {
+  animation: slideIn 0.3s ease-out;
+}
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
+/* Styles pour les boutons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
 
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
 
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
 
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
 
+.btn-secondary:hover {
+  background-color: #545b62;
+  border-color: #545b62;
+}
 
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Styles pour les nouveaux éléments */
+.tool-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  
+  button {
+    &.active {
+      background-color: #007bff;
+      color: white;
+    }
+  }
+}
+
+.layers-panel {
+  h4 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 1rem;
+  }
+}
+
+.parcelle-info {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  
+  h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+}
+
+.info-content {
+  .info-item {
+    margin-bottom: 8px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    strong {
+      color: #555;
+    }
+  }
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 2000;
+  
+  span {
+    color: #666;
+    font-size: 0.9rem;
+  }
+}
+
+// Styles pour les badges de statut
+.badge-brouillon {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-valide {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-publie {
+  background: #d1edff;
+  color: #0c5460;
+  border: 1px solid #b8daff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-archive {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}

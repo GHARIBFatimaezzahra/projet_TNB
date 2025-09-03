@@ -1,0 +1,100 @@
+<!-- ===================================================== -->
+<!-- COMPOSANT CARTE INTERACTIVE - TEMPLATE HTML -->
+<!-- ===================================================== -->
+
+<div class="map-container" [attr.data-mode]="options.mode">
+  <!-- Carte OpenLayers -->
+  <div #mapElement [id]="mapId" class="map"></div>
+  
+  <!-- Contrôles de la carte -->
+  <div class="map-controls" *ngIf="options.showLayers">
+    <!-- Boutons d'outils -->
+    <div class="tool-buttons" *ngIf="options.mode === 'create'">
+      <button mat-icon-button 
+              [class.active]="currentTool === 'polygon'"
+              (click)="startDrawing('Polygon')"
+              matTooltip="Dessiner une parcelle">
+        <mat-icon>gesture</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              [class.active]="currentTool === 'point'"
+              (click)="startDrawing('Point')"
+              matTooltip="Ajouter un point">
+        <mat-icon>add_location</mat-icon>
+      </button>
+      
+      <button mat-icon-button 
+              (click)="clearDrawing()"
+              matTooltip="Effacer le dessin">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </div>
+
+    <!-- Panneau des couches -->
+    <div class="layers-panel">
+      <h4>Couches</h4>
+      
+      <!-- Couche de base -->
+      <div class="layer-item">
+        <mat-slide-toggle 
+          [checked]="true" 
+          disabled>
+          OpenStreetMap
+        </mat-slide-toggle>
+      </div>
+      
+      <!-- Couches shapefile -->
+      <div class="layer-item" *ngFor="let layer of shapefileLayers">
+        <mat-slide-toggle 
+          [checked]="layer.visible"
+          (change)="toggleLayer(layer)">
+          {{ layer.name }}
+        </mat-slide-toggle>
+      </div>
+      
+      <!-- Couche parcelles -->
+      <div class="layer-item" *ngIf="options.showParcelles">
+        <mat-slide-toggle 
+          [checked]="true" 
+          disabled>
+          Parcelles
+        </mat-slide-toggle>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau d'informations de la parcelle sélectionnée -->
+  <div class="parcelle-info" *ngIf="selectedParcelle && options.mode !== 'create'">
+    <div class="info-header">
+      <h3>{{ selectedParcelle.referenceFonciere }}</h3>
+      <button mat-icon-button (click)="selectedParcelle = null">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <div class="info-content">
+      <div class="info-item">
+        <strong>Surface totale:</strong> {{ selectedParcelle.surfaceTotale }} m²
+      </div>
+      <div class="info-item">
+        <strong>Surface imposable:</strong> {{ selectedParcelle.surfaceImposable }} m²
+      </div>
+      <div class="info-item">
+        <strong>Statut:</strong> 
+        <span [ngClass]="getStatusClass(selectedParcelle.etatValidation)">
+          {{ getStatusLabel(selectedParcelle.etatValidation) }}
+        </span>
+      </div>
+      <div class="info-item">
+        <strong>TNB:</strong> {{ selectedParcelle.montantTotalTnb }} MAD
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicateur de chargement -->
+  <div class="loading-indicator" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Chargement des données...</span>
+  </div>
+</div>

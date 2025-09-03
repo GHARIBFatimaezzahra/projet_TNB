@@ -56,7 +56,7 @@ export class ParcellesDashboardComponent implements OnInit, OnDestroy {
         this.router.navigate(['/parcelles/recherche']);
         break;
       case 'liste-parcelles':
-        this.router.navigate(['/parcelles/liste']);
+        this.router.navigate(['/parcelles/list']);
         break;
       case 'creation-parcelle':
         this.router.navigate(['/parcelles/create']);

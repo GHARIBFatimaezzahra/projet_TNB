@@ -2,9 +2,13 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, Cha
 import { FormBuilder, FormGroup, Validators, FormArray, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule, DecimalPipe } from '@angular/common';
+import { Observable } from 'rxjs';
 import { ParcelleService } from '../../services/parcelle.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { FileSizePipe } from '../../../../shared/pipes';
+import { ComponentWithUnsavedChanges } from '../../../../core/guards/unsaved-changes.guard';
+import { MapModule } from '../../../../shared/components/map/map.module';
+import { MapOptions } from '../../../../shared/components/map/map.component';
 
 
 // OpenLayers imports
@@ -32,10 +36,11 @@ import { unByKey } from 'ol/Observable';
     ReactiveFormsModule,
     FormsModule,
     DecimalPipe,
-    FileSizePipe
+    FileSizePipe,
+    MapModule
   ]
 })
-export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit, ComponentWithUnsavedChanges {
   @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
 
   // État du composant
@@ -43,6 +48,21 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   totalSteps = 6;
   isLoading = false;
   isDraft = false;
+  isPublished = false;
+
+  // Options de la carte
+  mapOptions: MapOptions = {
+    center: [-7.6114, 33.5731], // Casablanca en WGS84
+    zoom: 10, // Zoom pour voir toute la région de Casablanca
+    enableSelection: false,
+    showParcelles: false,
+    showLayers: true,
+    mode: 'create' // Mode création avec outils de dessin
+  };
+  
+  // Pour le guard de modifications non sauvegardées
+  private formDirty = false;
+  private originalData: any = null;
   isEditing = false;
   parcelleId: string | null = null;
 
@@ -130,6 +150,79 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   // =====================================================
+  // IMPLÉMENTATION DE L'INTERFACE ComponentWithUnsavedChanges
+  // =====================================================
+
+  hasUnsavedChanges(): boolean {
+    return this.formDirty || this.isFormDirty();
+  }
+
+  saveChanges(): Observable<boolean> {
+    return new Observable<boolean>(observer => {
+      if (this.isDraft) {
+        this.saveDraft();
+        observer.next(true);
+        observer.complete();
+      } else {
+        this.saveParcelle();
+        observer.next(true);
+        observer.complete();
+      }
+    });
+  }
+
+  // Méthodes pour la carte
+  onGeometryDrawn(geometry: any): void {
+    console.log('Géométrie dessinée:', geometry);
+    this.parcelleForm.patchValue({
+      geometry: geometry
+    });
+    this.formDirty = true;
+    this.calculateSurfaceFromGeometry(geometry);
+  }
+
+  onMapReady(map: any): void {
+    console.log('Carte prête pour la création:', map);
+  }
+
+  private calculateSurfaceFromGeometry(geometry: any): void {
+    if (geometry && geometry.type === 'Polygon') {
+      // Calculer la surface à partir de la géométrie
+      // Cette logique sera implémentée dans le MapComponent
+      console.log('Calcul de la surface à partir de la géométrie');
+    }
+  }
+
+  private isFormDirty(): boolean {
+    return this.parcelleForm?.dirty || 
+           this.proprietairesForm?.dirty || 
+           this.fiscalForm?.dirty || 
+           this.validationForm?.dirty ||
+           this.drawnFeature !== null ||
+           this.uploadedDocuments.length > 0;
+  }
+
+  private markAsModified(): void {
+    this.formDirty = true;
+  }
+
+  private markAsSaved(): void {
+    this.formDirty = false;
+    this.updateOriginalData();
+  }
+
+  private updateOriginalData(): void {
+    this.originalData = {
+      parcelle: this.parcelleForm?.value,
+      proprietaires: this.proprietairesForm?.value,
+      fiscal: this.fiscalForm?.value,
+      validation: this.validationForm?.value,
+      geometry: this.drawnFeature,
+      documents: this.uploadedDocuments
+    };
+  }
+
+  // =====================================================
   // INITIALISATION DES FORMULAIRES
   // =====================================================
   private initializeForms(): void {
@@ -198,6 +291,23 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     // Recalcul automatique du TNB
     this.fiscalForm.get('tarif_unitaire')?.valueChanges.subscribe(() => {
       this.recalculateTNB();
+    });
+
+    // Marquer comme modifié quand les formulaires changent
+    this.parcelleForm.valueChanges.subscribe(() => {
+      this.markAsModified();
+    });
+
+    this.proprietairesForm.valueChanges.subscribe(() => {
+      this.markAsModified();
+    });
+
+    this.fiscalForm.valueChanges.subscribe(() => {
+      this.markAsModified();
+    });
+
+    this.validationForm.valueChanges.subscribe(() => {
+      this.markAsModified();
     });
 
     // Recalcul automatique du TNB quand la surface imposable change
@@ -309,11 +419,13 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     this.drawnFeature = feature;
     this.calculateSurface();
     this.updateFormGeometry();
+    this.markAsModified();
   }
 
   private onFeatureModified(event: any): void {
     this.calculateSurface();
     this.updateFormGeometry();
+    this.markAsModified();
   }
 
   private calculateSurface(): void {
@@ -416,6 +528,7 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     // For now, we'll simulate success.
     const mockResponse = { id: 'doc_' + Date.now(), name: file.name, size: file.size, type: file.type };
     this.uploadedDocuments.push(mockResponse);
+    this.markAsModified();
     // this.documentService.uploadDocument(formData).subscribe({
     //   next: (response: any) => {
     //     this.uploadedDocuments.push(response);
@@ -522,10 +635,13 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   // =====================================================
   saveDraft(): void {
     this.isDraft = true;
+    this.isPublished = false;
     this.saveParcelle();
   }
 
   validateParcelle(): void {
+    this.isDraft = false;
+    this.isPublished = false;
     this.validationForm.patchValue({
       validation_geometrie: true,
       validation_attributs: true,
@@ -538,25 +654,51 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
 
   publishParcelle(): void {
     this.isDraft = false;
+    this.isPublished = true;
     this.saveParcelle();
   }
 
   private saveParcelle(): void {
     this.isLoading = true;
 
+    // Vérifier que la référence foncière est remplie
+    const referenceFonciere = this.parcelleForm.get('reference_fonciere')?.value;
+    if (!referenceFonciere || referenceFonciere.trim() === '') {
+      this.showErrorMessage('La référence foncière est obligatoire');
+      this.isLoading = false;
+      return;
+    }
+
+    // Si on n'est pas en mode édition, générer une référence unique si nécessaire
+    if (!this.isEditing) {
+      const uniqueRef = this.generateUniqueReference(referenceFonciere);
+      if (uniqueRef !== referenceFonciere) {
+        this.parcelleForm.patchValue({ reference_fonciere: uniqueRef });
+        console.log(`Référence foncière mise à jour pour éviter les conflits: ${uniqueRef}`);
+      }
+    }
+
     const parcelleData = this.prepareParcelleData();
     
     console.log('Sauvegarde parcelle:', {
       isDraft: this.isDraft,
+      isPublished: this.isPublished,
+      etatValidation: parcelleData.etatValidation,
       data: parcelleData,
       currentStep: this.currentStep
     });
+    
+    console.log('Données complètes envoyées au backend:', JSON.stringify(parcelleData, null, 2));
+    console.log('URL API de création:', this.parcelleService['apiUrl']);
+    
+    console.log('Données complètes envoyées au backend:', JSON.stringify(parcelleData, null, 2));
 
     if (this.isEditing && this.parcelleId) {
       // Mise à jour d'une parcelle existante
       this.parcelleService.updateParcelle(Number(this.parcelleId), parcelleData).subscribe({
         next: (response: any) => {
           console.log('Parcelle mise à jour avec succès:', response);
+          this.markAsSaved();
           this.showSuccessMessage('Parcelle mise à jour avec succès !');
           this.router.navigate(['/parcelles']);
         },
@@ -571,12 +713,36 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
       this.parcelleService.createParcelle(parcelleData).subscribe({
         next: (response: any) => {
           console.log('Parcelle créée avec succès:', response);
+          this.markAsSaved();
           this.showSuccessMessage('Parcelle enregistrée avec succès !');
-          this.router.navigate(['/parcelles']);
+          // Délai plus long pour laisser le temps au backend de traiter et indexer
+          setTimeout(() => {
+            console.log('Navigation vers la liste des parcelles...');
+            this.router.navigate(['/parcelles/list']);
+          }, 2000);
         },
         error: (error: any) => {
           console.error('Erreur lors de la création:', error);
-          this.showErrorMessage('Erreur lors de la création de la parcelle');
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Error body:', error.error);
+          
+          let errorMessage = 'Erreur lors de la création de la parcelle';
+          if (error.status === 409) {
+            if (error.error && error.error.message) {
+              if (error.error.message.includes('Référence foncière déjà utilisée')) {
+                errorMessage = `Conflit détecté: ${error.error.message}. Veuillez utiliser une référence foncière différente.`;
+              } else {
+                errorMessage = `Conflit détecté: ${error.error.message}`;
+              }
+            } else {
+              errorMessage = 'Conflit détecté. Vérifiez la référence foncière ou la géométrie.';
+            }
+          } else if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          }
+          
+          this.showErrorMessage(errorMessage);
           this.isLoading = false;
         }
       });
@@ -584,39 +750,22 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private prepareParcelleData(): any {
-    // Préparer les données de base de la parcelle
+    // Préparer les données de base de la parcelle avec les noms de propriétés du backend
+    const formValue = this.parcelleForm.value;
+    
     const parcelleData: any = {
-      ...this.parcelleForm.value,
-      statut: this.isDraft ? 'brouillon' : 'valide',
-      date_creation: new Date().toISOString(),
-      etape_actuelle: this.currentStep,
-      progression: Math.round((this.currentStep / this.totalSteps) * 100)
+      // Propriétés principales avec conversion camelCase
+      referenceFonciere: formValue.reference_fonciere,
+      surfaceTotale: formValue.surface_totale,
+      surfaceImposable: formValue.surface_imposable,
+      statutFoncier: formValue.statut_foncier,
+      statutOccupation: formValue.statut_occupation,
+      zonage: formValue.zone_urbanistique,
+      exonereTnb: formValue.exonere_tnb,
+      datePermis: formValue.date_permis || undefined,
+      dureeExoneration: formValue.duree_exoneration ? Number(formValue.duree_exoneration) : undefined,
+      observations: formValue.observations || undefined
     };
-
-    // Ajouter les données des propriétaires si disponibles
-    if (this.proprietaires.length > 0) {
-      parcelleData.proprietaires = this.proprietaires;
-      parcelleData.total_quote_parts = this.totalQuoteParts;
-    }
-
-    // Ajouter les données fiscales si disponibles
-    if (this.fiscalForm.get('tarif_unitaire')?.value) {
-      parcelleData.fiscalite = {
-        ...this.fiscalForm.value,
-        total_tnb: this.totalTnb,
-        tnb_par_proprietaire: this.tnbParProprietaire
-      };
-    }
-
-    // Ajouter les documents si disponibles
-    if (this.uploadedDocuments.length > 0) {
-      parcelleData.documents = this.uploadedDocuments.map(doc => ({
-        nom: doc.name,
-        type: doc.type,
-        taille: doc.size,
-        date_upload: new Date().toISOString()
-      }));
-    }
 
     // Ajouter la géométrie si disponible
     if (this.drawnFeature) {
@@ -624,13 +773,38 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
       if (geometry) {
         // Convertir la géométrie OpenLayers en GeoJSON
         const geoJson = geometry.transform('EPSG:3857', 'EPSG:4326');
-        parcelleData.geometrie = {
+        const coordinates = (geoJson as any).getCoordinates()[0];
+        
+        // S'assurer que le polygone est fermé (premier et dernier point identiques)
+        if (coordinates.length > 0) {
+          const firstPoint = coordinates[0];
+          const lastPoint = coordinates[coordinates.length - 1];
+          
+          if (firstPoint[0] !== lastPoint[0] || firstPoint[1] !== lastPoint[1]) {
+            coordinates.push([firstPoint[0], firstPoint[1]]);
+          }
+        }
+        
+        parcelleData.geometry = {
           type: 'Polygon',
-          coordinates: (geoJson as any).getCoordinates()[0],
-          surface_calculee: this.calculatedSurface,
-          perimetre: this.calculatedPerimeter
+          coordinates: [coordinates]
         };
+        
+        console.log('Géométrie préparée:', parcelleData.geometry);
+        console.log('Nombre de points:', coordinates.length);
+        console.log('Premier point:', coordinates[0]);
+        console.log('Dernier point:', coordinates[coordinates.length - 1]);
       }
+    }
+
+    // Ajouter l'état de validation selon l'action choisie
+    if (this.isDraft) {
+      parcelleData.etatValidation = 'Brouillon';
+    } else if (this.isPublished) {
+      parcelleData.etatValidation = 'Publie';
+    } else {
+      // Par défaut, si ce n'est pas un brouillon et pas publié, c'est validé
+      parcelleData.etatValidation = 'Valide';
     }
 
     console.log('Données parcelle préparées:', parcelleData);
@@ -1070,5 +1244,13 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     console.error('❌ ERREUR:', message);
     // TODO: Implémenter une vraie notification d'erreur
     alert('ERREUR: ' + message); // Temporaire - à remplacer par un vrai système de notification
+  }
+
+  private generateUniqueReference(baseRef: string): string {
+    // Générer une référence unique en ajoutant un timestamp
+    const timestamp = Date.now().toString().slice(-6); // 6 derniers chiffres du timestamp
+    const prefix = baseRef.split('-')[0] || 'TF'; // Garder le préfixe ou utiliser TF par défaut
+    
+    return `${prefix}-${timestamp}`;
   }
 }

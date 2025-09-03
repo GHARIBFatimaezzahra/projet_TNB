@@ -14,33 +14,33 @@ import { environment } from '../../../../environments/environment';
 
 export interface ParcelleAPI {
   id: number;
-  reference_fonciere: string;
-  statut_foncier: string;
-  surface_totale: number;
-  surface_imposable: number;
+  referenceFonciere: string;
+  statutFoncier: string;
+  surfaceTotale: number;
+  surfaceImposable: number;
   zonage: string;
-  statut_occupation: string;
-  statut_validation: 'BROUILLON' | 'VALIDE' | 'PUBLIE' | 'ARCHIVE';
-  tnb_calculee: number;
-  tarif_unitaire: number;
-  est_exoneree: boolean;
-  date_exoneration?: Date;
-  duree_exoneration?: number;
-  geometrie?: any; // GeoJSON
-  centroide_x?: number;
-  centroide_y?: number;
+  statutOccupation: string;
+  etatValidation: 'Brouillon' | 'Valide' | 'Publie' | 'Archive';
+  montantTotalTnb: number;
+  prixUnitaireM2: number;
+  exonereTnb: boolean;
+  datePermis?: Date;
+  dureeExoneration?: number;
+  geometry?: any; // GeoJSON
+  centroideX?: number;
+  centroideY?: number;
   perimetre?: number;
-  date_creation: Date;
-  date_modification: Date;
-  utilisateur_creation: string;
-  utilisateur_modification: string;
+  dateCreation: Date;
+  dateModification: Date;
+  utilisateurCreation: string;
+  utilisateurModification: string;
   proprietaires?: ProprietaireAPI[];
   documents?: DocumentAPI[];
 }
 
 export interface ProprietaireAPI {
   id: number;
-  parcelle_id: number;
+  parcelleId: number;
   nom: string;
   prenom?: string;
   type: 'PHYSIQUE' | 'MORALE';
@@ -49,9 +49,9 @@ export interface ProprietaireAPI {
   telephone?: string;
   adresse?: string;
   email?: string;
-  quote_part: number;
-  montant_tnb: number;
-  date_creation: Date;
+  quotePart: number;
+  montantTnb: number;
+  dateCreation: Date;
 }
 
 export interface DocumentAPI {
@@ -68,22 +68,37 @@ export interface DocumentAPI {
 
 export interface SearchFilters {
   reference?: string;
-  statut_foncier?: string;
+  statutFoncier?: string;
   zonage?: string;
-  statut_validation?: string;
+  etatValidation?: string;
   proprietaire?: string;
   globalSearch?: string;
-  surface_min?: number;
-  surface_max?: number;
-  tnb_min?: number;
-  tnb_max?: number;
-  date_creation_debut?: Date;
-  date_creation_fin?: Date;
-  est_exoneree?: boolean;
+  surfaceMin?: number;
+  surfaceMax?: number;
+  tnbMin?: number;
+  tnbMax?: number;
+  dateCreationDebut?: Date;
+  dateCreationFin?: Date;
+  exonereTnb?: boolean;
   page?: number;
   limit?: number;
-  sort_by?: string;
-  sort_order?: 'ASC' | 'DESC';
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface UpdateParcelleData {
+  referenceFonciere?: string;
+  surfaceTotale?: number;
+  surfaceImposable?: number;
+  statutFoncier?: string;
+  statutOccupation?: string;
+  zonage?: string;
+  exonereTnb?: boolean;
+  datePermis?: Date;
+  dureeExoneration?: number;
+  observations?: string;
+  etatValidation?: 'Brouillon' | 'Valide' | 'Publie' | 'Archive';
+  geometry?: any;
 }
 
 export interface SearchResult<T> {
@@ -130,7 +145,7 @@ export class ParcellesApiService {
   // PROPRIÉTÉS
   // =====================================================
 
-  private readonly apiUrl = `${environment.apiUrl}/parcelles`;
+  private readonly apiUrl = `${environment.apiUrl}/v1/parcelles`;
   
   // Cache et état
   private parcellesCache$ = new BehaviorSubject<ParcelleAPI[]>([]);
@@ -164,9 +179,27 @@ export class ParcellesApiService {
       });
     }
 
-    return this.http.get<SearchResult<ParcelleAPI>>(`${this.apiUrl}`, { params })
+    const url = `${this.apiUrl}`;
+    console.log('🔍 API getParcelles - URL:', url);
+    console.log('🔍 API getParcelles - Filtres:', filters);
+    console.log('🔍 API getParcelles - Paramètres HTTP:', params.toString());
+
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+
+    return this.http.get<ApiResponse<SearchResult<ParcelleAPI>>>(url, { params })
       .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
         tap(result => {
+          console.log('✅ API getParcelles - Réponse reçue:', result);
+          console.log('✅ API getParcelles - Type de réponse:', typeof result);
+          console.log('✅ API getParcelles - Propriétés:', Object.keys(result || {}));
           this.parcellesCache$.next(result.data);
           this.setLoading(false);
           this.clearError();
@@ -181,8 +214,18 @@ export class ParcellesApiService {
   getParcelleById(id: number): Observable<ParcelleAPI> {
     this.setLoading(true);
     
-    return this.http.get<ParcelleAPI>(`${this.apiUrl}/${id}`)
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+
+    return this.http.get<ApiResponse<ParcelleAPI>>(`${this.apiUrl}/${id}`)
       .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
         tap(() => {
           this.setLoading(false);
           this.clearError();
@@ -197,26 +240,57 @@ export class ParcellesApiService {
   createParcelle(parcelle: any): Observable<ParcelleAPI> {
     this.setLoading(true);
     
-    return this.http.post<ParcelleAPI>(`${this.apiUrl}`, parcelle)
+    const url = `${this.apiUrl}`;
+    console.log('🚀 API createParcelle - URL:', url);
+    console.log('🚀 API createParcelle - Données envoyées:', parcelle);
+    
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+    
+    return this.http.post<ApiResponse<ParcelleAPI>>(url, parcelle)
       .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
         tap(newParcelle => {
+          console.log('✅ API createParcelle - Réponse reçue:', newParcelle);
           const currentParcelles = this.parcellesCache$.value;
           this.parcellesCache$.next([...currentParcelles, newParcelle]);
           this.setLoading(false);
           this.clearError();
         }),
-        catchError(this.handleError.bind(this))
+        catchError((error) => {
+          console.error('❌ API createParcelle - Erreur:', error);
+          console.error('❌ API createParcelle - Status:', error.status);
+          console.error('❌ API createParcelle - Message:', error.message);
+          console.error('❌ API createParcelle - Error body:', error.error);
+          return this.handleError(error);
+        })
       );
   }
 
   /**
    * Mettre à jour une parcelle
    */
-  updateParcelle(id: number, parcelle: Partial<ParcelleAPI>): Observable<ParcelleAPI> {
+  updateParcelle(id: number, parcelle: Partial<UpdateParcelleData>): Observable<ParcelleAPI> {
     this.setLoading(true);
     
-    return this.http.put<ParcelleAPI>(`${this.apiUrl}/${id}`, parcelle)
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+    
+    return this.http.put<ApiResponse<ParcelleAPI>>(`${this.apiUrl}/${id}`, parcelle)
       .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
         tap(updatedParcelle => {
           const currentParcelles = this.parcellesCache$.value;
           const index = currentParcelles.findIndex(p => p.id === id);
@@ -237,8 +311,18 @@ export class ParcellesApiService {
   deleteParcelle(id: number): Observable<void> {
     this.setLoading(true);
     
-    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+    
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`)
       .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
         tap(() => {
           const currentParcelles = this.parcellesCache$.value;
           this.parcellesCache$.next(currentParcelles.filter(p => p.id !== id));
@@ -533,16 +617,40 @@ export class ParcellesApiService {
    * Obtenir les statistiques générales
    */
   getStatistics(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/statistics`)
-      .pipe(catchError(this.handleError.bind(this)));
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+    
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/statistics`)
+      .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
+        catchError(this.handleError.bind(this))
+      );
   }
 
   /**
    * Obtenir les statistiques par zone
    */
   getStatisticsByZone(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/statistics/by-zone`)
-      .pipe(catchError(this.handleError.bind(this)));
+    // Interface pour la réponse encapsulée de l'intercepteur
+    interface ApiResponse<T> {
+      success: boolean;
+      data: T;
+      timestamp: string;
+      path: string;
+      version: string;
+    }
+    
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/statistics/by-zone`)
+      .pipe(
+        map(response => response.data), // Extraire les données de l'enveloppe API
+        catchError(this.handleError.bind(this))
+      );
   }
 
   // =====================================================

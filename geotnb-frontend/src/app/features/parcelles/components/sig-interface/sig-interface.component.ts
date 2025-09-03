@@ -9,6 +9,9 @@ import { Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { MapModule } from '../../../../shared/components/map/map.module';
+import { MapOptions } from '../../../../shared/components/map/map.component';
+import { ParcellesApiService, ParcelleAPI } from '../../services/parcelles-api.service';
 
 // Angular Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -54,6 +57,7 @@ export interface SelectedParcel {
     CommonModule,
     FormsModule,
     RouterModule,
+    MapModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -104,14 +108,19 @@ export class SigInterfaceComponent implements OnInit, OnDestroy {
   currentZoom: number = 12;
 
   // Parcelle sélectionnée
-  selectedParcel: SelectedParcel | null = {
-    id: 1,
-    reference: 'TF-478923-B',
-    surface: 1250.75,
-    surfaceImposable: 1180.50,
-    zone: 'R+4',
-    proprietaire: 'ALAMI Mohammed',
-    tnb: 15680
+  selectedParcel: SelectedParcel | null = null;
+
+  // Données des parcelles
+  parcelles: ParcelleAPI[] = [];
+
+  // Options de la carte
+  mapOptions: MapOptions = {
+    center: [-7.6114, 33.5731], // Casablanca en WGS84
+    zoom: 10, // Zoom pour voir toute la région de Casablanca
+    enableSelection: true,
+    showParcelles: true,
+    showLayers: true,
+    mode: 'view' // Mode consultation
   };
 
   // Subject pour la destruction
@@ -119,7 +128,8 @@ export class SigInterfaceComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private parcellesApiService: ParcellesApiService
   ) {}
 
   // =====================================================
@@ -128,6 +138,30 @@ export class SigInterfaceComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('Interface SIG initialisée');
+    this.loadParcelles();
+  }
+
+  private loadParcelles(): void {
+    this.parcellesApiService.getParcelles()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.parcelles = response.data || [];
+          this.updateStatistics();
+          console.log('Parcelles chargées pour la carte:', this.parcelles.length);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement des parcelles:', error);
+          this.showError('Erreur lors du chargement des parcelles');
+        }
+      });
+  }
+
+  private updateStatistics(): void {
+    this.mapStats.parcellesVisibles = this.parcelles.length;
+    this.mapStats.parcellesPubliees = this.parcelles.filter(p => p.etatValidation === 'Publie').length;
+    this.mapStats.surfaceImposable = this.parcelles.reduce((total, p) => total + (p.surfaceImposable || 0), 0) / 10000; // Convertir en hectares
+    this.mapStats.tnbCalculee = this.parcelles.reduce((total, p) => total + (p.montantTotalTnb || 0), 0);
   }
 
   ngOnDestroy(): void {
@@ -176,7 +210,24 @@ export class SigInterfaceComponent implements OnInit, OnDestroy {
   initializeMap(): void {
     this.mapInitialized = true;
     this.showSuccess('Carte OpenLayers initialisée');
-    // TODO: Implémenter l'initialisation OpenLayers
+  }
+
+  onParcelleSelected(parcelle: ParcelleAPI): void {
+    this.selectedParcel = {
+      id: parcelle.id,
+      reference: parcelle.referenceFonciere,
+      surface: parcelle.surfaceTotale,
+      surfaceImposable: parcelle.surfaceImposable,
+      zone: parcelle.zonage,
+      proprietaire: parcelle.proprietaires?.[0] ? `${parcelle.proprietaires[0].nom} ${parcelle.proprietaires[0].prenom}` : 'Non défini',
+      tnb: parcelle.montantTotalTnb
+    };
+    this.showSuccess(`Parcelle ${parcelle.referenceFonciere} sélectionnée`);
+  }
+
+  onMapReady(map: any): void {
+    console.log('Carte prête:', map);
+    this.mapInitialized = true;
   }
 
   zoomIn(): void {
@@ -276,6 +327,13 @@ export class SigInterfaceComponent implements OnInit, OnDestroy {
     this.snackBar.open(message, 'Fermer', {
       duration: 2000,
       panelClass: ['success-snackbar']
+    });
+  }
+
+  private showError(message: string): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration: 3000,
+      panelClass: ['error-snackbar']
     });
   }
 }
