@@ -75,8 +75,8 @@
     
     &.exoneration-section {
       border-left: 4px solid #9b59b6;
-      
-      mat-card-header {
+
+  mat-card-header {
         background: linear-gradient(45deg, #f4ecf7, #e8daef);
       }
     }
@@ -181,8 +181,8 @@
         }
         
         .result-label {
-          display: flex;
-          align-items: center;
+      display: flex;
+      align-items: center;
           justify-content: center;
           margin-bottom: 12px;
           font-size: 13px;
@@ -198,7 +198,7 @@
         
         .result-value {
           font-size: 16px;
-          font-weight: 600;
+      font-weight: 600;
           
           &.tarif {
             color: #e67e22;
@@ -270,7 +270,7 @@
     margin-bottom: 24px;
     
     .duration-option {
-      display: flex;
+    display: flex;
       flex-direction: column;
       gap: 2px;
       
@@ -319,8 +319,8 @@
       }
       
       .status-header {
-        display: flex;
-        align-items: center;
+      display: flex;
+      align-items: center;
         margin-bottom: 12px;
         
         .status-icon {
@@ -387,15 +387,15 @@
       
       .summary-content {
         .summary-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
           padding: 12px 0;
           border-bottom: 1px solid #f1f2f6;
-          
-          &:last-child {
-            border-bottom: none;
-          }
+
+    &:last-child {
+      border-bottom: none;
+    }
           
           &.total-row {
             background: rgba(39, 174, 96, 0.1);
@@ -417,8 +417,8 @@
           .summary-value {
             font-weight: 600;
             color: #2c3e50;
-            
-            &.total {
+
+    &.total {
               color: #27ae60;
               font-size: 18px;
             }

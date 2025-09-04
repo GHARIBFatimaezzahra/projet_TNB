@@ -1,713 +1,716 @@
-<!-- Interface 5 - Fiche Détaillée d'une Parcelle - Design exact fourni -->
 <div class="container">
-  <div class="interface-section">
-    <div class="section-header">
-      <mat-icon>description</mat-icon>
-      5. Fiche Détaillée d'une Parcelle
+  <!-- Header avec informations principales -->
+  <div class="header-section">
+    <div>
+      <h2>Détail de parcelle - {{ parcelle?.referenceFonciere || 'TF-456789' }}</h2>
+      <div class="header-meta">
+        <span class="badge badge-success">
+          <i class="fas fa-check-circle"></i> {{ parcelle?.statut || 'Publié' }}
+        </span>
+        <span class="last-modified">
+          Dernière modification: {{ parcelle?.dateModification ? (parcelle.dateModification | date:'dd/MM/yyyy') : '15/03/2024' }} par {{ parcelle?.derniereModificationPar || 'tech.sig' }}
+        </span>
+      </div>
     </div>
-    <div class="section-content">
-      
-      <!-- En-tête parcelle -->
-      <div class="parcel-header">
-        <div class="header-main">
-          <button mat-icon-button class="back-btn" (click)="retourListe()">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
-          
-          <div class="parcel-title">
-            <h1>{{ parcelleDetails.reference }}</h1>
-            <p class="parcel-subtitle">
-              {{ parcelleDetails.proprietaire }} • Zone {{ parcelleDetails.zone }}
-            </p>
-          </div>
-          
-          <div class="header-actions">
-            <span class="badge" [class]="getStatusBadgeClass(parcelleDetails.statut)">
-              {{ parcelleDetails.statut }}
-            </span>
-            <button mat-raised-button color="primary" (click)="editParcel()">
-              <mat-icon>edit</mat-icon>
-              Modifier
-            </button>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <button class="btn btn-primary" (click)="localiserParcelle()">
+        <i class="fas fa-map-marker-alt"></i> Localiser
+      </button>
+      <button class="btn btn-secondary" (click)="editParcelle()">
+        <i class="fas fa-edit"></i> Modifier
+      </button>
+    </div>
+  </div>
+
+  <!-- Vue d'ensemble avec métriques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon surface-icon">
+          <i class="fas fa-ruler-combined"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ parcelle?.surfaceCadastrale ? (parcelle.surfaceCadastrale | number:'1.0-0') : '2,450' }} m²</h3>
+          <p>Surface cadastrale</p>
+          <div class="stat-trend">
+            <i class="fas fa-info-circle"></i> SIG: {{ parcelle?.surfaceSIG ? (parcelle.surfaceSIG | number:'1.2-2') : '2,453.67' }} m²
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Statistiques rapides -->
-      <div class="stats-grid">
-        <div class="stat-card primary">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>square_foot</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ formatNumber(parcelleDetails.surface) }}</h3>
-              <p>Surface totale (m²)</p>
-            </div>
-          </div>
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon tnb-icon">
+          <i class="fas fa-money-bill-wave"></i>
         </div>
-
-        <div class="stat-card success">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>area_chart</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ formatNumber(parcelleDetails.surfaceImposable) }}</h3>
-              <p>Surface imposable (m²)</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card warning">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>attach_money</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ formatCurrency(parcelleDetails.tnb) }}</h3>
-              <p>TNB calculée</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card info">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>trending_up</mat-icon>
-            </div>
-            <div class="stat-info">
-              <h3>{{ getCalculatedPercentage() }}%</h3>
-              <p>Taux d'occupation</p>
-            </div>
+        <div class="stat-info">
+          <h3>{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH</h3>
+          <p>TNB calculée</p>
+          <div class="stat-trend">
+            <i class="fas fa-info-circle"></i> {{ parcelle?.tarifUnitaire || '10' }} DH/m²
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Layout principal avec onglets -->
-      <div class="detail-layout">
-        <!-- Navigation onglets -->
-        <div class="detail-tabs">
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'general'"
-                  (click)="switchTab('general')">
-            <mat-icon>info</mat-icon>
-            Informations générales
-          </button>
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'fiscal'"
-                  (click)="switchTab('fiscal')">
-            <mat-icon>calculate</mat-icon>
-            Calcul fiscal
-          </button>
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'proprietaires'"
-                  (click)="switchTab('proprietaires')">
-            <mat-icon>people</mat-icon>
-            Propriétaires
-          </button>
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'geometrie'"
-                  (click)="switchTab('geometrie')">
-            <mat-icon>map</mat-icon>
-            Géométrie
-          </button>
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'documents'"
-                  (click)="switchTab('documents')">
-            <mat-icon>folder</mat-icon>
-            Documents
-          </button>
-          <button class="tab-btn" 
-                  [class.active]="activeTab === 'historique'"
-                  (click)="switchTab('historique')">
-            <mat-icon>history</mat-icon>
-            Historique
-          </button>
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon owners-icon">
+          <i class="fas fa-users"></i>
         </div>
-
-        <!-- Contenu des onglets -->
-        <div class="tab-content">
-          
-          <!-- Onglet Informations générales -->
-          <div *ngIf="activeTab === 'general'" class="tab-pane active">
-            <div class="info-sections">
-              <div class="info-section">
-                <h3>Identification</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <label>Référence foncière:</label>
-                    <span class="value primary">{{ parcelleDetails.reference }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Statut foncier:</label>
-                    <span class="value">{{ parcelleDetails.statutFoncier }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Zone urbanistique:</label>
-                    <span class="value">{{ parcelleDetails.zone }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Statut d'occupation:</label>
-                    <span class="value">{{ parcelleDetails.statutOccupation }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="info-section">
-                <h3>Localisation</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <label>Adresse:</label>
-                    <span class="value">{{ parcelleDetails.adresse }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Commune:</label>
-                    <span class="value">Oujda</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Secteur:</label>
-                    <span class="value">{{ parcelleDetails.secteur }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Coordonnées:</label>
-                    <span class="value">{{ parcelleDetails.coordonnees }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="info-section">
-                <h3>Dimensions</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <label>Surface totale:</label>
-                    <span class="value primary">{{ formatNumber(parcelleDetails.surface) }} m²</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Surface imposable:</label>
-                    <span class="value">{{ formatNumber(parcelleDetails.surfaceImposable) }} m²</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Périmètre:</label>
-                    <span class="value">{{ formatNumber(parcelleDetails.perimetre) }} m</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Forme géométrique:</label>
-                    <span class="value">{{ parcelleDetails.formeGeometrique }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Onglet Calcul fiscal -->
-          <div *ngIf="activeTab === 'fiscal'" class="tab-pane active">
-            <div class="fiscal-sections">
-              <div class="fiscal-section">
-                <h3>Paramètres fiscaux</h3>
-                <div class="fiscal-grid">
-                  <div class="fiscal-item">
-                    <label>Prix unitaire au m²:</label>
-                    <span class="value primary">{{ formatCurrency(parcelleDetails.prixUnitaire) }}/m²</span>
-                  </div>
-                  <div class="fiscal-item">
-                    <label>Coefficient d'abattement:</label>
-                    <span class="value">{{ parcelleDetails.coefficientAbattement }}%</span>
-                  </div>
-                  <div class="fiscal-item">
-                    <label>Année fiscale:</label>
-                    <span class="value">{{ parcelleDetails.anneeFiscale }}</span>
-                  </div>
-                  <div class="fiscal-item">
-                    <label>Exonération TNB:</label>
-                    <span class="badge" [class]="parcelleDetails.exonere ? 'success' : 'secondary'">
-                      {{ parcelleDetails.exonere ? 'Exonéré' : 'Non exonéré' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fiscal-section">
-                <h3>Calcul détaillé</h3>
-                <div class="calculation-table">
-                  <div class="calc-row">
-                    <span class="calc-label">Surface imposable:</span>
-                    <span class="calc-value">{{ formatNumber(parcelleDetails.surfaceImposable) }} m²</span>
-                  </div>
-                  <div class="calc-row">
-                    <span class="calc-label">Prix unitaire:</span>
-                    <span class="calc-value">{{ formatCurrency(parcelleDetails.prixUnitaire) }}/m²</span>
-                  </div>
-                  <div class="calc-row">
-                    <span class="calc-label">Montant brut:</span>
-                    <span class="calc-value">{{ formatCurrency(getMontantBrut()) }}</span>
-                  </div>
-                  <div class="calc-row">
-                    <span class="calc-label">Abattement ({{ parcelleDetails.coefficientAbattement }}%):</span>
-                    <span class="calc-value negative">-{{ formatCurrency(getAbattement()) }}</span>
-                  </div>
-                  <div class="calc-row total">
-                    <span class="calc-label">TNB à payer:</span>
-                    <span class="calc-value primary">{{ formatCurrency(parcelleDetails.tnb) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="fiscal-section" *ngIf="parcelleDetails.exonere">
-                <h3>Informations d'exonération</h3>
-                <div class="exoneration-info">
-                  <div class="exoneration-item">
-                    <label>Date d'exonération:</label>
-                    <span class="value">{{ parcelleDetails.dateExoneration | date:'dd/MM/yyyy' }}</span>
-                  </div>
-                  <div class="exoneration-item">
-                    <label>Durée d'exonération:</label>
-                    <span class="value">{{ parcelleDetails.dureeExoneration }} ans</span>
-                  </div>
-                  <div class="exoneration-item">
-                    <label>Motif:</label>
-                    <span class="value">{{ parcelleDetails.motifExoneration }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Onglet Propriétaires -->
-          <div *ngIf="activeTab === 'proprietaires'" class="tab-pane active">
-            <div class="proprietaires-section">
-              <div class="proprietaires-header">
-                <h3>Propriétaires en indivision ({{ parcelleDetails.proprietaires.length }})</h3>
-                <button mat-raised-button color="primary" (click)="addProprietaire()">
-                  <mat-icon>person_add</mat-icon>
-                  Ajouter propriétaire
-                </button>
-              </div>
-
-              <div class="proprietaires-list">
-                <div *ngFor="let prop of parcelleDetails.proprietaires; let i = index" 
-                     class="proprietaire-card">
-                  <div class="proprietaire-info">
-                    <div class="proprietaire-identity">
-                      <div class="proprietaire-name">{{ prop.nom }} {{ prop.prenom }}</div>
-                      <div class="proprietaire-type">
-                        <span class="badge" [class]="prop.type === 'physique' ? 'info' : 'warning'">
-                          {{ prop.type === 'physique' ? 'Personne physique' : 'Personne morale' }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="proprietaire-details">
-                      <div class="detail-item">
-                        <label>{{ prop.type === 'physique' ? 'CIN:' : 'RC:' }}</label>
-                        <span>{{ prop.type === 'physique' ? prop.cin : prop.rc }}</span>
-                      </div>
-                      <div class="detail-item" *ngIf="prop.adresse">
-                        <label>Adresse:</label>
-                        <span>{{ prop.adresse }}</span>
-                      </div>
-                      <div class="detail-item" *ngIf="prop.telephone">
-                        <label>Téléphone:</label>
-                        <span>{{ prop.telephone }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="proprietaire-quote">
-                    <div class="quote-info">
-                      <div class="quote-percentage">{{ prop.quotePart }}%</div>
-                      <div class="quote-amount">{{ formatCurrency(calculateQuoteAmount(prop.quotePart)) }}</div>
-                    </div>
-                    <div class="quote-actions">
-                      <button mat-icon-button color="primary" (click)="editProprietaire(i)">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button color="warn" (click)="deleteProprietaire(i)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="quotes-summary">
-                <div class="summary-item">
-                  <span class="label">Total des quote-parts:</span>
-                  <span class="value" [class]="getTotalQuotesClass()">{{ getTotalQuotes() }}%</span>
-                </div>
-                <div class="summary-item">
-                  <span class="label">TNB total répartie:</span>
-                  <span class="value">{{ formatCurrency(parcelleDetails.tnb) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Onglet Géométrie -->
-          <div *ngIf="activeTab === 'geometrie'" class="tab-pane active">
-            <div class="geometry-section">
-              <div class="geometry-info">
-                <h3>Informations géométriques</h3>
-                <div class="geometry-grid">
-                  <div class="geometry-item">
-                    <label>Nombre de points:</label>
-                    <span class="value">{{ parcelleDetails.geometry.nombrePoints }}</span>
-                  </div>
-                  <div class="geometry-item">
-                    <label>Surface calculée:</label>
-                    <span class="value primary">{{ formatNumber(parcelleDetails.surface) }} m²</span>
-                  </div>
-                  <div class="geometry-item">
-                    <label>Périmètre:</label>
-                    <span class="value">{{ formatNumber(parcelleDetails.perimetre) }} m</span>
-                  </div>
-                  <div class="geometry-item">
-                    <label>Centroïde X:</label>
-                    <span class="value">{{ formatCoordinate(parcelleDetails.geometry.centroide.x) }}</span>
-                  </div>
-                  <div class="geometry-item">
-                    <label>Centroïde Y:</label>
-                    <span class="value">{{ formatCoordinate(parcelleDetails.geometry.centroide.y) }}</span>
-                  </div>
-                  <div class="geometry-item">
-                    <label>Géométrie valide:</label>
-                    <span class="badge" [class]="parcelleDetails.geometry.valide ? 'success' : 'error'">
-                      {{ parcelleDetails.geometry.valide ? 'Valide' : 'Invalide' }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="geometry-map">
-                <div class="map-placeholder">
-                  <mat-icon>map</mat-icon>
-                  <h4>Visualisation géométrique</h4>
-                  <p>Aperçu de la forme de la parcelle</p>
-                </div>
-              </div>
-
-              <div class="geometry-actions">
-                <button mat-raised-button color="primary" (click)="editGeometry()">
-                  <mat-icon>edit_location</mat-icon>
-                  Modifier géométrie
-                </button>
-                <button mat-stroked-button (click)="viewOnMap()">
-                  <mat-icon>map</mat-icon>
-                  Voir sur carte
-                </button>
-                <button mat-stroked-button (click)="exportGeometry()">
-                  <mat-icon>download</mat-icon>
-                  Exporter géométrie
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Onglet Documents -->
-          <div *ngIf="activeTab === 'documents'" class="tab-pane active">
-            <div class="documents-section">
-              <div class="documents-header">
-                <h3>Documents associés ({{ parcelleDetails.documents.length }})</h3>
-                <button mat-raised-button color="primary" (click)="uploadDocument()">
-                  <mat-icon>upload_file</mat-icon>
-                  Ajouter document
-                </button>
-              </div>
-
-              <div class="documents-grid">
-                <div *ngFor="let doc of parcelleDetails.documents" class="document-card">
-                  <div class="document-icon" [style.background-color]="getDocumentColor(doc.type)">
-                    <mat-icon>{{ getDocumentIcon(doc.type) }}</mat-icon>
-                  </div>
-                  <div class="document-info">
-                    <div class="document-name">{{ doc.nom }}</div>
-                    <div class="document-meta">
-                      <span class="document-size">{{ doc.taille }}</span>
-                      <span class="document-date">{{ doc.dateAjout | date:'dd/MM/yyyy' }}</span>
-                    </div>
-                    <div class="document-type">{{ getDocumentTypeLabel(doc.type) }}</div>
-                  </div>
-                  <div class="document-actions">
-                    <button mat-icon-button color="primary" (click)="viewDocument(doc)" matTooltip="Voir">
-                      <mat-icon>visibility</mat-icon>
-                    </button>
-                    <button mat-icon-button color="accent" (click)="downloadDocument(doc)" matTooltip="Télécharger">
-                      <mat-icon>download</mat-icon>
-                    </button>
-                    <button mat-icon-button color="warn" (click)="deleteDocument(doc)" matTooltip="Supprimer">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="documents-summary" *ngIf="parcelleDetails.documents.length === 0">
-                <mat-icon>folder_open</mat-icon>
-                <p>Aucun document associé à cette parcelle</p>
-                <button mat-raised-button color="primary" (click)="uploadDocument()">
-                  <mat-icon>upload_file</mat-icon>
-                  Ajouter le premier document
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Onglet Historique -->
-          <div *ngIf="activeTab === 'historique'" class="tab-pane active">
-            <div class="historique-section">
-              <h3>Historique des modifications</h3>
-              
-              <div class="historique-timeline">
-                <div *ngFor="let entry of parcelleDetails.historique" class="timeline-entry">
-                  <div class="timeline-marker" [class]="getHistoryMarkerClass(entry.type)">
-                    <mat-icon>{{ getHistoryIcon(entry.type) }}</mat-icon>
-                  </div>
-                  <div class="timeline-content">
-                    <div class="timeline-header">
-                      <h4>{{ entry.action }}</h4>
-                      <span class="timeline-date">{{ entry.date | date:'dd/MM/yyyy HH:mm' }}</span>
-                    </div>
-                    <div class="timeline-details">{{ entry.details }}</div>
-                    <div class="timeline-user">Par {{ entry.utilisateur }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="stat-info">
+          <h3>{{ parcelle?.proprietaires?.length || '2' }}</h3>
+          <p>Propriétaires</p>
+          <div class="stat-trend">
+            <i class="fas fa-info-circle"></i> {{ parcelle?.typePropriete || 'Indivision' }}
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Actions rapides flottantes -->
-        <div class="quick-actions">
-          <button mat-fab color="primary" (click)="generateFicheTNB()" matTooltip="Générer fiche TNB">
-            <mat-icon>description</mat-icon>
-          </button>
-          <button mat-mini-fab color="accent" (click)="printParcel()" matTooltip="Imprimer">
-            <mat-icon>print</mat-icon>
-          </button>
-          <button mat-mini-fab (click)="shareParcel()" matTooltip="Partager">
-            <mat-icon>share</mat-icon>
-          </button>
+    <div class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon documents-icon">
+          <i class="fas fa-file-invoice"></i>
+        </div>
+        <div class="stat-info">
+          <h3>{{ parcelle?.fichesGenerees || '3' }}</h3>
+          <p>Fiches générées</p>
+          <div class="stat-trend">
+            <i class="fas fa-info-circle"></i> Dernière: {{ parcelle?.derniereFiche ? (parcelle.derniereFiche | date:'dd/MM/yyyy') : '15/03/2024' }}
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- État de chargement -->
-<div *ngIf="loading" class="loading-container">
-  <mat-spinner diameter="50"></mat-spinner>
-  <p>Chargement des détails de la parcelle...</p>
-</div>
-  <!-- Métriques principales -->
-  <div class="metrics-section">
-    <mat-card class="metric-card surface">
-      <div class="metric-value">{{parcelleDetails.surface | number:'1.2-2'}}</div>
-      <div class="metric-label">Surface totale (m²)</div>
-    </mat-card>
-    
-    <mat-card class="metric-card surface-imposable">
-      <div class="metric-value">{{parcelleDetails.surfaceImposable | number:'1.2-2'}}</div>
-      <div class="metric-label">Surface imposable (m²)</div>
-    </mat-card>
-    
-    <mat-card class="metric-card montant">
-      <div class="metric-value">{{parcelleDetails.tnb | number:'1.2-2'}} DH</div>
-      <div class="metric-label">Montant TNB (DH)</div>
-    </mat-card>
+  <!-- Onglets de détail -->
+  <div class="nav-tabs">
+    <button class="nav-tab" [class.active]="activeTab === 'overview'" (click)="setActiveTab('overview')">
+      <i class="fas fa-info-circle"></i>
+      Vue d'ensemble
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'geometry'" (click)="setActiveTab('geometry')">
+      <i class="fas fa-map"></i>
+      Géométrie & Localisation
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'owners'" (click)="setActiveTab('owners')">
+      <i class="fas fa-users"></i>
+      Propriétaires & Quote-parts
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'fiscal'" (click)="setActiveTab('fiscal')">
+      <i class="fas fa-calculator"></i>
+      Données fiscales
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'documents'" (click)="setActiveTab('documents')">
+      <i class="fas fa-paperclip"></i>
+      Documents joints
+    </button>
+    <button class="nav-tab" [class.active]="activeTab === 'history'" (click)="setActiveTab('history')">
+      <i class="fas fa-history"></i>
+      Historique
+    </button>
   </div>
 
-  <!-- Contenu principal -->
-  <div class="main-content">
-    
-    <!-- Colonne principale -->
-    <div class="main-column">
-      
-      <!-- Informations de base -->
-      <mat-card class="info-section">
-        <mat-card-header>
-          <mat-card-title>Informations de base</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
+  <!-- Contenu des onglets -->
+  
+  <!-- Vue d'ensemble -->
+  <div class="tab-content" *ngIf="activeTab === 'overview'">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>Informations foncières</h3>
+          <button class="btn btn-secondary btn-sm" (click)="editInformationsFoncieres()">
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+        <div class="card-body">
           <div class="info-grid">
             <div class="info-item">
-              <label>Statut foncier</label>
-              <span>{{parcelleDetails.statutFoncier}} - Titre Foncier</span>
+              <label>RÉFÉRENCE FONCIÈRE</label>
+              <p class="info-value">{{ parcelle?.referenceFonciere || 'TF-456789' }}</p>
+              <small>{{ parcelle?.typeTitre || 'Titre Foncier' }}</small>
             </div>
             
             <div class="info-item">
-              <label>Prix unitaire</label>
-              <span>{{parcelleDetails.prixUnitaire | number:'1.2-2'}} DH/m²</span>
+              <label>ZONE URBANISTIQUE</label>
+              <p class="info-value">
+                <span class="badge badge-secondary">{{ parcelle?.zoneUrbanistique || 'R2 - Résidentiel moyen' }}</span>
+              </p>
             </div>
             
             <div class="info-item">
-              <label>Zone urbanistique</label>
-              <span>{{parcelleDetails.zone}}</span>
+              <label>STATUT D'OCCUPATION</label>
+              <p class="info-value">{{ parcelle?.statutOccupation || 'Terrain nu' }}</p>
+              <small>{{ parcelle?.statutOccupationDetail || 'Pas de construction déclarée' }}</small>
             </div>
             
             <div class="info-item">
-              <label>Exonération</label>
-              <span>{{parcelleDetails.exonere ? 'Exonéré' : 'Non exonéré'}}</span>
-            </div>
-            
-            <div class="info-item">
-              <label>Statut occupation</label>
-              <span>{{parcelleDetails.statutOccupation}}</span>
-            </div>
-            
-            <div class="info-item">
-              <label>Année fiscale</label>
-              <span>2024</span>
+              <label>ADRESSE</label>
+              <p class="info-value">{{ parcelle?.adresse || 'Secteur Lazaret, Quartier Salam' }}</p>
+              <small>{{ parcelle?.adresseDetail || 'Oujda, Province d\'Oujda-Angad' }}</small>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Propriétaires -->
-      <mat-card class="proprietaires-section">
-        <mat-card-header>
-          <mat-card-title>Propriétaires ({{parcelleDetails.proprietaires.length}} - Indivision)</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="proprietaires-list">
-            <div class="proprietaire-item" *ngFor="let prop of parcelleDetails.proprietaires">
-              <div class="proprietaire-info">
-                <div class="proprietaire-nom">
-                  {{prop.nom}} {{prop.prenom || ''}}
-                </div>
-                <div class="proprietaire-details">
-                  {{prop.type === 'physique' ? 'CIN: ' + prop.cin : 'RC: ' + prop.rc}} • 
-                  {{prop.type === 'physique' ? 'Personne physique' : 'Personne morale'}}
-                </div>
-              </div>
-              <div class="proprietaire-quote">
-                <div class="quote-percentage">{{prop.quotePart}}%</div>
-                <div class="quote-amount">{{(parcelleDetails!.tnb * prop.quotePart / 100) | number:'1.2-2'}} DH</div>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Historique des modifications -->
-      <mat-card class="historique-section">
-        <mat-card-header>
-          <mat-card-title>Historique des modifications</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="historique-list">
-            <div class="historique-item" *ngFor="let item of parcelleDetails.historique">
-              <div class="historique-date">{{item.date}}</div>
-              <div class="historique-action">{{item.action}}</div>
-              <div class="historique-details">{{item.details}}</div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Sidebar droite -->
-    <div class="sidebar">
+        </div>
+      </div>
       
-      <!-- Actions rapides -->
-      <mat-card class="actions-card">
-        <mat-card-header>
-          <mat-card-title>Actions rapides</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="actions-list">
-            <button mat-raised-button class="action-btn modifier" (click)="modifierParcelle()">
-              <mat-icon>edit</mat-icon>
-              Modifier la parcelle
-            </button>
+      <div class="card">
+        <div class="card-header">
+          <h3>Données techniques</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>SURFACE CADASTRALE</label>
+              <p class="info-value">{{ parcelle?.surfaceCadastrale ? (parcelle.surfaceCadastrale | number:'1.0-0') : '2,450' }} m²</p>
+            </div>
             
-            <button mat-raised-button class="action-btn generer" (click)="genererFicheTnb()">
-              <mat-icon>description</mat-icon>
-              Générer fiche TNB
-            </button>
+            <div class="info-item">
+              <label>SURFACE IMPOSABLE</label>
+              <p class="info-value">{{ parcelle?.surfaceImposable ? (parcelle.surfaceImposable | number:'1.0-0') : '2,200' }} m²</p>
+            </div>
             
-            <button mat-stroked-button class="action-btn voir-carte" (click)="voirSurCarte()">
-              <mat-icon>map</mat-icon>
-              Voir sur la carte
-            </button>
+            <div class="info-item">
+              <label>SURFACE CALCULÉE (SIG)</label>
+              <p class="info-value">{{ parcelle?.surfaceSIG ? (parcelle.surfaceSIG | number:'1.2-2') : '2,453.67' }} m²</p>
+              <small class="warning-text" *ngIf="parcelle?.ecartSurface">
+                <i class="fas fa-exclamation-triangle"></i>
+                Écart de {{ parcelle.ecartSurface | number:'1.2-2' }} m² avec le cadastre
+              </small>
+            </div>
             
-            <button mat-stroked-button class="action-btn imprimer" (click)="imprimerDetails()">
-              <mat-icon>print</mat-icon>
-              Imprimer détails
-            </button>
+            <div class="info-item">
+              <label>PÉRIMÈTRE</label>
+              <p class="info-value">{{ parcelle?.perimetre ? (parcelle.perimetre | number:'1.2-2') : '198.45' }} m</p>
+            </div>
             
-            <button mat-stroked-button class="action-btn changer-statut" (click)="changerStatut()">
-              <mat-icon>swap_horiz</mat-icon>
-              Changer statut
-            </button>
-            
-            <button mat-stroked-button class="action-btn archiver" (click)="archiverParcelle()">
-              <mat-icon>archive</mat-icon>
-              Archiver
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Localisation -->
-      <mat-card class="localisation-card">
-        <mat-card-header>
-          <mat-card-title>Localisation</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="map-placeholder">
-            <div class="map-info">
-              <mat-icon class="map-icon">place</mat-icon>
-              <p>Miniature carte</p>
+            <div class="info-item">
+              <label>COORDONNÉES CENTROÏDE</label>
+              <p class="info-value coords">
+                X: {{ parcelle?.coordonneesCentroide?.x ? (parcelle.coordonneesCentroide.x | number:'1.2-2') : '651,289.23' }}<br>
+                Y: {{ parcelle?.coordonneesCentroide?.y ? (parcelle.coordonneesCentroide.y | number:'1.2-2') : '372,165.34' }}
+              </p>
             </div>
           </div>
-          
-          <div class="coordinates-info">
-            <div class="coord-item">
-              <label>Coordonnées:</label>
-              <span>{{parcelleDetails.coordonnees}}</span>
-            </div>
-            <div class="coord-item">
-              <label>Secteur:</label>
-              <span>Nord-Est Oujda</span>
-            </div>
-            <div class="coord-item">
-              <label>Commune:</label>
-              <span>Oujda</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Documents -->
-      <mat-card class="documents-card">
-        <mat-card-header>
-          <mat-card-title>Documents ({{parcelleDetails.documents.length}})</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="documents-list">
-            <div class="document-item" *ngFor="let doc of parcelleDetails.documents">
-              <div class="document-icon" [style.background-color]="getDocumentColor(doc.type)">
-                <mat-icon>{{getDocumentIcon(doc.type)}}</mat-icon>
-              </div>
-              <div class="document-info">
-                <div class="document-name">{{doc.nom}}</div>
-                <div class="document-details">{{doc.taille}}</div>
-              </div>
-              <button mat-icon-button class="document-action">
-                <mat-icon>visibility</mat-icon>
-              </button>
-            </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Résumé fiscal -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Résumé fiscal TNB {{ parcelle?.anneeFiscale || '2024' }}</h3>
+        <button class="btn btn-success btn-sm" (click)="genererFichesPDF()">
+          <i class="fas fa-file-pdf"></i>
+          Fiches PDF
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="grid-3">
+          <div class="fiscal-summary-item">
+            <div class="fiscal-value">{{ parcelle?.tarifUnitaire || '10' }} DH/m²</div>
+            <div class="fiscal-label">Tarif unitaire</div>
           </div>
           
-          <button mat-raised-button class="add-document-btn" (click)="ajouterDocument()">
-            <mat-icon>add</mat-icon>
-            Ajouter document
-          </button>
-        </mat-card-content>
-      </mat-card>
+          <div class="fiscal-summary-item">
+            <div class="fiscal-value">{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH</div>
+            <div class="fiscal-label">TNB totale</div>
+          </div>
+          
+          <div class="fiscal-summary-item">
+            <div class="fiscal-value">{{ parcelle?.tauxRecouvrement || '100' }}%</div>
+            <div class="fiscal-label">Taux de recouvrement</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-<!-- État de chargement -->
-<div *ngIf="loading" class="loading-container">
-  <mat-spinner diameter="50"></mat-spinner>
-  <p>Chargement des détails de la parcelle...</p>
+  <!-- Géométrie & Localisation -->
+  <div class="tab-content" *ngIf="activeTab === 'geometry'">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>Carte de localisation</h3>
+          <div class="map-actions">
+            <button class="btn btn-secondary btn-sm" (click)="pleinEcran()">
+              <i class="fas fa-expand"></i> Plein écran
+            </button>
+            <button class="btn btn-primary btn-sm" (click)="exportCarte()">
+              <i class="fas fa-download"></i> Export carte
+            </button>
+          </div>
+        </div>
+        <div class="card-body map-container">
+          <app-map 
+            [parcelles]="[]"
+            [showControls]="true">
+          </app-map>
+        </div>
+      </div>
+      
+      <div>
+        <!-- Informations géométriques -->
+        <div class="card">
+          <div class="card-header">
+            <h4>Caractéristiques géométriques</h4>
+          </div>
+          <div class="card-body">
+            <div class="geometry-info">
+              <div class="geometry-item">
+                <span>Type géométrie:</span>
+                <strong>{{ parcelle?.typeGeometrie || 'Polygone' }}</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Nombre de sommets:</span>
+                <strong>{{ parcelle?.nombreSommets || '12' }} points</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Surface calculée:</span>
+                <strong>{{ parcelle?.surfaceSIG ? (parcelle.surfaceSIG | number:'1.2-2') : '2,453.67' }} m²</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Périmètre:</span>
+                <strong>{{ parcelle?.perimetre ? (parcelle.perimetre | number:'1.2-2') : '198.45' }} m</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Ratio forme:</span>
+                <strong>{{ parcelle?.ratioForme || '0.78' }}</strong>
+              </div>
+            </div>
+            
+            <hr>
+            
+            <div class="geometry-info">
+              <div class="geometry-item">
+                <span>Système projection:</span>
+                <strong>{{ parcelle?.systemeProjection || 'EPSG:26191' }}</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Précision:</span>
+                <strong>{{ parcelle?.precision || '± 0.05' }} m</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Source géométrie:</span>
+                <strong>{{ parcelle?.sourceGeometrie || 'Levé GPS-RTK' }}</strong>
+              </div>
+              <div class="geometry-item">
+                <span>Date levé:</span>
+                <strong>{{ parcelle?.dateLeve ? (parcelle.dateLeve | date:'dd/MM/yyyy') : '15/03/2024' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Analyse spatiale -->
+        <div class="card" style="margin-top: 1rem;">
+          <div class="card-header">
+            <h4>Analyse spatiale</h4>
+          </div>
+          <div class="card-body">
+            <div class="spatial-analysis">
+              <h5>Parcelles voisines:</h5>
+              <ul class="neighbors-list">
+                <li *ngFor="let voisin of parcelle?.parcellesVoisines">
+                  <i class="fas fa-arrow-up"></i> {{ voisin.direction }}: {{ voisin.reference }} ({{ voisin.zone }})
+                </li>
+              </ul>
+              
+              <h5>Équipements proches:</h5>
+              <ul class="equipments-list">
+                <li *ngFor="let equipement of parcelle?.equipementsProches">
+                  <i [class]="equipement.icon"></i> 
+                  <span class="equipment-name">{{ equipement.nom }}</span>
+                  <span class="equipment-distance">({{ equipement.distance }})</span>
+                  <small class="equipment-type">{{ equipement.type }}</small>
+                </li>
+              </ul>
+              
+              <h5>Voiries proches:</h5>
+              <ul class="voiries-list">
+                <li *ngFor="let voirie of parcelle?.voiriesProches">
+                  <i [class]="voirie.icon"></i> 
+                  <span class="voirie-name">{{ voirie.nom }}</span>
+                  <span class="voirie-type">{{ voirie.type }}</span>
+                  <span class="voirie-distance">({{ voirie.distance }})</span>
+                  <div class="voirie-details">
+                    <small>Largeur: {{ voirie.largeur }} | État: {{ voirie.etat }}</small>
+                  </div>
+                </li>
+              </ul>
+              
+              <h5>Grands espaces:</h5>
+              <ul class="grands-espaces-list">
+                <li *ngFor="let espace of parcelle?.grandsEspaces">
+                  <i [class]="espace.icon"></i> 
+                  <span class="espace-name">{{ espace.nom }}</span>
+                  <span class="espace-type">{{ espace.type }}</span>
+                  <span class="espace-distance">({{ espace.distance }})</span>
+                  <div class="espace-details">
+                    <small>Superficie: {{ espace.superficie }}</small>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Table des coordonnées -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Coordonnées des sommets</h3>
+        <div class="coords-actions">
+          <button class="btn btn-secondary btn-sm" (click)="copierCoordonnees()">
+            <i class="fas fa-copy"></i> Copier
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="exportDXF()">
+            <i class="fas fa-download"></i> Export DXF
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Point</th>
+                <th>X (Lambert)</th>
+                <th>Y (Lambert)</th>
+                <th>Longitude (WGS84)</th>
+                <th>Latitude (WGS84)</th>
+                <th>Distance au suivant</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let point of parcelle?.coordonneesSommets; let i = index">
+                <td><strong>P{{ i + 1 }}</strong></td>
+                <td>{{ point.xLambert | number:'1.2-2' }}</td>
+                <td>{{ point.yLambert | number:'1.2-2' }}</td>
+                <td>{{ point.longitude | number:'1.6-6' }}°</td>
+                <td>{{ point.latitude | number:'1.6-6' }}°</td>
+                <td>{{ point.distanceSuivant | number:'1.2-2' }} m</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Propriétaires & Quote-parts -->
+  <div class="tab-content" *ngIf="activeTab === 'owners'">
+    <div class="card">
+      <div class="card-header">
+        <h3>Propriétaires et répartition des quote-parts</h3>
+        <button class="btn btn-primary btn-sm" (click)="modifierProprietaires()">
+          <i class="fas fa-edit"></i> Modifier
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          Cette parcelle est en {{ parcelle?.typePropriete || 'indivision' }} entre {{ parcelle?.proprietaires?.length || '2' }} propriétaires. Les quote-parts totalisent {{ getTotalQuoteParts() }}%.
+        </div>
+
+        <div class="grid-2">
+          <div class="card owner-card" *ngFor="let proprietaire of parcelle?.proprietaires; let i = index" 
+               [style.border-color]="getOwnerCardColor(i)">
+            <div class="card-body">
+              <div class="owner-header">
+                <div>
+                  <h4>{{ proprietaire.nom }}</h4>
+                  <small>CIN: {{ proprietaire.cin }}</small>
+                </div>
+                <span class="badge" [class]="'badge-' + getOwnerBadgeClass(i)" 
+                      style="font-size: 1rem; padding: 0.5rem 1rem;">
+                  {{ proprietaire.quotePart }}%
+                </span>
+              </div>
+              <div class="owner-address">
+                <div><strong>Adresse:</strong></div>
+                <div>{{ proprietaire.adresse }}</div>
+                <div>{{ proprietaire.ville }} {{ proprietaire.codePostal }}</div>
+              </div>
+              <div class="owner-tnb" [style.background]="getOwnerTnbBackground(i)">
+                <strong>TNB individuelle: {{ calculerTnbIndividuelle(proprietaire.quotePart) | number:'1.0-0' }} DH</strong>
+                <div class="tnb-calculation">
+                  {{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH × {{ proprietaire.quotePart }}% = {{ calculerTnbIndividuelle(proprietaire.quotePart) | number:'1.0-0' }} DH
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="indivision-summary">
+          <h5>Récapitulatif de l'indivision</h5>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <strong>{{ parcelle?.proprietaires?.length || '2' }}</strong>
+              <span>Propriétaires</span>
+            </div>
+            <div class="summary-item">
+              <strong>{{ getTotalQuoteParts() }}%</strong>
+              <span>Quote-parts</span>
+            </div>
+            <div class="summary-item">
+              <strong>{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH</strong>
+              <span>TNB totale</span>
+            </div>
+            <div class="summary-item">
+              <strong [style.color]="'var(--success-color)'">Valid</strong>
+              <span>Statut</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Données fiscales -->
+  <div class="tab-content" *ngIf="activeTab === 'fiscal'">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>Calcul TNB détaillé</h3>
+          <button class="btn btn-primary btn-sm" (click)="recalculerTNB()">
+            <i class="fas fa-calculator"></i> Recalculer
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="formula-box">
+            <h5>Formule de calcul</h5>
+            <p>TNB = Surface × Tarif × Coefficient × Quote-part</p>
+          </div>
+          
+          <div class="calculation-section">
+            <label><strong>Calcul de base:</strong></label>
+            <div class="calculation-box">
+              {{ parcelle?.surfaceImposable ? (parcelle.surfaceImposable | number:'1.0-0') : '2,200' }} m² × {{ parcelle?.tarifUnitaire || '10' }} DH/m² × {{ parcelle?.coefficientAbattement || '1.0' }} = <strong>{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH</strong>
+            </div>
+          </div>
+          
+          <h5>Répartition par propriétaire:</h5>
+          
+          <div class="owner-calculation" *ngFor="let proprietaire of parcelle?.proprietaires">
+            <div class="calculation-row">
+              <div>
+                <strong>{{ proprietaire.nom }}</strong><br>
+                <small>Quote-part: {{ proprietaire.quotePart }}% ({{ proprietaire.quotePart / 100 }})</small>
+              </div>
+              <div class="calculation-result">
+                <strong>{{ calculerTnbIndividuelle(proprietaire.quotePart) | number:'1.0-0' }} DH</strong><br>
+                <small>{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} × {{ proprietaire.quotePart / 100 }}</small>
+              </div>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="total-calculation">
+            <strong>Total TNB:</strong>
+            <strong>{{ parcelle?.tnbCalculee ? (parcelle.tnbCalculee | number:'1.0-0') : '22,000' }} DH</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Paramètres fiscaux</h3>
+        </div>
+        <div class="card-body">
+          <div class="fiscal-params">
+            <div class="param-item">
+              <span>Zone urbanistique:</span>
+              <strong>{{ parcelle?.zoneUrbanistique || 'R2 - Résidentiel moyen' }}</strong>
+            </div>
+            <div class="param-item">
+              <span>Catégorie fiscale:</span>
+              <strong>{{ parcelle?.categorieFiscale || 'Terrain nu résidentiel' }}</strong>
+            </div>
+            <div class="param-item">
+              <span>Tarif unitaire {{ parcelle?.anneeFiscale || '2024' }}:</span>
+              <strong>{{ parcelle?.tarifUnitaire || '10' }} DH/m²</strong>
+            </div>
+            <div class="param-item">
+              <span>Surface imposable:</span>
+              <strong>{{ parcelle?.surfaceImposable ? (parcelle.surfaceImposable | number:'1.0-0') : '2,200' }} m²</strong>
+            </div>
+            <div class="param-item">
+              <span>Coefficient d'abattement:</span>
+              <strong>{{ parcelle?.coefficientAbattement || '1.0' }} (aucun)</strong>
+            </div>
+          </div>
+
+          <hr>
+          
+          <h5>Évolution des tarifs</h5>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Année</th>
+                  <th>Tarif (DH/m²)</th>
+                  <th>Évolution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let tarif of parcelle?.evolutionTarifs" 
+                    [style.background]="tarif.annee === parcelle?.anneeFiscale ? 'rgba(5, 150, 105, 0.05)' : ''">
+                  <td><strong *ngIf="tarif.annee === parcelle?.anneeFiscale">{{ tarif.annee }}</strong>
+                      <span *ngIf="tarif.annee !== parcelle?.anneeFiscale">{{ tarif.annee }}</span>
+                  </td>
+                  <td><strong *ngIf="tarif.annee === parcelle?.anneeFiscale">{{ tarif.tarif | number:'1.2-2' }}</strong>
+                      <span *ngIf="tarif.annee !== parcelle?.anneeFiscale">{{ tarif.tarif | number:'1.2-2' }}</span>
+                  </td>
+                  <td>
+                    <span class="badge" [class]="'badge-' + tarif.evolutionClass">
+                      <i [class]="tarif.evolutionIcon"></i> {{ tarif.evolution }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents joints -->
+  <div class="tab-content" *ngIf="activeTab === 'documents'">
+    <div class="card">
+      <div class="card-header">
+        <h3>Documents et pièces jointes</h3>
+        <button class="btn btn-primary btn-sm" (click)="ajouterDocument()">
+          <i class="fas fa-upload"></i> Ajouter document
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div class="card document-card" *ngFor="let doc of parcelle?.documents" 
+               [style.border-left-color]="getDocumentColor(doc.type)">
+            <div class="card-body">
+              <div class="document-header">
+                <div class="document-icon" [style.background]="getDocumentIconBackground(doc.type)">
+                  <i [class]="getFileIcon(doc.type)"></i>
+                </div>
+                <div>
+                  <h5>{{ doc.nom }}</h5>
+                  <small>{{ doc.nomFichier }}</small>
+                </div>
+              </div>
+              <div class="document-meta">
+                Taille: {{ doc.taille | fileSize }} | Ajouté le: {{ doc.dateCreation | date:'dd/MM/yyyy' }}<br>
+                Par: {{ doc.ajoutePar }}
+              </div>
+              <div class="document-actions">
+                <button class="btn btn-secondary btn-sm" (click)="telechargerDocument(doc)">
+                  <i class="fas fa-download"></i> Télécharger
+                </button>
+                <button class="btn btn-primary btn-sm" (click)="previewDocument(doc)">
+                  <i class="fas fa-eye"></i> Aperçu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          <strong>Note:</strong> Tous les documents sont stockés de manière sécurisée et horodatés. L'accès est limité aux utilisateurs autorisés selon leurs privilèges.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div class="tab-content" *ngIf="activeTab === 'history'">
+    <div class="card">
+      <div class="card-header">
+        <h3>Historique des modifications</h3>
+        <div class="history-actions">
+          <button class="btn btn-secondary btn-sm" (click)="filtrerHistorique()">
+            <i class="fas fa-filter"></i> Filtrer
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="exporterHistorique()">
+            <i class="fas fa-download"></i> Export historique
+          </button>
+        </div>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date/Heure</th>
+                <th>Utilisateur</th>
+                <th>Action</th>
+                <th>Champs modifiés</th>
+                <th>Commentaire</th>
+                <th>Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let event of parcelle?.historique" 
+                  [style.background]="getHistoryRowBackground(event.type)">
+                <td>
+                  <strong>{{ event.date | date:'dd/MM/yyyy HH:mm' }}</strong><br>
+                  <small>{{ getTimeAgo(event.date) }}</small>
+                </td>
+                <td>
+                  <div>
+                    <strong>{{ event.utilisateur }}</strong><br>
+                    <small>{{ event.roleUtilisateur }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="'badge-' + event.badgeClass">
+                    <i [class]="event.icon"></i> {{ event.action }}
+                  </span>
+                </td>
+                <td>
+                  <div class="champs-modifies">
+                    <div *ngFor="let champ of event.champsModifies">
+                      • {{ champ }}
+                    </div>
+                  </div>
+                </td>
+                <td>{{ event.description }}</td>
+                <td><strong>{{ event.version }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques d'historique -->
+    <div class="grid-3" style="margin-top: 1.5rem;">
+      <div class="card">
+        <div class="card-body" style="text-align: center;">
+          <h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">{{ parcelle?.historique?.length || '5' }}</h3>
+          <p style="margin: 0; color: var(--gray-600);">Modifications totales</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body" style="text-align: center;">
+          <h3 style="color: var(--success-color); margin-bottom: 0.5rem;">{{ getNombreUtilisateurs() }}</h3>
+          <p style="margin: 0; color: var(--gray-600);">Utilisateurs impliqués</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-body" style="text-align: center;">
+          <h3 style="color: var(--info-color); margin-bottom: 0.5rem;">{{ getJoursDepuisCreation() }}</h3>
+          <p style="margin: 0; color: var(--gray-600);">Jours depuis création</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

@@ -1,6 +1,11 @@
 import { Component, ElementRef, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
@@ -8,6 +13,8 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import OSM from 'ol/source/OSM';
 import TileWMS from 'ol/source/TileWMS';
+import { XYZ } from 'ol/source';
+import { TileGrid } from 'ol/tilegrid';
 import { fromLonLat, toLonLat, transform, addProjection, get as getProjection } from 'ol/proj';
 import { register } from 'ol/proj/proj4';
 import proj4 from 'proj4';
@@ -18,6 +25,10 @@ import { defaults as defaultInteractions, Select, Draw, Modify } from 'ol/intera
 import { SelectEvent } from 'ol/interaction/Select';
 import { DrawEvent } from 'ol/interaction/Draw';
 import { ParcelleAPI } from './../../../features/parcelles/services/parcelles-api.service';
+import GeoJSON from 'ol/format/GeoJSON';
+
+// ArcGIS Online API Key
+const ARCGIS_API_KEY = "AAPTxy8BH1VEsoebNVZXo8HurOSE9hKbMgk3NnyJSolFXjbhcEX0Y2DiHVwgEXLwyDPhDRJoKSzMQfIF9P2j2Il7rIbcsReg902LKml_ysfPz7P0FNBf1RRp6ZlULPMhOJY_lMIFfLtqWHT6plbwOgaJal3-yaPbElwyjVMz2A3gqljYNBZ9c8oDSq9O1E0GP0_QvtmbFWD-nPtVMKpV_sRNa4GMFNba8ieQbBi-iH35HIsAV68T7K9q43tJ2jOu2AvgAT1_OGou6MIV";
 
 // Interface pour les options de la carte
 export interface MapOptions {
@@ -42,53 +53,15 @@ export interface ShapefileLayer {
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="map-container">
-      <div #mapElement class="map" [id]="mapId"></div>
-      
-      <!-- Contrôles de la carte -->
-      <div class="map-controls" *ngIf="showControls">
-        <!-- Contrôles des couches -->
-        <div class="layer-controls" *ngIf="showLayers">
-          <h4>Couches</h4>
-          <div class="layer-item" *ngFor="let layer of shapefileLayers">
-            <label>
-              <input type="checkbox" 
-                     [checked]="layer.visible" 
-                     (change)="toggleLayer(layer)">
-              {{ layer.name }}
-            </label>
-          </div>
-        </div>
-        
-        <!-- Outils de dessin -->
-        <div class="drawing-tools" *ngIf="enableDrawing">
-          <h4>Outils de dessin</h4>
-          <button class="btn btn-primary btn-sm" 
-                  (click)="startDrawing('Polygon')"
-                  [class.active]="currentTool === 'Polygon'">
-            <i class="fas fa-draw-polygon"></i> Polygone
-          </button>
-          <button class="btn btn-secondary btn-sm" 
-                  (click)="clearDrawing()">
-            <i class="fas fa-trash"></i> Effacer
-          </button>
-        </div>
-        
-        <!-- Informations de sélection -->
-        <div class="selection-info" *ngIf="selectedParcelle">
-          <h4>Parcelle sélectionnée</h4>
-          <p><strong>Référence:</strong> {{ selectedParcelle.referenceFonciere }}</p>
-          <p><strong>Surface:</strong> {{ selectedParcelle.surfaceTotale }} m²</p>
-          <p><strong>Statut:</strong> {{ selectedParcelle.etatValidation }}</p>
-          <button class="btn btn-primary btn-sm" (click)="viewParcelleDetails()">
-            Voir détails
-          </button>
-        </div>
-      </div>
-    </div>
-  `,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatSlideToggleModule,
+    MatProgressSpinnerModule,
+    MatButtonModule,
+    MatTooltipModule
+  ],
+  templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -104,6 +77,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() enableModify: boolean = false;
   
   @Output() parcelleSelected = new EventEmitter<ParcelleAPI>();
+  
+  // Propriétés d'état
+  public isLoading: boolean = false;
   @Output() geometryDrawn = new EventEmitter<any>();
   @Output() mapReady = new EventEmitter<Map>();
 
@@ -116,50 +92,23 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private modifyInteraction!: Modify;
   public currentTool: string = '';
   
-  // Couches shapefile pour Casablanca
-  public shapefileLayers: ShapefileLayer[] = [
-    {
-      name: 'OSM_Base',
-      url: '/assets/shapefiles/casablanca/OSM.geojson',
-      visible: true
-    },
-    {
-      name: 'Casablanca_Communes',
-      url: '/assets/shapefiles/casablanca/commune.geojson',
-      visible: true
-    },
-    {
-      name: 'Quartiers_Casa',
-      url: '/assets/shapefiles/casablanca/quartiers.geojson',
-      visible: false
-    },
-    {
-      name: 'voirie casa',
-      url: '/assets/shapefiles/casablanca/voirie.geojson',
-      visible: true
-    },
-    {
-      name: 'site_acceuil_wgs',
-      url: '/assets/shapefiles/casablanca/sites.geojson',
-      visible: false
-    },
-    {
-      name: 'bidonvilles84',
-      url: '/assets/shapefiles/casablanca/bidonvilles.geojson',
-      visible: false
-    }
-  ];
+  // Les couches shapefile locales ont été remplacées par les couches ArcGIS
 
   // Parcelle sélectionnée
   public selectedParcelle: ParcelleAPI | null = null;
 
-  // Coordonnées de Casablanca
+  // Coordonnées de Casablanca (version qui fonctionnait)
   private readonly CASABLANCA_CENTER: [number, number] = [-7.6114, 33.5731]; // Longitude, Latitude (WGS84)
   private readonly CASABLANCA_CENTER_26191: [number, number] = [-842000, 3950000]; // X, Y en EPSG:26191 (Merchich/Nord Maroc)
   private readonly DEFAULT_ZOOM = 10; // Zoom plus large pour voir toute la région de Casablanca
 
   // Couches shapefile chargées (Map des couches vectorielles)
   private loadedLayers: { [key: string]: VectorLayer<VectorSource> } = {};
+  
+  // Propriétés pour les calculs de géométrie
+  public calculatedSurface: number = 0;
+  public calculatedPerimeter: number = 0;
+  public calculatedPoints: number = 0;
 
   constructor(private http: HttpClient) {
     // Configurer la projection EPSG:26191 (Merchich/Nord Maroc)
@@ -167,8 +116,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupProjection(): void {
-    // Définir la projection EPSG:26191
-    proj4.defs('EPSG:26191', '+proj=tmerc +lat_0=33.3 +lon_0=-7.5 +k=0.999625769 +x_0=500000 +y_0=300000 +ellps=clrk80 +units=m +no_defs');
+    // Définir la projection EPSG:26191 (Merchich/Nord Maroc)
+    proj4.defs('EPSG:26191', '+proj=tmerc +lat_0=33.3 +lon_0=-7.5 +k=0.999625769 +x_0=500000 +y_0=300000 +ellps=clrk80 +towgs84=-31,146,47,0,0,0,0 +units=m +no_defs');
     
     // Enregistrer la projection avec OpenLayers
     register(proj4);
@@ -177,6 +126,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     const projection = getProjection('EPSG:26191');
     if (projection) {
       addProjection(projection);
+      console.log('✅ Projection EPSG:26191 configurée avec succès');
+    } else {
+      console.warn('⚠️ Impossible de configurer la projection EPSG:26191');
     }
   }
 
@@ -258,23 +210,19 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       this.map = new Map({
         target: this.mapElement.nativeElement,
         layers: [
-          // Couche de base WMS en EPSG:26191
+          // Couche de base ArcGIS Online avec API key
           new TileLayer({
-            source: new TileWMS({
-              url: 'https://www.ign.ma/wms',
-              params: {
-                'LAYERS': 'ign:ortho',
-                'TILED': true,
-                'CRS': 'EPSG:26191'
-              },
-              serverType: 'geoserver'
-            })
+            source: new XYZ({
+              url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=YOUR_API_KEY',
+              crossOrigin: 'anonymous'
+            }),
+            visible: true
           })
         ],
         view: new View({
-          center: this.CASABLANCA_CENTER_26191, // Utiliser EPSG:26191
+          center: fromLonLat(this.CASABLANCA_CENTER), // Convertir WGS84 vers Web Mercator
           zoom: this.options.zoom || this.DEFAULT_ZOOM,
-          projection: 'EPSG:26191'
+          projection: 'EPSG:3857' // Web Mercator pour OpenStreetMap
         }),
         interactions: defaultInteractions()
       });
@@ -293,6 +241,24 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       // Émettre l'événement de prêt
       this.mapReady.emit(this.map);
       
+      // S'assurer que la carte est centrée sur Casablanca
+      setTimeout(() => {
+        if (this.map) {
+          const casablancaCenter = fromLonLat(this.CASABLANCA_CENTER);
+          this.map.getView().setCenter(casablancaCenter);
+          this.map.getView().setZoom(11); // Zoom optimal pour voir Casablanca
+          console.log('🗺️ Map centered on Casablanca (WGS84):', casablancaCenter);
+          console.log('🗺️ Map projection:', this.map.getView().getProjection().getCode());
+          
+          // Forcer un refresh de la vue
+          setTimeout(() => {
+            this.map.getView().setCenter(casablancaCenter);
+            this.map.getView().setZoom(11);
+            console.log('🗺️ Map view refreshed with projection EPSG:3857');
+          }, 500);
+        }
+      }, 1000);
+      
       console.log('Map initialization completed');
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -300,8 +266,162 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initializeBaseLayer(): void {
-    // La couche de base OpenStreetMap est déjà ajoutée dans initializeMap()
-    // Pas besoin d'ajouter d'autres couches de base
+    // Ajouter les couches ArcGIS Online
+    this.addArcGISLayers();
+  }
+
+  private addArcGISLayers(): void {
+    console.log('🗺️ Ajout des couches ArcGIS...');
+    
+    // 1. Couche des Communes (visible par défaut)
+    const communesLayer = new VectorLayer({
+      source: new VectorSource({
+        url: `https://services5.arcgis.com/MihR3tFxJ3v2wyRZ/arcgis/rest/services/communes_wgs/FeatureServer/0/query?where=1%3D1&outFields=PREFECTURE,COMMUNE_AR,Shape_Area&f=geojson&token=${ARCGIS_API_KEY}`,
+        format: new GeoJSON()
+      }),
+      style: new Style({
+        fill: new Fill({
+          color: 'rgba(0, 123, 255, 0.2)'
+        }),
+        stroke: new Stroke({
+          color: '#007bff',
+          width: 2
+        })
+      }),
+      visible: true
+    });
+    this.map.addLayer(communesLayer);
+    this.loadedLayers['communes'] = communesLayer;
+    console.log('✅ Couche Communes ajoutée');
+
+    // 2. Couche des Hôtels
+    const hotelsLayer = new VectorLayer({
+      source: new VectorSource({
+        url: `https://services5.arcgis.com/MihR3tFxJ3v2wyRZ/arcgis/rest/services/Hotels_wgs/FeatureServer/0/query?where=1%3D1&outFields=CATÉGORIE,ADRESSE,HOTEL&f=geojson&token=${ARCGIS_API_KEY}`,
+        format: new GeoJSON()
+      }),
+      style: new Style({
+        image: new Circle({
+          radius: 12,
+          fill: new Fill({ color: 'orange' }),
+          stroke: new Stroke({ color: 'white', width: 2 })
+        })
+      }),
+      visible: true // Rendre visible par défaut
+    });
+    this.map.addLayer(hotelsLayer);
+    this.loadedLayers['hotels'] = hotelsLayer;
+    console.log('✅ Couche Hôtels ajoutée et visible');
+
+    // 3. Couche des Grandes Surfaces
+    const largeSurfaceLayer = new VectorLayer({
+      source: new VectorSource({
+        url: `https://services5.arcgis.com/MihR3tFxJ3v2wyRZ/arcgis/rest/services/Grande_surface_wgs_shp/FeatureServer/0/query?where=1%3D1&outFields=Adresse,Type&f=geojson&token=${ARCGIS_API_KEY}`,
+        format: new GeoJSON()
+      }),
+      style: new Style({
+        image: new Circle({
+          radius: 15,
+          fill: new Fill({ color: 'blue' }),
+          stroke: new Stroke({ color: 'white', width: 2 })
+        })
+      }),
+      visible: true // Rendre visible par défaut
+    });
+    this.map.addLayer(largeSurfaceLayer);
+    this.loadedLayers['grandes_surfaces'] = largeSurfaceLayer;
+    console.log('✅ Couche Grandes Surfaces ajoutée et visible');
+
+    // 4. Couche de Voirie
+    const voirieLayer = new VectorLayer({
+      source: new VectorSource({
+        url: `https://services5.arcgis.com/MihR3tFxJ3v2wyRZ/arcgis/rest/services/voirie_casa_1/FeatureServer/0/query?where=1%3D1&outFields=NOM,LENGTH&f=geojson&token=${ARCGIS_API_KEY}`,
+        format: new GeoJSON()
+      }),
+      style: new Style({
+        stroke: new Stroke({
+          color: 'purple',
+          width: 2
+        })
+      }),
+      visible: true // Rendre visible par défaut
+    });
+    this.map.addLayer(voirieLayer);
+    this.loadedLayers['voirie'] = voirieLayer;
+    console.log('✅ Couche Voirie ajoutée et visible');
+    
+    console.log('🗺️ Toutes les couches ArcGIS ont été ajoutées:', Object.keys(this.loadedLayers));
+  }
+
+  // Méthode pour changer le fond de carte ArcGIS
+  public changeBasemap(basemapType: string): void {
+    if (!this.map) return;
+
+    // Supprimer toutes les couches de base existantes
+    const layers = this.map.getLayers().getArray();
+    layers.forEach(layer => {
+      if (layer instanceof TileLayer) {
+        this.map.removeLayer(layer);
+      }
+    });
+
+    // Ajouter le nouveau fond de carte
+    let newBasemapLayer: TileLayer;
+    
+    switch (basemapType) {
+      case 'arcgis-topographic':
+        newBasemapLayer = new TileLayer({
+          source: new XYZ({
+            url: `https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`,
+            crossOrigin: 'anonymous'
+          })
+        });
+        break;
+      case 'arcgis-imagery':
+        newBasemapLayer = new TileLayer({
+          source: new XYZ({
+            url: `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`,
+            crossOrigin: 'anonymous'
+          })
+        });
+        break;
+      case 'arcgis-streets':
+        newBasemapLayer = new TileLayer({
+          source: new XYZ({
+            url: `https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`,
+            crossOrigin: 'anonymous'
+          })
+        });
+        break;
+      case 'arcgis-navigation':
+        newBasemapLayer = new TileLayer({
+          source: new XYZ({
+            url: `https://services.arcgisonline.com/ArcGIS/rest/services/World_Navigation_Charts/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`,
+            crossOrigin: 'anonymous'
+          })
+        });
+        break;
+      default:
+        // Retour à OpenStreetMap par défaut
+        newBasemapLayer = new TileLayer({
+          source: new OSM({
+            crossOrigin: 'anonymous'
+          })
+        });
+    }
+
+    // Ajouter le nouveau fond de carte en première position
+    this.map.getLayers().insertAt(0, newBasemapLayer);
+    console.log(`🗺️ Fond de carte changé vers: ${basemapType}`);
+  }
+
+  // Méthode pour basculer les couches ArcGIS
+  public toggleArcGISLayer(layerName: string, event: any): void {
+    const layer = this.loadedLayers[layerName];
+    if (layer) {
+      layer.setVisible(event.target.checked);
+      console.log(`🗺️ Couche ${layerName} ${event.target.checked ? 'activée' : 'désactivée'}`);
+    }
   }
 
 
@@ -338,475 +458,44 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initializeShapefileLayers(): void {
-    this.shapefileLayers.forEach(layer => {
-      this.loadShapefileLayer(layer);
-    });
+    // Les couches GeoJSON locales sont remplacées par les couches ArcGIS
+    // Plus besoin de charger les shapefiles locaux
+    console.log('🗺️ Couches GeoJSON locales désactivées - utilisation des couches ArcGIS uniquement');
   }
 
-  private loadShapefileLayer(layer: ShapefileLayer): void {
-    const source = new VectorSource();
-    
-    // Créer la couche vectorielle
-    const vectorLayer = new VectorLayer({
-      source: source,
-      style: this.getShapefileStyle(layer.name),
-      visible: layer.visible
-    });
+  // Méthode supprimée - remplacée par les couches ArcGIS
 
-    // Ajouter la couche à la carte
-    this.map.addLayer(vectorLayer);
-    
-    // Forcer la visibilité
-    vectorLayer.setVisible(true);
-    
-    // Stocker la référence
-    this.loadedLayers[layer.name] = vectorLayer;
-    
-    console.log(`Couche ${layer.name} ajoutée à la carte, visible: ${vectorLayer.getVisible()}`);
-    console.log(`🔍 Nombre de couches sur la carte:`, this.map.getLayers().getLength());
-    console.log(`🔍 Couche ajoutée:`, vectorLayer);
+  // Méthode supprimée - styles gérés par les couches ArcGIS
 
-    // Charger les données GeoJSON réelles
-    this.loadGeoJSONData(layer, source);
-    
-    // Zoomer sur les features après chargement
-    source.on('addfeature', () => {
-      if (source.getFeatures().length > 0) {
-        const extent = source.getExtent();
-        if (extent && extent[0] !== Infinity) {
-          this.map.getView().fit(extent, { padding: [50, 50, 50, 50] });
-        }
-      }
-    });
-  }
+  // Méthode supprimée - remplacée par les couches ArcGIS
 
-  private getShapefileStyle(layerName: string): Style {
-    switch (layerName) {
-      case 'OSM_Base':
-        // Style pour le fond de carte OSM - plus visible
-        return new Style({
-          stroke: new Stroke({
-            color: '#000000',
-            width: 3
-          }),
-          fill: new Fill({
-            color: 'rgba(200, 200, 200, 0.8)'
-          })
-        });
-      
-      case 'Casablanca_Communes':
-        // Bleu foncé plus visible
-        return new Style({
-          fill: new Fill({
-            color: 'rgba(0, 0, 255, 0.6)'
-          }),
-          stroke: new Stroke({
-            color: '#0000ff',
-            width: 3
-          })
-        });
-      
-      case 'voirie casa':
-        // Rouge plus visible pour les voiries
-        return new Style({
-          stroke: new Stroke({
-            color: '#ff0000',
-            width: 4
-          })
-        });
-      
-      case 'Quartiers_Casa':
-        // Bleu clair/teal plus visible
-        return new Style({
-          fill: new Fill({
-            color: 'rgba(11, 195, 115, 0.6)'
-          }),
-          stroke: new Stroke({
-            color: '#00ffff',
-            width: 2
-          }),
-          text: new Text({
-            font: '12px Arial',
-            fill: new Fill({
-              color: '#00ffff'
-            })
-          })
-        });
-      
-      case 'site_acceuil_wgs':
-        // Rose plus visible
-        return new Style({
-          fill: new Fill({
-            color: 'rgba(255, 105, 180, 0.8)'
-          }),
-          stroke: new Stroke({
-            color: '#ff69b4',
-            width: 3
-          })
-        });
-      
-      case 'bidonvilles84':
-        // Rose plus visible
-        return new Style({
-          fill: new Fill({
-            color: 'rgba(255, 105, 180, 0.7)'
-          }),
-          stroke: new Stroke({
-            color: '#ff1493',
-            width: 3
-          })
-        });
-      
-      default:
-        return new Style({
-          fill: new Fill({
-            color: 'rgba(108, 117, 125, 0.1)'
-          }),
-          stroke: new Stroke({
-            color: '#6c757d',
-            width: 1
-          })
-        });
-    }
-  }
+  // Méthode supprimée - GPKG non utilisé avec ArcGIS
 
-  private loadGeoJSONData(layer: ShapefileLayer, source: VectorSource): void {
-    console.log(`🔄 Tentative de chargement de ${layer.name} depuis: ${layer.url}`);
-    
-    // Vérifier si c'est un fichier GPKG
-    if (layer.url.endsWith('.gpkg')) {
-      console.log(`📦 Fichier GPKG détecté pour ${layer.name}`);
-      this.loadGPKGData(layer, source);
-      return;
-    }
-    
-    this.http.get(layer.url).subscribe({
-      next: (data: any) => {
-        console.log(`📄 Données GeoJSON reçues pour ${layer.name}:`, data);
-        // Créer les features à partir des données GeoJSON
-        const features = this.createFeaturesFromGeoJSON(data);
-        source.addFeatures(features);
-        console.log(`✅ Couche ${layer.name} chargée: ${features.length} éléments`);
-        console.log(`🔍 Features ajoutées à la source:`, features.length);
-        console.log(`🔍 Source features count:`, source.getFeatures().length);
-        console.log(`🔍 Couche visible:`, this.loadedLayers[layer.name]?.getVisible());
-      },
-      error: (error) => {
-        console.warn(`❌ Impossible de charger la couche ${layer.name} depuis ${layer.url}:`, error);
-        console.log(`🔄 Utilisation des données de démonstration pour ${layer.name}`);
-        // Créer des données de démonstration si les fichiers n'existent pas
-        this.createDemoData(layer, source);
-      }
-    });
-  }
+  // Méthodes supprimées - conversion gérée par les couches ArcGIS
 
-  private async loadGPKGData(layer: ShapefileLayer, source: VectorSource): Promise<void> {
-    try {
-      console.log(`🔄 Chargement du fichier GPKG: ${layer.url}`);
-      
-      // Charger le fichier GPKG avec GDAL-JS
-      const gdal = await import('gdal-js') as any;
-      const dataset = await gdal.open(layer.url);
-      console.log(`📦 Dataset GPKG ouvert:`, dataset);
-      
-      // Obtenir les couches du dataset
-      const layers = dataset.layers;
-      console.log(`📋 Nombre de couches dans le GPKG:`, layers.length);
-      
-      const features: Feature[] = [];
-      
-      // Parcourir toutes les couches
-      for (let i = 0; i < layers.length; i++) {
-        const gdalLayer = layers.get(i);
-        console.log(`🗺️ Couche ${i}:`, gdalLayer.name);
-        
-        // Parcourir les features de la couche
-        gdalLayer.features.forEach((gdalFeature: any) => {
-          try {
-            const geometry = gdalFeature.getGeometry();
-            const properties = gdalFeature.fields.toObject();
-            
-            // Convertir la géométrie GDAL en géométrie OpenLayers
-            const olGeometry = this.convertGDALGeometryToOL(geometry);
-            
-            if (olGeometry) {
-              const feature = new Feature({
-                geometry: olGeometry,
-                properties: properties
-              });
-              features.push(feature);
-            }
-          } catch (error) {
-            console.warn('Erreur lors de la conversion de la feature:', error);
-          }
-        });
-      }
-      
-      // Ajouter les features à la source
-      source.addFeatures(features);
-      console.log(`✅ GPKG ${layer.name} chargé: ${features.length} éléments`);
-      console.log(`🔍 Features ajoutées à la source:`, features.length);
-      console.log(`🔍 Couche visible:`, this.loadedLayers[layer.name]?.getVisible());
-      
-    } catch (error) {
-      console.error(`❌ Erreur lors du chargement du GPKG ${layer.name}:`, error);
-      console.log(`🔄 Utilisation des données de démonstration pour ${layer.name}`);
-      this.createDemoData(layer, source);
-    }
-  }
+  // Méthode supprimée - conversion gérée par les couches ArcGIS
 
-  private convertGDALGeometryToOL(gdalGeometry: any): any {
-    if (!gdalGeometry) return null;
-    
-    const type = gdalGeometry.type;
-    const coordinates = gdalGeometry.getCoordinates();
-    
-    switch (type) {
-      case 'Point':
-        return new Point(coordinates);
-      case 'LineString':
-        return new LineString(coordinates);
-      case 'Polygon':
-        return new Polygon(coordinates);
-      case 'MultiPolygon':
-        return new MultiPolygon(coordinates);
-      default:
-        console.warn('Type de géométrie non supporté:', type);
-        return null;
-    }
-  }
-
-  private createFeaturesFromGeoJSON(geoJsonData: any): Feature[] {
-    const features: Feature[] = [];
-    
-    if (geoJsonData.type === 'FeatureCollection' && geoJsonData.features) {
-      geoJsonData.features.forEach((featureData: any) => {
-        try {
-          const feature = new Feature({
-            geometry: this.createGeometryFromGeoJSON(featureData.geometry),
-            properties: featureData.properties
-          });
-          features.push(feature);
-        } catch (error) {
-          console.warn('Erreur lors de la création de la feature:', error);
-        }
-      });
-    }
-    
-    return features;
-  }
-
-  private createGeometryFromGeoJSON(geometry: any): any {
-    switch (geometry.type) {
-      case 'Point':
-        return new Point(geometry.coordinates);
-      case 'LineString':
-        return new LineString(geometry.coordinates);
-      case 'MultiLineString':
-        return new LineString(geometry.coordinates[0]); // Prendre la première ligne
-      case 'Polygon':
-        return new Polygon(geometry.coordinates);
-      case 'MultiPolygon':
-        return new MultiPolygon(geometry.coordinates);
-      default:
-        return new Point([0, 0]);
-    }
-  }
-
-  private convertToCasablanca(coords: number[]): number[] {
-    // Conversion approximative vers Casablanca
-    // Les coordonnées semblent être dans un système local
-    const x = coords[0];
-    const y = coords[1];
-    
-    // Conversion approximative vers WGS84 Casablanca
-    const lon = -7.6114 + (x + 28) * 0.1; // Ajustement longitude
-    const lat = 33.5731 + (y - 63) * 0.1; // Ajustement latitude
-    
-    return [lon, lat];
-  }
-
-  private convertCoordinatesArray(coordsArray: number[][]): number[][] {
-    if (!coordsArray || !Array.isArray(coordsArray)) {
-      return [];
-    }
-    return coordsArray.map(coords => this.convertToCasablanca(coords));
-  }
-
-  private convertMultiPolygonCoordinates(multiCoords: number[][][]): number[][][] {
-    if (!multiCoords || !Array.isArray(multiCoords)) {
-      return [];
-    }
-    return multiCoords.map(polygon => this.convertCoordinatesArray(polygon));
-  }
+  // Méthodes supprimées - conversion gérée par les couches ArcGIS
 
 
 
-  private createDemoData(layer: ShapefileLayer, source: VectorSource): void {
-    // Créer des données de démonstration pour Casablanca
-    const demoFeatures: Feature[] = [];
-    
-    switch (layer.name) {
-      case 'OSM_Base':
-        // Créer un fond de carte simple avec des routes et bâtiments en EPSG:26191
-        const osmRoutes = [
-          { name: 'Route principale', coords: [[-842000, 3950000], [-840000, 3950000]] },
-          { name: 'Route secondaire', coords: [[-841000, 3945000], [-841000, 3955000]] },
-          { name: 'Route côtière', coords: [[-843000, 3952000], [-840000, 3952000]] }
-        ];
-        
-        osmRoutes.forEach(route => {
-          const feature = new Feature({
-            geometry: new LineString(route.coords),
-            properties: { name: route.name, type: 'road' }
-          });
-          demoFeatures.push(feature);
-        });
-        
-        // Ajouter quelques bâtiments
-        const osmBuildings = [
-          { name: 'Bâtiment 1', coords: [[[-841500, 3948000], [-841400, 3948000], [-841400, 3949000], [-841500, 3949000], [-841500, 3948000]]] },
-          { name: 'Bâtiment 2', coords: [[[-840500, 3951000], [-840400, 3951000], [-840400, 3952000], [-840500, 3952000], [-840500, 3951000]]] }
-        ];
-        
-        osmBuildings.forEach(building => {
-          const feature = new Feature({
-            geometry: new Polygon(building.coords),
-            properties: { name: building.name, type: 'building' }
-          });
-          demoFeatures.push(feature);
-        });
-        
-        console.log(`🏗️ OSM_Base - Routes créées:`, osmRoutes.length);
-        console.log(`🏢 OSM_Base - Bâtiments créés:`, osmBuildings.length);
-        console.log(`📊 OSM_Base - Total features:`, demoFeatures.length);
-        break;
-      case 'Commune de Casablanca':
-        // Communes complètes de Casablanca comme dans QGIS
-        const communes = [
-          { name: 'Casablanca', coords: [[-7.7, 33.5], [-7.5, 33.5], [-7.5, 33.7], [-7.7, 33.7], [-7.7, 33.5]] },
-          { name: 'Ain Harrouda', coords: [[-7.6, 33.6], [-7.5, 33.6], [-7.5, 33.7], [-7.6, 33.7], [-7.6, 33.6]] },
-          { name: 'Mohammedia', coords: [[-7.4, 33.6], [-7.3, 33.6], [-7.3, 33.7], [-7.4, 33.7], [-7.4, 33.6]] },
-          { name: 'Bouskoura', coords: [[-7.6, 33.4], [-7.5, 33.4], [-7.5, 33.5], [-7.6, 33.5], [-7.6, 33.4]] },
-          { name: 'Dar Bouazza', coords: [[-7.8, 33.4], [-7.7, 33.4], [-7.7, 33.5], [-7.8, 33.5], [-7.8, 33.4]] }
-        ];
-        
-        communes.forEach(commune => {
-          demoFeatures.push(new Feature({
-            geometry: new Polygon([commune.coords]),
-            properties: { name: commune.name }
-          }));
-        });
-        break;
-        
-      case 'Quartiers':
-        // Quartiers complets de Casablanca comme dans QGIS
-        const quartiers = [
-          { name: 'Centre', coords: [[-7.62, 33.58], [-7.60, 33.58], [-7.60, 33.60], [-7.62, 33.60], [-7.62, 33.58]] },
-          { name: 'Maarif', coords: [[-7.65, 33.57], [-7.63, 33.57], [-7.63, 33.59], [-7.65, 33.59], [-7.65, 33.57]] },
-          { name: 'Ain Diab', coords: [[-7.68, 33.55], [-7.66, 33.55], [-7.66, 33.57], [-7.68, 33.57], [-7.68, 33.55]] },
-          { name: 'Hay Mohammadi', coords: [[-7.69, 33.56], [-7.67, 33.56], [-7.67, 33.58], [-7.69, 33.58], [-7.69, 33.56]] },
-          { name: 'Sidi Maarouf', coords: [[-7.61, 33.59], [-7.59, 33.59], [-7.59, 33.61], [-7.61, 33.61], [-7.61, 33.59]] },
-          { name: 'Ain Sebaa', coords: [[-7.70, 33.54], [-7.68, 33.54], [-7.68, 33.56], [-7.70, 33.56], [-7.70, 33.54]] },
-          { name: 'Hay Hassani', coords: [[-7.64, 33.54], [-7.62, 33.54], [-7.62, 33.56], [-7.64, 33.56], [-7.64, 33.54]] },
-          { name: 'Oulfa', coords: [[-7.66, 33.58], [-7.64, 33.58], [-7.64, 33.60], [-7.66, 33.60], [-7.66, 33.58]] }
-        ];
-        
-        quartiers.forEach(quartier => {
-          demoFeatures.push(new Feature({
-            geometry: new Polygon([quartier.coords]),
-            properties: { name: quartier.name }
-          }));
-        });
-        break;
-        
-      case 'voirie casa':
-        // Réseau routier complet de Casablanca comme dans QGIS
-        const voirieRoutes = [
-          { name: 'Boulevard Mohammed V', coords: [[-7.65, 33.6], [-7.6, 33.6]] },
-          { name: 'Avenue Hassan II', coords: [[-7.62, 33.55], [-7.62, 33.65]] },
-          { name: 'Boulevard Zerktouni', coords: [[-7.64, 33.58], [-7.60, 33.58]] },
-          { name: 'Avenue des FAR', coords: [[-7.66, 33.56], [-7.60, 33.56]] },
-          { name: 'Boulevard de la Corniche', coords: [[-7.68, 33.54], [-7.60, 33.54]] },
-          { name: 'Avenue Moulay Rachid', coords: [[-7.70, 33.55], [-7.68, 33.55]] },
-          { name: 'Boulevard Sidi Mohammed Ben Abdellah', coords: [[-7.64, 33.60], [-7.60, 33.60]] },
-          { name: 'Avenue Lalla Yacout', coords: [[-7.66, 33.58], [-7.64, 33.58]] },
-          { name: 'Boulevard Moulay Youssef', coords: [[-7.68, 33.57], [-7.66, 33.57]] },
-          { name: 'Avenue Al Fida', coords: [[-7.62, 33.57], [-7.60, 33.57]] }
-        ];
-        
-        voirieRoutes.forEach(route => {
-          demoFeatures.push(new Feature({
-            geometry: new LineString(route.coords),
-            properties: { name: route.name }
-          }));
-        });
-        break;
-        
-      case 'site_acceuil_wgs':
-        // Sites d'accueil complets de Casablanca comme dans QGIS
-        const sites = [
-          { name: 'Site Centre', coords: [-7.61, 33.58] },
-          { name: 'Site Maarif', coords: [-7.64, 33.57] },
-          { name: 'Site Ain Diab', coords: [-7.67, 33.56] },
-          { name: 'Site Hay Mohammadi', coords: [-7.68, 33.57] },
-          { name: 'Site Sidi Maarouf', coords: [-7.60, 33.60] },
-          { name: 'Site Ain Sebaa', coords: [-7.69, 33.55] },
-          { name: 'Site Hay Hassani', coords: [-7.63, 33.55] },
-          { name: 'Site Oulfa', coords: [-7.65, 33.59] },
-          { name: 'Site Mers Sultan', coords: [-7.62, 33.56] },
-          { name: 'Site Derb Ghalef', coords: [-7.66, 33.55] }
-        ];
-        
-        sites.forEach(site => {
-          demoFeatures.push(new Feature({
-            geometry: new Point(site.coords),
-            properties: { name: site.name }
-          }));
-        });
-        break;
-        
-      case 'bidonvilles84':
-        // Zones bidonvilles complètes de Casablanca comme dans QGIS
-        const bidonvilles = [
-          { name: 'Sidi Moumen', coords: [[-7.68, 33.52], [-7.66, 33.52], [-7.66, 33.54], [-7.68, 33.54], [-7.68, 33.52]] },
-          { name: 'Hay Mohammadi', coords: [[-7.69, 33.56], [-7.67, 33.56], [-7.67, 33.58], [-7.69, 33.58], [-7.69, 33.56]] },
-          { name: 'Ain Sebaa', coords: [[-7.70, 33.54], [-7.68, 33.54], [-7.68, 33.56], [-7.70, 33.56], [-7.70, 33.54]] },
-          { name: 'Derb Ghalef', coords: [[-7.66, 33.55], [-7.64, 33.55], [-7.64, 33.57], [-7.66, 33.57], [-7.66, 33.55]] },
-          { name: 'Hay Hassani', coords: [[-7.64, 33.54], [-7.62, 33.54], [-7.62, 33.56], [-7.64, 33.56], [-7.64, 33.54]] },
-          { name: 'Oulfa', coords: [[-7.66, 33.58], [-7.64, 33.58], [-7.64, 33.60], [-7.66, 33.60], [-7.66, 33.58]] },
-          { name: 'Mers Sultan', coords: [[-7.62, 33.56], [-7.60, 33.56], [-7.60, 33.58], [-7.62, 33.58], [-7.62, 33.56]] },
-          { name: 'Hay Riad', coords: [[-7.60, 33.54], [-7.58, 33.54], [-7.58, 33.56], [-7.60, 33.56], [-7.60, 33.54]] }
-        ];
-        
-        bidonvilles.forEach(zone => {
-          demoFeatures.push(new Feature({
-            geometry: new Polygon([zone.coords]),
-            properties: { name: zone.name }
-          }));
-        });
-        break;
-    }
-    
-    source.addFeatures(demoFeatures);
-    console.log(`Données de démonstration créées pour ${layer.name}: ${demoFeatures.length} éléments`);
-    console.log(`Couche ${layer.name} ajoutée à la carte avec ${demoFeatures.length} features`);
-  }
+  // Méthode supprimée - données de démonstration non nécessaires avec ArcGIS
 
   private initializeInteractions(): void {
     // Interaction de sélection
-    if (this.options.enableSelection) {
+    if (this.options?.enableSelection) {
       this.selectInteraction = new Select({
-        layers: [this.parcelleLayer]
+        style: new Style({
+          fill: new Fill({ color: 'rgba(255, 255, 0, 0.3)' }),
+          stroke: new Stroke({ color: '#ffcc00', width: 2 })
+        })
       });
 
       this.selectInteraction.on('select', (event: SelectEvent) => {
         const features = event.selected;
         if (features.length > 0) {
           const feature = features[0];
-          const parcelle = feature.get('parcelle') as ParcelleAPI;
-          this.selectedParcelle = parcelle;
-          this.parcelleSelected.emit(parcelle);
+          console.log('Feature selected:', feature);
         }
       });
 
@@ -814,25 +503,42 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Interaction de dessin
-    if (this.options.enableDrawing) {
+    if (this.options?.enableDrawing) {
       this.drawInteraction = new Draw({
         source: this.drawingLayer.getSource()!,
-        type: 'Polygon'
+        type: 'Polygon',
+        style: new Style({
+          fill: new Fill({ color: 'rgba(0, 255, 0, 0.3)' }),
+          stroke: new Stroke({ color: '#00ff00', width: 2 })
+        })
       });
 
       this.drawInteraction.on('drawend', (event: DrawEvent) => {
         const feature = event.feature;
         const geometry = feature.getGeometry();
-        this.geometryDrawn.emit(geometry);
+        if (geometry) {
+          this.geometryDrawn.emit(geometry);
+        }
       });
 
       this.map.addInteraction(this.drawInteraction);
     }
 
     // Interaction de modification
-    if (this.options.enableModify) {
+    if (this.options?.enableModify && this.selectInteraction) {
       this.modifyInteraction = new Modify({
-        source: this.parcelleLayer.getSource()!
+        features: this.selectInteraction.getFeatures()
+      });
+
+      this.modifyInteraction.on('modifyend', (event: any) => {
+        const features = event.features.getArray();
+        if (features.length > 0) {
+          const feature = features[0];
+          const geometry = feature.getGeometry();
+          if (geometry) {
+            this.geometryDrawn.emit(geometry);
+          }
+        }
       });
 
       this.map.addInteraction(this.modifyInteraction);

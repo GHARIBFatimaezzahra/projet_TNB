@@ -28,7 +28,6 @@
     "chart.js": "^4.4.6",
     "date-fns": "^4.1.0",
     "file-saver": "^2.0.5",
-    "gdal-js": "^2.2.0",
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2",
     "lodash-es": "^4.17.21",

@@ -208,7 +208,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  font-size: 0.9rem;
+    font-size: 0.9rem;
 }
 
 .checkbox-container {
@@ -227,7 +227,7 @@
     border: 2px solid #ddd;
     border-radius: 3px;
     margin-right: 8px;
-    position: relative;
+  position: relative;
     transition: all 0.3s ease;
     
     &::after {
@@ -256,15 +256,15 @@
 }
 
 .checkbox-text {
-  color: #666;
+    color: #666;
 }
 
 .forgot-link {
   color: #4A90E2;
   text-decoration: none;
   transition: color 0.3s ease;
-  
-  &:hover {
+
+    &:hover {
     color: #357ABD;
     text-decoration: underline;
   }
@@ -286,10 +286,10 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   height: 48px;
   
   &:hover:not(:disabled) {

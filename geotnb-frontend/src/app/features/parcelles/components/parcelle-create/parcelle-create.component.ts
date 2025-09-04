@@ -186,11 +186,53 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   private calculateSurfaceFromGeometry(geometry: any): void {
-    if (geometry && geometry.type === 'Polygon') {
-      // Calculer la surface à partir de la géométrie
-      // Cette logique sera implémentée dans le MapComponent
-      console.log('Calcul de la surface à partir de la géométrie');
+    if (!geometry) {
+      this.resetCalculations();
+      return;
     }
+
+    try {
+      if (geometry instanceof Polygon) {
+        // Calculer la surface en mètres carrés
+        this.calculatedSurface = Math.round(geometry.getArea());
+        
+        // Calculer le périmètre en mètres
+        const linearRing = geometry.getLinearRing(0);
+        if (linearRing) {
+          const coordinates = linearRing.getCoordinates();
+          if (coordinates && coordinates.length > 1) {
+            let perimeter = 0;
+            for (let i = 0; i < coordinates.length - 1; i++) {
+              const p1 = coordinates[i];
+              const p2 = coordinates[i + 1];
+              const distance = Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2));
+              perimeter += distance;
+            }
+            this.calculatedPerimeter = Math.round(perimeter);
+            this.verticesCount = coordinates.length;
+          } else {
+            this.calculatedPerimeter = 0;
+            this.verticesCount = 0;
+          }
+        } else {
+          this.calculatedPerimeter = 0;
+          this.verticesCount = 0;
+        }
+        
+        console.log(`📐 Calculs géométrie - Surface: ${this.calculatedSurface}m², Périmètre: ${this.calculatedPerimeter}m, Points: ${this.verticesCount}`);
+      } else {
+        this.resetCalculations();
+      }
+    } catch (error) {
+      console.error('Erreur lors du calcul de la géométrie:', error);
+      this.resetCalculations();
+    }
+  }
+
+  private resetCalculations(): void {
+    this.calculatedSurface = 0;
+    this.calculatedPerimeter = 0;
+    this.verticesCount = 0;
   }
 
   private isFormDirty(): boolean {
@@ -919,6 +961,8 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
       surface_imposable: 0,
       coordonnees_geometriques: null
     });
+    // Réinitialiser les calculs de géométrie
+    this.resetCalculations();
   }
 
   // Méthodes pour la gestion des quote-parts (remplacées par les versions du modal)

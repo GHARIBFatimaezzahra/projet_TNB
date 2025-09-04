@@ -13,15 +13,15 @@
       </button>
       <button class="btn btn-primary" routerLink="/parcelles/new">
         <i class="fas fa-plus"></i> Nouvelle parcelle
-      </button>
+    </button>
               <button class="btn btn-secondary" (click)="refreshData()" [disabled]="loading">
           <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Actualiser
-        </button>
+    </button>
         <button class="btn btn-info" (click)="testAPI()" [disabled]="loading">
           <i class="fas fa-bug"></i> Test API
-        </button>
-    </div>
+    </button>
   </div>
+</div>
 
   <!-- ===================================================== -->
   <!-- STATISTIQUES EN TEMPS RÉEL -->
@@ -103,7 +103,7 @@
           <option value="COM">COM - Commercial</option>
           <option value="IND">IND - Industriel</option>
         </select>
-      </div>
+    </div>
 
       <div class="filter-group">
         <label class="form-label">Statut</label>
@@ -126,16 +126,16 @@
           <option value="Domanial">Domanial</option>
           <option value="Collectif">Collectif</option>
         </select>
-      </div>
+    </div>
 
       <div class="filter-group">
         <label class="form-label" style="opacity: 0;">Action</label>
         <button class="btn btn-primary" (click)="applyFilters()" style="width: 100%;">
           <i class="fas fa-filter"></i> Filtrer
-        </button>
-      </div>
+      </button>
     </div>
-  </div>
+    </div>
+</div>
 
   <!-- ===================================================== -->
   <!-- ACTIONS EN LOT -->
@@ -166,34 +166,34 @@
                   [disabled]="selection.selected.length === 0"
                   (click)="deleteSelected()">
             <i class="fas fa-trash"></i> Supprimer en lot
-          </button>
+      </button>
         </div>
       </div>
     </div>
-  </div>
+    </div>
 
   <!-- ===================================================== -->
   <!-- TABLE PRINCIPALE -->
   <!-- ===================================================== -->
   <div class="card">
     <div class="card-body" style="padding: 0;">
-      <div class="table-container">
+    <div class="table-container">
         <table mat-table [dataSource]="dataSource" class="table" matSort (matSortChange)="onSortChange($event)">
-          
+        
           <!-- Colonne de sélection -->
-          <ng-container matColumnDef="select">
-            <th mat-header-cell *matHeaderCellDef>
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
               <mat-checkbox (change)="toggleAllSelection($event.checked)"
                           [checked]="isAllSelected()"
                           [indeterminate]="isPartialSelection()">
-              </mat-checkbox>
-            </th>
-            <td mat-cell *matCellDef="let parcelle">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let parcelle">
               <mat-checkbox (change)="toggleSelection(parcelle, $event.checked)"
                           [checked]="isSelected(parcelle)">
-              </mat-checkbox>
-            </td>
-          </ng-container>
+            </mat-checkbox>
+          </td>
+        </ng-container>
 
           <!-- Référence -->
           <ng-container matColumnDef="reference">
@@ -201,15 +201,15 @@
               Référence
               <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-circle" [ngClass]="getStatusIconClass(parcelle.etatValidation)"></i>
                 <span class="reference-text">
                   {{ parcelle.referenceFonciere }}
-                </span>
+            </span>
               </div>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
           <!-- Zone -->
           <ng-container matColumnDef="zone">
@@ -217,10 +217,10 @@
               Zone
               <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <span class="badge badge-secondary">{{ parcelle.zonage }}</span>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
           <!-- Surface -->
           <ng-container matColumnDef="surface">
@@ -228,20 +228,20 @@
               Surface (m²)
               <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <div>
                 <strong>{{ parcelle.surfaceTotale | number }}</strong><br>
                 <small style="color: var(--gray-500);">{{ parcelle.surfaceImposable | number }} imposable</small>
               </div>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
-          <!-- Propriétaires -->
-          <ng-container matColumnDef="proprietaires">
+        <!-- Propriétaires -->
+        <ng-container matColumnDef="proprietaires">
             <th mat-header-cell *matHeaderCellDef>
               Propriétaires
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <div *ngIf="parcelle.proprietaires && parcelle.proprietaires.length > 0">
                 <div *ngFor="let prop of parcelle.proprietaires.slice(0, 2); let i = index">
                   <span *ngIf="i === 0">{{ prop.nom }} {{ prop.prenom || '' }} ({{ (prop.quote_part * 100) | number:'1.0-1' }}%)</span>
@@ -253,9 +253,9 @@
               </div>
               <div *ngIf="!parcelle.proprietaires || parcelle.proprietaires.length === 0">
                 <span style="color: var(--gray-500);">Aucun propriétaire</span>
-              </div>
-            </td>
-          </ng-container>
+            </div>
+          </td>
+        </ng-container>
 
           <!-- TNB -->
           <ng-container matColumnDef="tnb">
@@ -263,22 +263,22 @@
               TNB (DH)
               <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <strong style="color: var(--success-color);">{{ parcelle.montantTotalTnb | number:'1.0-0' }}</strong>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
           <!-- Statut -->
           <ng-container matColumnDef="statut">
             <th mat-header-cell *matHeaderCellDef>
               Statut
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <span class="badge" [ngClass]="getStatusClass(parcelle.etatValidation)">
                 {{ getStatusLabel(parcelle.etatValidation) }}
               </span>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
           <!-- Dernière MAJ -->
           <ng-container matColumnDef="derniere_maj">
@@ -286,16 +286,16 @@
               Dernière MAJ
               <i class="fas fa-sort" style="margin-left: 0.5rem; cursor: pointer;"></i>
             </th>
-            <td mat-cell *matCellDef="let parcelle">
+          <td mat-cell *matCellDef="let parcelle">
               <div>
                 {{ parcelle.dateModification | date:'dd/MM/yyyy' }}<br>
                 <small style="color: var(--gray-500);">par admin</small>
               </div>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
-          <!-- Actions -->
-          <ng-container matColumnDef="actions">
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>
               Actions
             </th>
@@ -305,23 +305,23 @@
                         (click)="viewParcelle(parcelle)" 
                         title="Voir détails">
                   <i class="fas fa-eye"></i>
-                </button>
+            </button>
                 <button class="btn btn-primary btn-sm" 
                         (click)="editParcelle(parcelle)"
                         title="Modifier">
                   <i class="fas fa-pencil-alt"></i>
-                </button>
+            </button>
                 <button class="btn btn-info btn-sm" 
                         [disabled]="!parcelle.geometrie"
                         (click)="locateParcelle(parcelle)"
                         [title]="parcelle.geometrie ? 'Localiser' : 'Pas de géométrie'">
                   <i class="fas fa-map-marker-alt"></i>
-                </button>
+            </button>
                 <button class="btn btn-secondary btn-sm" 
                         (click)="generatePDF(parcelle)"
                         title="Fiche PDF">
                   <i class="fas fa-file-pdf"></i>
-                </button>
+            </button>
                 <button class="btn btn-secondary btn-sm" 
                         (click)="viewHistory(parcelle)"
                         title="Historique">
@@ -331,25 +331,25 @@
                         (click)="duplicateParcelle(parcelle)"
                         title="Dupliquer">
                   <i class="fas fa-copy"></i>
-                </button>
+              </button>
                 <button class="btn btn-warning btn-sm" 
                         *ngIf="parcelle.etatValidation === 'Brouillon'"
                         (click)="validateParcelle(parcelle)"
                         title="Valider">
                   <i class="fas fa-check"></i>
-                </button>
+              </button>
                 <button class="btn btn-danger btn-sm" 
                         (click)="deleteParcelle(parcelle)"
                         title="Supprimer">
                   <i class="fas fa-trash"></i>
-                </button>
+              </button>
               </div>
-            </td>
-          </ng-container>
+          </td>
+        </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
+      </table>
       </div>
     </div>
 
@@ -378,8 +378,8 @@
             Suivant <i class="fas fa-chevron-right"></i>
           </button>
         </div>
-      </div>
-    </div>
+  </div>
+  </div>
   </div>
 </div>
 

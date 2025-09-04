@@ -5,7 +5,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, FormArray, FormGroup } from '@angular/forms';
 
 export class QuotePartValidator {
-  
+
   /**
    * Validateur de base pour une quote-part
    */
@@ -62,10 +62,10 @@ export class QuotePartValidator {
         } 
       };
     }
-    
+
     return null;
   }
-  
+
   /**
    * Valide le format d'une quote-part (décimal ou fraction)
    */
@@ -116,18 +116,18 @@ export class QuotePartValidator {
         };
       }
     }
-    
+
     return null;
   }
-  
+
   /**
    * Valide que la somme des quote-parts égale 1
    */
   static totalSum(formArray: FormArray): ValidationErrors | null {
     if (!formArray || formArray.length === 0) {
-      return null;
-    }
-    
+        return null;
+      }
+
     let totalQuotePart = 0;
     const quotePartValues: number[] = [];
     
@@ -149,18 +149,18 @@ export class QuotePartValidator {
     const tolerance = 0.0001;
     
     if (Math.abs(totalQuotePart - 1) > tolerance) {
-      return { 
+        return {
         quotePartTotalInvalid: {
           total: Math.round(totalQuotePart * 10000) / 10000,
           expected: 1,
           difference: Math.round((totalQuotePart - 1) * 10000) / 10000,
           values: quotePartValues,
           message: `Total des quote-parts: ${Math.round(totalQuotePart * 100)}% (doit être 100%)`
-        }
-      };
-    }
-    
-    return null;
+          }
+        };
+      }
+
+      return null;
   }
   
   /**
@@ -192,15 +192,15 @@ export class QuotePartValidator {
     }
     
     if (duplicates.length > 0) {
-      return { 
+        return {
         quotePartDuplicateOwners: {
           duplicateIds: duplicates,
           message: 'Propriétaires en double détectés'
-        }
-      };
-    }
-    
-    return null;
+          }
+        };
+      }
+
+      return null;
   }
   
   /**
@@ -220,7 +220,7 @@ export class QuotePartValidator {
       const minShare = 1 / minOwners;
       
       if (numValue < minShare) {
-        return { 
+        return {
           quotePartTooSmall: {
             value: numValue,
             minimum: minShare,
@@ -229,11 +229,11 @@ export class QuotePartValidator {
           }
         };
       }
-      
+
       return null;
     };
   }
-  
+
   /**
    * Valide qu'une quote-part est cohérente avec le montant
    */
@@ -258,7 +258,7 @@ export class QuotePartValidator {
       const tolerance = totalAmount * 0.01; // 1% de tolérance
       
       if (Math.abs(amount - expectedAmount) > tolerance) {
-        return { 
+        return {
           quotePartAmountMismatch: {
             quotePart,
             actualAmount: amount,
@@ -269,11 +269,11 @@ export class QuotePartValidator {
           }
         };
       }
-      
+
       return null;
     };
   }
-  
+
   /**
    * Valide les quote-parts pour succession/héritage
    */
@@ -306,15 +306,15 @@ export class QuotePartValidator {
     );
     
     if (!isCommonShare && numValue < 0.1) {
-      return { 
+        return {
         quotePartUncommon: {
           value: numValue,
           message: 'Quote-part inhabituelle (vérifiez le calcul successoral)'
-        }
-      };
-    }
-    
-    return null;
+          }
+        };
+      }
+
+      return null;
   }
   
   /**
@@ -343,10 +343,10 @@ export class QuotePartValidator {
         if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
           return numerator / denominator;
         }
+        }
       }
-    }
-    
-    return null;
+
+      return null;
   }
 }
 

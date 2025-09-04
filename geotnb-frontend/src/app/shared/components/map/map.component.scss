@@ -305,6 +305,23 @@
     color: #333;
     font-size: 1rem;
   }
+  
+  .basemap-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    background: white;
+    cursor: pointer;
+    
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+  }
 }
 
 .parcelle-info {

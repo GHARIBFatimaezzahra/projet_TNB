@@ -35,7 +35,7 @@ export interface AuthResponse {
   success?: boolean;
   data?: {
     user: User;
-    access_token: string;
+  access_token: string;
     refreshToken?: string;
     expiresIn?: number;
   };
@@ -66,7 +66,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   private permissionsSubject = new BehaviorSubject<Permission[]>([]);
-  
+
   // Observables publics
   public currentUser$ = this.currentUserSubject.asObservable();
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -86,7 +86,7 @@ export class AuthService {
   public initializeAuthState(): void {
     const token = this.getStoredToken();
     const user = this.getStoredUser();
-    
+
     if (token && user && !this.isTokenExpired(token)) {
       this.currentUserSubject.next(user);
       this.isAuthenticatedSubject.next(true);
@@ -921,7 +921,7 @@ Watch mode enabled. Watching for file changes...
       })
     );
   }
-
+  
   /**
    * Rafraîchir le token
    */
@@ -945,7 +945,7 @@ Watch mode enabled. Watching for file changes...
       })
     );
   }
-
+  
   /**
    * Récupérer le profil utilisateur
    */

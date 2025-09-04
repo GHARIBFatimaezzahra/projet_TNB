@@ -33,34 +33,46 @@
 
     <!-- Panneau des couches -->
     <div class="layers-panel">
-      <h4>Couches</h4>
+      <h4>Fonds de carte</h4>
+      <select (change)="changeBasemap($any($event.target).value)" class="basemap-select">
+        <option value="osm">OpenStreetMap</option>
+        <option value="arcgis-topographic">ArcGIS Topographique</option>
+        <option value="arcgis-imagery">ArcGIS Imagerie</option>
+        <option value="arcgis-streets">ArcGIS Rues</option>
+        <option value="arcgis-navigation">ArcGIS Navigation</option>
+      </select>
       
-      <!-- Couche de base -->
+      <h4>Couches ArcGIS</h4>
       <div class="layer-item">
         <mat-slide-toggle 
-          [checked]="true" 
-          disabled>
-          OpenStreetMap
+          [checked]="true"
+          (change)="toggleArcGISLayer('communes', $event)">
+          🏛️ Communes
+        </mat-slide-toggle>
+      </div>
+      <div class="layer-item">
+        <mat-slide-toggle 
+          [checked]="true"
+          (change)="toggleArcGISLayer('hotels', $event)">
+          🏨 Hôtels
+        </mat-slide-toggle>
+      </div>
+      <div class="layer-item">
+        <mat-slide-toggle 
+          [checked]="true"
+          (change)="toggleArcGISLayer('grandes_surfaces', $event)">
+          🏪 Grandes Surfaces
+        </mat-slide-toggle>
+      </div>
+      <div class="layer-item">
+        <mat-slide-toggle 
+          [checked]="true"
+          (change)="toggleArcGISLayer('voirie', $event)">
+          🛣️ Voirie
         </mat-slide-toggle>
       </div>
       
-      <!-- Couches shapefile -->
-      <div class="layer-item" *ngFor="let layer of shapefileLayers">
-        <mat-slide-toggle 
-          [checked]="layer.visible"
-          (change)="toggleLayer(layer)">
-          {{ layer.name }}
-        </mat-slide-toggle>
-      </div>
-      
-      <!-- Couche parcelles -->
-      <div class="layer-item" *ngIf="options.showParcelles">
-        <mat-slide-toggle 
-          [checked]="true" 
-          disabled>
-          Parcelles
-        </mat-slide-toggle>
-      </div>
+      <!-- Les couches locales GeoJSON ont été remplacées par les couches ArcGIS -->
     </div>
   </div>
 
