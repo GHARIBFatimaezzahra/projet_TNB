@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Like, Between } from 'typeorm';
+import { Repository, FindOptionsWhere, Like, Between, DataSource } from 'typeorm';
 import { Parcelle } from './entities/parcelle.entity';
 import { CreateParcelleDto } from './dto/create-parcelle.dto';
 import { UpdateParcelleDto } from './dto/update-parcelle.dto';
 import { SearchParcelleDto } from './dto/search-parcelle.dto';
 import { GeometryUtils } from './utils/geometry.utils';
 import { SpatialQueryUtils } from './utils/spatial-query.utils';
+import { ParcelleProprietaire } from '../parcelle-proprietaire/entities/parcelle-proprietaire.entity';
+import { Proprietaire } from '../proprietaire/entities/proprietaire.entity';
 
 export interface PaginatedParcelles {
   data: Parcelle[];
@@ -21,35 +23,103 @@ export class ParcelleService {
   constructor(
     @InjectRepository(Parcelle)
     private parcelleRepository: Repository<Parcelle>,
+    @InjectRepository(ParcelleProprietaire)
+    private parcelleProprietaireRepository: Repository<ParcelleProprietaire>,
+    @InjectRepository(Proprietaire)
+    private proprietaireRepository: Repository<Proprietaire>,
+    private dataSource: DataSource,
   ) {}
 
   async create(createParcelleDto: CreateParcelleDto): Promise<Parcelle> {
-    // Vérifier si la référence foncière existe déjà
-    const existingParcelle = await this.parcelleRepository.findOne({
-      where: { referenceFonciere: createParcelleDto.referenceFonciere },
+    return await this.dataSource.transaction(async manager => {
+      // Vérifier si la référence foncière existe déjà
+      const existingParcelle = await manager.findOne(Parcelle, {
+        where: { referenceFonciere: createParcelleDto.referenceFonciere },
+      });
+
+      if (existingParcelle) {
+        throw new ConflictException('Référence foncière déjà utilisée');
+      }
+
+      // Valider la géométrie si fournie
+      if (createParcelleDto.geometry && !GeometryUtils.isValidPolygon(createParcelleDto.geometry)) {
+        throw new ConflictException('Géométrie invalide');
+      }
+
+      // Calculer la surface à partir de la géométrie si pas fournie
+      if (createParcelleDto.geometry && !createParcelleDto.surfaceTotale) {
+        createParcelleDto.surfaceTotale = GeometryUtils.calculateArea(createParcelleDto.geometry);
+      }
+
+      // Surface imposable par défaut = surface totale
+      if (!createParcelleDto.surfaceImposable && createParcelleDto.surfaceTotale) {
+        createParcelleDto.surfaceImposable = createParcelleDto.surfaceTotale;
+      }
+
+      // Calculer le montant TNB total
+      const montantTotalTnb = createParcelleDto.surfaceImposable && createParcelleDto.prixUnitaireM2 
+        ? createParcelleDto.surfaceImposable * createParcelleDto.prixUnitaireM2 
+        : 0;
+
+      // Créer la parcelle
+      const parcelleData = { ...createParcelleDto, montantTotalTnb };
+      const parcelle = manager.create(Parcelle, parcelleData);
+      const savedParcelle = await manager.save(parcelle);
+
+      // Gérer les propriétaires si fournis
+      if (createParcelleDto.proprietaires && createParcelleDto.proprietaires.length > 0) {
+        // Vérifier que la somme des quote-parts = 1
+        const sommeQuoteParts = createParcelleDto.proprietaires.reduce((sum, p) => sum + p.quotePart, 0);
+        if (Math.abs(sommeQuoteParts - 1) > 0.0001) {
+          throw new ConflictException(
+            `La somme des quotes-parts doit être égale à 1. Somme actuelle: ${sommeQuoteParts}`
+          );
+        }
+
+        // Créer les relations parcelle-propriétaire
+        for (const prop of createParcelleDto.proprietaires) {
+          // Vérifier que le propriétaire existe
+          const proprietaire = await manager.findOne(Proprietaire, {
+            where: { id: prop.proprietaireId }
+          });
+
+          if (!proprietaire) {
+            throw new ConflictException(`Propriétaire avec l'ID ${prop.proprietaireId} introuvable`);
+          }
+
+          const montantIndividuel = montantTotalTnb * prop.quotePart;
+          
+          // Vérifier si la relation existe déjà
+          const existingRelation = await manager.findOne(ParcelleProprietaire, {
+            where: {
+              parcelleId: savedParcelle.id,
+              proprietaireId: prop.proprietaireId,
+              estActif: true
+            }
+          });
+
+          if (!existingRelation) {
+            const parcelleProprietaire = manager.create(ParcelleProprietaire, {
+              parcelleId: savedParcelle.id,
+              proprietaireId: prop.proprietaireId,
+              quotePart: prop.quotePart,
+              montantIndividuel,
+              estActif: true,
+              dateDebut: new Date()
+            });
+
+            await manager.save(parcelleProprietaire);
+          } else {
+            // Mettre à jour la relation existante
+            existingRelation.quotePart = prop.quotePart;
+            existingRelation.montantIndividuel = montantIndividuel;
+            await manager.save(existingRelation);
+          }
+        }
+      }
+
+      return savedParcelle;
     });
-
-    if (existingParcelle) {
-      throw new ConflictException('Référence foncière déjà utilisée');
-    }
-
-    // Valider la géométrie si fournie
-    if (createParcelleDto.geometry && !GeometryUtils.isValidPolygon(createParcelleDto.geometry)) {
-      throw new ConflictException('Géométrie invalide');
-    }
-
-    // Calculer la surface à partir de la géométrie si pas fournie
-    if (createParcelleDto.geometry && !createParcelleDto.surfaceTotale) {
-      createParcelleDto.surfaceTotale = GeometryUtils.calculateArea(createParcelleDto.geometry);
-    }
-
-    // Surface imposable par défaut = surface totale
-    if (!createParcelleDto.surfaceImposable && createParcelleDto.surfaceTotale) {
-      createParcelleDto.surfaceImposable = createParcelleDto.surfaceTotale;
-    }
-
-    const parcelle = this.parcelleRepository.create(createParcelleDto);
-    return await this.parcelleRepository.save(parcelle);
   }
 
   async findAll(searchDto: SearchParcelleDto = {}): Promise<PaginatedParcelles> {
@@ -119,26 +189,50 @@ export class ParcelleService {
     console.log('🔍 ParcelleService.findAll - Requête SQL générée:', query.getSql());
     console.log('🔍 ParcelleService.findAll - Paramètres de la requête:', query.getParameters());
 
-    const [data, total] = await query.getManyAndCount();
-
-    console.log('🔍 ParcelleService.findAll - Résultats trouvés:', data.length, 'sur', total);
-    if (data.length > 0) {
-      console.log('🔍 ParcelleService.findAll - Première parcelle:', data[0]);
+    try {
+      const [data, total] = await query.getManyAndCount();
+      console.log('🔍 ParcelleService.findAll - Requête exécutée avec succès');
+      console.log('🔍 ParcelleService.findAll - Résultats trouvés:', data.length, 'sur', total);
+      
+      // Charger les propriétaires séparément pour chaque parcelle
+      for (const parcelle of data) {
+        try {
+          const proprietaires = await this.parcelleProprietaireRepository.find({
+            where: { parcelleId: parcelle.id, estActif: true },
+            relations: ['proprietaire'],
+            order: { dateDebut: 'DESC' }
+          });
+          parcelle.proprietaires = proprietaires;
+          console.log(`🔍 ParcelleService.findAll - Propriétaires pour parcelle ${parcelle.id}:`, proprietaires.length);
+        } catch (propError) {
+          console.error(`🔍 ParcelleService.findAll - Erreur lors du chargement des propriétaires pour parcelle ${parcelle.id}:`, propError);
+          parcelle.proprietaires = [];
+        }
+      }
+      
+      if (data.length > 0) {
+        console.log('🔍 ParcelleService.findAll - Première parcelle:', JSON.stringify(data[0], null, 2));
+      }
+      
+      return {
+        data,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('🔍 ParcelleService.findAll - Erreur lors de l\'exécution de la requête:', error);
+      console.error('🔍 ParcelleService.findAll - Détails de l\'erreur:', error.message);
+      console.error('🔍 ParcelleService.findAll - Stack trace:', error.stack);
+      throw error;
     }
-
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
   }
 
   async findOne(id: number): Promise<Parcelle> {
     const parcelle = await this.parcelleRepository.findOne({
       where: { id },
-      // relations: ['proprietaires', 'documents'], // À ajouter plus tard
+      relations: ['proprietaires', 'proprietaires.proprietaire'],
     });
 
     if (!parcelle) {

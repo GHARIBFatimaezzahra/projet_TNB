@@ -5,11 +5,16 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { Observable } from 'rxjs';
 import { ParcelleService } from '../../services/parcelle.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ProprietaireService, Proprietaire } from '../../../proprietaires/services/proprietaire.service';
 import { FileSizePipe } from '../../../../shared/pipes';
 import { ComponentWithUnsavedChanges } from '../../../../core/guards/unsaved-changes.guard';
 import { MapModule } from '../../../../shared/components/map/map.module';
 import { MapOptions } from '../../../../shared/components/map/map.component';
 
+// Interface pour les propriétaires avec quote-part dans le contexte de création de parcelle
+interface ProprietaireAvecQuote extends Proprietaire {
+  quote_part: number;
+}
 
 // OpenLayers imports
 import Map from 'ol/Map';
@@ -74,7 +79,8 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   validationForm!: FormGroup;
 
   // Données
-  proprietaires: any[] = [];
+  proprietaires: ProprietaireAvecQuote[] = [];
+  proprietairesDisponibles: Proprietaire[] = [];
   documents: File[] = [];
   uploadedDocuments: any[] = [];
   mapLayers: any[] = [];
@@ -121,6 +127,7 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     private router: Router,
     private route: ActivatedRoute,
     private parcelleService: ParcelleService,
+    private proprietaireService: ProprietaireService,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -522,23 +529,35 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   // GESTION DES PROPRÉTAIRES
   // =====================================================
   private loadProprietaires(): void {
-    // Simulation des données pour le moment
-    this.proprietaires = [
-      { id: 1, nom: 'Propriétaire 1', cin: 'AB123456' },
-      { id: 2, nom: 'Propriétaire 2', cin: 'CD789012' }
-    ];
-    this.initializeQuoteParts();
+    // Charger les propriétaires depuis l'API
+    this.proprietaireService.getProprietaires().subscribe({
+      next: (proprietaires) => {
+        this.proprietairesDisponibles = proprietaires;
+        console.log('Propriétaires chargés:', proprietaires);
+        this.initializeQuoteParts();
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des propriétaires:', error);
+        // En cas d'erreur, initialiser avec un tableau vide
+        this.proprietairesDisponibles = [];
+        this.initializeQuoteParts();
+      }
+    });
   }
 
   private initializeQuoteParts(): void {
     const quotePartsArray = this.proprietairesForm.get('quote_parts') as FormArray;
     quotePartsArray.clear();
 
-    this.proprietaires.forEach(proprietaire => {
+    // Initialiser avec les propriétaires sélectionnés (pas tous les propriétaires disponibles)
+    this.proprietaires.forEach((proprietaire: any) => {
+      // Extraire les données si c'est une réponse encapsulée
+      const data = proprietaire.data || proprietaire;
+      
       quotePartsArray.push(this.fb.group({
-        proprietaire_id: [proprietaire.id],
-        nom: [proprietaire.nom],
-        quote_part: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
+        proprietaire_id: [data.id || proprietaire.id],
+        nom: [this.getProprietaireName(proprietaire)],
+        quote_part: [proprietaire.quote_part || 0, [Validators.required, Validators.min(0), Validators.max(1)]],
         montant_tnb: [0]
       }));
     });
@@ -720,20 +739,26 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
       }
     }
 
-    const parcelleData = this.prepareParcelleData();
-    
-    console.log('Sauvegarde parcelle:', {
-      isDraft: this.isDraft,
-      isPublished: this.isPublished,
-      etatValidation: parcelleData.etatValidation,
-      data: parcelleData,
-      currentStep: this.currentStep
-    });
+    let parcelleData: any;
+    try {
+      parcelleData = this.prepareParcelleData();
+      
+      console.log('Sauvegarde parcelle:', {
+        isDraft: this.isDraft,
+        isPublished: this.isPublished,
+        etatValidation: parcelleData.etatValidation,
+        data: parcelleData,
+        currentStep: this.currentStep
+      });
+    } catch (error: any) {
+      console.error('Erreur de validation:', error);
+      this.showErrorMessage(error.message || 'Erreur de validation des données');
+      this.isLoading = false;
+      return;
+    }
     
     console.log('Données complètes envoyées au backend:', JSON.stringify(parcelleData, null, 2));
     console.log('URL API de création:', this.parcelleService['apiUrl']);
-    
-    console.log('Données complètes envoyées au backend:', JSON.stringify(parcelleData, null, 2));
 
     if (this.isEditing && this.parcelleId) {
       // Mise à jour d'une parcelle existante
@@ -838,6 +863,71 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
         console.log('Dernier point:', coordinates[coordinates.length - 1]);
       }
     }
+
+    // Ajouter les propriétaires si disponibles
+    if (this.proprietaires && this.proprietaires.length > 0) {
+      // Vérifier que la somme des quote-parts est exactement 1.0 (100%)
+      const totalQuoteParts = this.proprietaires.reduce((sum, prop) => sum + (prop.quote_part || 0), 0);
+      console.log('Total quote-parts avant validation:', totalQuoteParts);
+      
+      // Si la somme n'est pas 1.0, ajuster automatiquement
+      if (Math.abs(totalQuoteParts - 1.0) > 0.01) {
+        console.warn(`Somme des quote-parts incorrecte: ${totalQuoteParts}, ajustement automatique à 1.0`);
+        // Ajuster automatiquement la quote-part du premier propriétaire
+        if (this.proprietaires.length > 0) {
+          this.proprietaires[0].quote_part = 1.0;
+        }
+      }
+    } else {
+      // Si aucun propriétaire, créer un propriétaire par défaut
+      console.warn('Aucun propriétaire trouvé, création d\'un propriétaire par défaut');
+      this.proprietaires = [this.createDefaultProprietaire()];
+    }
+    
+    parcelleData.proprietaires = this.proprietaires.map((prop: any) => {
+        console.log('Propriétaire complet:', prop);
+        console.log('Propriétés disponibles:', Object.keys(prop));
+        
+        // Extraire les données si c'est une réponse encapsulée
+        const data = prop.data || prop;
+        const proprietaireId = data.id || prop.id;
+        
+        console.log('prop.quote_part:', prop.quote_part);
+        console.log('Type de quote_part:', typeof prop.quote_part);
+        
+        let quotePart = Number(prop.quote_part);
+        
+        // Si quote_part est undefined, null, ou NaN, utiliser 1.0 par défaut
+        if (isNaN(quotePart) || quotePart === null || quotePart === undefined || quotePart <= 0) {
+          console.warn(`Quote-part invalide pour propriétaire ${proprietaireId} (${prop.quote_part}), utilisation de 1.0 par défaut`);
+          quotePart = 1.0;
+        }
+        
+        // S'assurer que la quote-part est entre 0 et 1
+        if (quotePart > 1) {
+          console.warn(`Quote-part > 1 pour propriétaire ${proprietaireId} (${quotePart}), normalisation à 1.0`);
+          quotePart = 1.0;
+        }
+        
+        console.log(`Propriétaire ${proprietaireId}: quote_part=${prop.quote_part}, envoyé=${quotePart}`);
+        return {
+          proprietaireId: proprietaireId,
+          quotePart: quotePart // Les quote-parts sont déjà en décimales (0-1)
+        };
+      });
+      
+      console.log('Propriétaires préparés:', parcelleData.proprietaires);
+      const totalQuoteParts = parcelleData.proprietaires.reduce((sum: number, p: any) => sum + p.quotePart, 0);
+      console.log('Somme des quote-parts (décimales):', totalQuoteParts);
+      
+      // Validation finale : s'assurer que la somme = 1.0
+      if (Math.abs(totalQuoteParts - 1.0) > 0.01) {
+        console.warn(`Somme des quote-parts invalide: ${totalQuoteParts}, ajustement automatique`);
+        // Ajuster automatiquement le premier propriétaire pour que la somme = 1.0
+        const difference = 1.0 - totalQuoteParts;
+        parcelleData.proprietaires[0].quotePart += difference;
+        console.log(`Ajustement appliqué: ${parcelleData.proprietaires[0].quotePart}`);
+      }
 
     // Ajouter l'état de validation selon l'action choisie
     if (this.isDraft) {
@@ -1143,12 +1233,14 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   // Initialiser le formulaire modal
   private initializeProprietaireModalForm(): void {
     this.proprietaireModalForm = this.fb.group({
-      type_proprietaire: ['personne_physique', Validators.required],
-      nom_complet: ['', Validators.required],
-      cin_ou_rc: [''],
+      type_proprietaire: ['Physique', Validators.required],
+      nom: ['', Validators.required],
+      prenom: [''],
+      cin_ou_rc: ['', Validators.required],
       adresse: [''],
       telephone: [''],
-      quote_part: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      email: [''],
+      quote_part: [0.5, [Validators.required, Validators.min(0), Validators.max(1)]]
     });
   }
 
@@ -1182,7 +1274,7 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   validateQuotePart(): boolean {
     const newQuotePart = this.proprietaireModalForm.get('quote_part')?.value || 0;
     const currentTotal = this.proprietaires.reduce((sum, prop) => sum + (prop.quote_part || 0), 0);
-    return (currentTotal + newQuotePart) <= 100;
+    return (currentTotal + newQuotePart) <= 1.0;
   }
 
   // Vérifier si la quote-part est valide
@@ -1193,23 +1285,67 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   // Soumettre le propriétaire
   submitProprietaire(): void {
     if (this.proprietaireModalForm.valid && this.isQuotePartValid()) {
-      const newProprietaire = {
-        ...this.proprietaireModalForm.value,
-        id: Date.now(), // ID temporaire
-        type: this.proprietaireModalForm.get('type_proprietaire')?.value
+      const formValue = this.proprietaireModalForm.value;
+      const quotePart = Number(formValue.quote_part) || 1.0;
+      
+      console.log('Formulaire soumis:', formValue);
+      console.log('Quote-part extraite:', quotePart);
+      console.log('Type de quote-part:', typeof quotePart);
+      
+      // Créer le nouveau propriétaire
+      const nouveauProprietaire: Partial<Proprietaire> = {
+        nom: formValue.nom,
+        prenom: formValue.prenom,
+        nature: formValue.type_proprietaire || 'Physique',
+        cinOuRc: formValue.cin_ou_rc,
+        adresse: formValue.adresse,
+        telephone: formValue.telephone,
+        email: formValue.email,
+        estActif: true
       };
 
-      this.proprietaires.push(newProprietaire);
-      this.recalculateQuoteParts();
-      this.closeProprietaireModal();
-      
-      console.log('Propriétaire ajouté:', newProprietaire);
+      // Sauvegarder le propriétaire dans la base de données
+      this.proprietaireService.createProprietaire(nouveauProprietaire).subscribe({
+        next: (response) => {
+          console.log('Réponse complète de l\'API:', response);
+          
+          // Extraire les données du propriétaire de la réponse encapsulée
+          const proprietaireCree = (response as any).data || response;
+          console.log('Propriétaire créé par l\'API:', proprietaireCree);
+          console.log('Propriétés disponibles:', Object.keys(proprietaireCree));
+          
+          // Ajouter le propriétaire créé avec sa quote-part
+          const proprietaireAvecQuote: any = {
+            ...proprietaireCree,
+            quote_part: quotePart
+          };
+          
+          // Vérifier que la quote-part est valide
+          if (quotePart <= 0 || quotePart > 1) {
+            console.error('Quote-part invalide:', quotePart);
+            this.showErrorMessage('La quote-part doit être entre 0 et 1');
+            return;
+          }
+          
+          this.proprietaires.push(proprietaireAvecQuote);
+          this.recalculateQuoteParts();
+          this.closeProprietaireModal();
+          
+          console.log('Propriétaire créé et ajouté:', proprietaireAvecQuote);
+          this.showSuccessMessage('Propriétaire ajouté avec succès !');
+        },
+        error: (error) => {
+          console.error('Erreur lors de la création du propriétaire:', error);
+          this.showErrorMessage('Erreur lors de la création du propriétaire');
+        }
+      });
     }
   }
 
   // Recalculer les quote-parts
   private recalculateQuoteParts(): void {
     this.totalQuoteParts = this.proprietaires.reduce((sum, prop) => sum + (prop.quote_part || 0), 0);
+    console.log('Total quote-parts calculé:', this.totalQuoteParts);
     // Recalculer le TNB après modification des quote-parts
     this.recalculateTNB();
   }
@@ -1218,6 +1354,54 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   removeProprietaire(index: number): void {
     this.proprietaires.splice(index, 1);
     this.recalculateQuoteParts();
+  }
+
+  // Méthode utilitaire pour obtenir le nom complet du propriétaire
+  getProprietaireName(proprietaire: any): string {
+    console.log('Propriétaire pour affichage:', proprietaire);
+    console.log('Propriétés disponibles:', Object.keys(proprietaire));
+    
+    // Extraire les données si c'est une réponse encapsulée
+    const data = proprietaire.data || proprietaire;
+    
+    // Gérer les différents formats possibles de l'API
+    const nom = data.nom || data.nom_complet || '';
+    const prenom = data.prenom || '';
+    
+    console.log(`Nom: "${nom}", Prénom: "${prenom}"`);
+    
+    if (data.nature === 'Morale' || data.type_proprietaire === 'Morale') {
+      return nom;
+    }
+    
+    const nomComplet = prenom ? `${prenom} ${nom}` : nom;
+    console.log(`Nom complet: "${nomComplet}"`);
+    return nomComplet;
+  }
+
+  // Méthode utilitaire pour obtenir le CIN/RC du propriétaire
+  getProprietaireCin(proprietaire: any): string {
+    // Extraire les données si c'est une réponse encapsulée
+    const data = proprietaire.data || proprietaire;
+    const cin = data.cinOuRc || data.cin_ou_rc || '';
+    console.log(`CIN/RC: "${cin}"`);
+    return cin;
+  }
+
+  // Méthode pour créer un propriétaire par défaut avec quote-part = 1.0
+  private createDefaultProprietaire(): ProprietaireAvecQuote {
+    return {
+      id: Date.now(), // ID temporaire
+      nom: 'Propriétaire par défaut',
+      prenom: '',
+      nature: 'Physique',
+      cinOuRc: 'DEFAULT',
+      adresse: '',
+      telephone: '',
+      email: '',
+      estActif: true,
+      quote_part: 1.0
+    };
   }
 
   // =====================================================

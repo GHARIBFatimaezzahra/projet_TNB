@@ -341,17 +341,17 @@
           <div *ngIf="proprietaires.length > 0">
             <div *ngFor="let prop of proprietaires; let i = index" class="quote-part-row">
               <div class="proprietaire-info">
-                <div class="proprietaire-name">{{ prop.nom_complet || prop.raison_sociale }}</div>
-                <div class="proprietaire-details">{{ prop.cin_ou_rc }}</div>
+                <div class="proprietaire-name">{{ getProprietaireName(prop) }}</div>
+                <div class="proprietaire-details">{{ getProprietaireCin(prop) }}</div>
               </div>
               
               <div class="quote-input-group">
                 <input type="number" class="quote-input form-control" 
                        [(ngModel)]="prop.quote_part" 
                        (input)="validateQuoteParts()"
-                       min="0" max="100" step="0.1">
-                <span class="quote-percentage">{{ prop.quote_part }}%</span>
-                <span class="quote-amount">{{ (prop.quote_part * surfaceImposable * tarifTnb / 100) | number:'1.2-2' }} DH</span>
+                       min="0" max="1" step="0.01">
+                <span class="quote-percentage">{{ (prop.quote_part * 100) | number:'1.1-1' }}%</span>
+                <span class="quote-amount">{{ (prop.quote_part * surfaceImposable * tarifTnb) | number:'1.2-2' }} DH</span>
               </div>
               
               <button class="btn btn-danger btn-sm" (click)="removeProprietaire(i)">
@@ -363,14 +363,14 @@
           <!-- Récapitulatif -->
           <div *ngIf="proprietaires.length > 0" class="quote-summary">
             <div>
-              <strong style="font-size: 1.1rem;">Total des quote-parts: <span [style.color]="totalQuoteParts === 100 ? 'var(--success-color)' : 'var(--danger-color)'">{{ totalQuoteParts }}%</span></strong>
+              <strong style="font-size: 1.1rem;">Total des quote-parts: <span [style.color]="totalQuoteParts === 1.0 ? 'var(--success-color)' : 'var(--danger-color)'">{{ totalQuoteParts }} ({{ (totalQuoteParts * 100) | number:'1.1-1' }}%)</span></strong>
               <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.25rem;">
                 {{ proprietaires.length }} propriétaire(s) • Montant total: {{ totalTnb | number:'1.2-2' }} DH
               </div>
             </div>
-            <div class="alert" [class.alert-success]="totalQuoteParts === 100" [class.alert-warning]="totalQuoteParts !== 100" style="margin: 0; padding: 0.5rem 1rem;">
-              <i class="fas" [class.fa-check-circle]="totalQuoteParts === 100" [class.fa-exclamation-triangle]="totalQuoteParts !== 100"></i>
-              {{ totalQuoteParts === 100 ? 'Quote-parts valides' : 'Quote-parts incomplètes' }}
+            <div class="alert" [class.alert-success]="totalQuoteParts === 1.0" [class.alert-warning]="totalQuoteParts !== 1.0" style="margin: 0; padding: 0.5rem 1rem;">
+              <i class="fas" [class.fa-check-circle]="totalQuoteParts === 1.0" [class.fa-exclamation-triangle]="totalQuoteParts !== 1.0"></i>
+              {{ totalQuoteParts === 1.0 ? 'Quote-parts valides' : 'Quote-parts incomplètes' }}
             </div>
           </div>
         </div>
@@ -655,9 +655,9 @@
                     <i class="fas" [class.fa-check-circle]="geometryValid" [class.fa-clock]="!geometryValid"></i>
                     <span>Géométrie valide</span>
                   </div>
-                  <div class="validation-item" [class.valid]="totalQuoteParts === 100">
-                    <i class="fas" [class.fa-check-circle]="totalQuoteParts === 100" [class.fa-clock]="totalQuoteParts !== 100"></i>
-                    <span>Quote-parts totalisent 100%</span>
+                  <div class="validation-item" [class.valid]="totalQuoteParts === 1.0">
+                    <i class="fas" [class.fa-check-circle]="totalQuoteParts === 1.0" [class.fa-clock]="totalQuoteParts !== 1.0"></i>
+                    <span>Quote-parts totalisent 1.0 (100%)</span>
                   </div>
                   <div class="validation-item" [class.valid]="documents.length > 0">
                     <i class="fas" [class.fa-check-circle]="documents.length > 0" [class.fa-clock]="documents.length === 0"></i>
@@ -796,16 +796,20 @@
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label required">Type de propriétaire</label>
-              <select class="form-control" formControlName="type_proprietaire" (change)="onTypeProprietaireChange()">
-                <option value="">Sélectionner...</option>
-                <option value="personne_physique">Personne physique</option>
-                <option value="personne_morale">Personne morale</option>
+              <select class="form-control" formControlName="type_proprietaire">
+                <option value="Physique">Personne physique</option>
+                <option value="Morale">Personne morale</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Nom complet / Raison sociale</label>
-              <input type="text" class="form-control" formControlName="nom_complet" placeholder="Nom complet ou raison sociale">
+              <label class="form-label required">Nom</label>
+              <input type="text" class="form-control" formControlName="nom" placeholder="Nom du propriétaire">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Prénom</label>
+              <input type="text" class="form-control" formControlName="prenom" placeholder="Prénom (personne physique)">
             </div>
 
             <!-- Champ CIN ou RC/ICE -->
@@ -835,11 +839,16 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Quote-part (%)</label>
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" formControlName="email" placeholder="email@exemple.com">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Quote-part (0-1)</label>
               <input type="number" class="form-control" formControlName="quote_part" 
-                     placeholder="0" min="0" max="100" step="0.1"
+                     placeholder="0.5" min="0" max="1" step="0.01"
                      (input)="validateQuotePart()">
-              <div class="form-help">Pourcentage de propriété (0-100%)</div>
+              <div class="form-help">Part de propriété (0-1, ex: 0.5 = 50%)</div>
             </div>
           </div>
 
@@ -848,8 +857,8 @@
                [class.alert-success]="isQuotePartValid()" 
                [class.alert-warning]="!isQuotePartValid()">
             <i class="fas" [class.fa-check-circle]="isQuotePartValid()" [class.fa-exclamation-triangle]="!isQuotePartValid()"></i>
-            Quote-part: {{ proprietaireModalForm.get('quote_part')?.value }}% 
-            <span *ngIf="!isQuotePartValid()">- Attention: le total ne doit pas dépasser 100%</span>
+            Quote-part: {{ proprietaireModalForm.get('quote_part')?.value }} ({{ (proprietaireModalForm.get('quote_part')?.value * 100) | number:'1.1-1' }}%)
+            <span *ngIf="!isQuotePartValid()">- Attention: le total ne doit pas dépasser 1.0</span>
           </div>
         </div>
         

@@ -110,4 +110,23 @@ export class CreateParcelleDto {
   @IsOptional()
   @IsEnum(EtatValidation)
   etatValidation?: EtatValidation;
+
+  @ApiProperty({ 
+    description: 'Propriétaires de la parcelle avec leurs quote-parts',
+    example: [
+      {
+        proprietaireId: 1,
+        quotePart: 0.6
+      },
+      {
+        proprietaireId: 2,
+        quotePart: 0.4
+      }
+    ]
+  })
+  @IsOptional()
+  proprietaires?: {
+    proprietaireId: number;
+    quotePart: number;
+  }[];
 }
