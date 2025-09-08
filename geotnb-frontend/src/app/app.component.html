@@ -1,4 +1,9 @@
 <div class="app-container">
+  <!-- TEST SIMPLE -->
+  <div style="background: #2196F3; color: white; padding: 20px; margin: 20px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: bold;">
+    ✅ APPLICATION ANGULAR CHARGÉE ! Test de base réussi.
+  </div>
+  
   <!-- Barre de progression globale -->
   <mat-progress-bar 
     *ngIf="isLoading$ | async" 
@@ -6,15 +11,13 @@
     class="global-progress-bar">
   </mat-progress-bar>
 
-  <!-- Layout principal pour les utilisateurs connectés -->
-  <app-main-layout *ngIf="isAuthenticated$ | async; else guestContent">
+  <!-- Interface principale avec routage -->
+  <app-main-layout *ngIf="isAuthenticated$ | async">
     <router-outlet></router-outlet>
   </app-main-layout>
 
-  <!-- Contenu pour les invités (non connectés) -->
-  <ng-template #guestContent>
-    <main class="guest-content">
-      <router-outlet></router-outlet>
-    </main>
-  </ng-template>
+  <!-- Interface de login si non authentifié -->
+  <div *ngIf="!(isAuthenticated$ | async)">
+    <router-outlet></router-outlet>
+  </div>
 </div>

@@ -287,7 +287,7 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     this.parcelleForm = this.fb.group({
       reference_fonciere: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]{10,15}$/)]],
       surface_totale: [0, [Validators.required, Validators.min(0.01)]],
-      surface_imposable: [0, [Validators.required, Validators.min(0)]],
+      surface_imposable: [0, [Validators.min(0)]], // Pas required par défaut
       statut_foncier: ['nu', Validators.required],
       zone_urbanistique: ['', Validators.required],
       statut_occupation: ['Nu'],
@@ -307,6 +307,11 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
       proprietaire_secondaire: [''],
       indivision: [false],
       quote_parts: this.fb.array([])
+    });
+
+    // Écouter les changements d'exonération pour ajuster la validation
+    this.parcelleForm.get('exonere_tnb')?.valueChanges.subscribe(exonere => {
+      this.updateSurfaceImposableValidation(exonere);
     });
 
     // Formulaire des documents
@@ -748,6 +753,29 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   // =====================================================
+  // GESTION DE L'EXONÉRATION
+  // =====================================================
+
+  // Mettre à jour la validation de la surface imposable selon l'exonération
+  private updateSurfaceImposableValidation(exonere: boolean): void {
+    const surfaceImposableControl = this.parcelleForm.get('surface_imposable');
+    
+    if (exonere) {
+      // Si exonérée : surface imposable non obligatoire
+      surfaceImposableControl?.clearValidators();
+      surfaceImposableControl?.setValidators([Validators.min(0)]);
+      surfaceImposableControl?.setValue(0); // Mettre à 0 par défaut
+      console.log('🔓 Parcelle exonérée : surface imposable non obligatoire');
+    } else {
+      // Si imposable : surface imposable obligatoire
+      surfaceImposableControl?.setValidators([Validators.required, Validators.min(0)]);
+      console.log('🔒 Parcelle imposable : surface imposable obligatoire');
+    }
+    
+    surfaceImposableControl?.updateValueAndValidity();
+  }
+
+  // =====================================================
   // VALIDATION ET SAUVEGARDE
   // =====================================================
   
@@ -755,16 +783,19 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   fixFormValidation(): void {
     console.log('🔧 Correction automatique des erreurs de validation...');
     
+    // Vérifier si la parcelle est exonérée
+    const isExonere = this.parcelleForm.get('exonere_tnb')?.value || false;
+    
     // Valeurs par défaut pour tous les champs obligatoires
     const defaultValues: { [key: string]: any } = {
       'reference_fonciere': 'TF' + Date.now().toString().slice(-8),
       'surface_totale': 100,
-      'surface_imposable': 100,
+      'surface_imposable': isExonere ? 0 : 100, // 0 si exonérée, 100 si imposable
       'statut_foncier': 'nu',
       'zone_urbanistique': 'R1',
       'statut_occupation': 'Nu',
       'coordonnees_geometriques': [],
-      'prix_unitaire_m2': 10.0,
+      'prix_unitaire_m2': isExonere ? 0 : 10.0, // 0 si exonérée, 10 si imposable
       'exonere_tnb': false,
       'date_permis': new Date().toISOString().split('T')[0],
       'duree_exoneration': 0,
@@ -833,16 +864,19 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
     // Remplir tous les champs avec des valeurs par défaut
     this.fixFormValidation();
     
+    // Vérifier si la parcelle est exonérée
+    const isExonere = this.parcelleForm.get('exonere_tnb')?.value || false;
+    
     // Forcer la validation à true
     this.parcelleForm.patchValue({
       reference_fonciere: this.parcelleForm.get('reference_fonciere')?.value || 'TF' + Date.now().toString().slice(-8),
       surface_totale: this.parcelleForm.get('surface_totale')?.value || 100,
-      surface_imposable: this.parcelleForm.get('surface_imposable')?.value || 100,
+      surface_imposable: isExonere ? 0 : (this.parcelleForm.get('surface_imposable')?.value || 100),
       statut_foncier: this.parcelleForm.get('statut_foncier')?.value || 'nu',
       zone_urbanistique: this.parcelleForm.get('zone_urbanistique')?.value || 'R1',
       statut_occupation: this.parcelleForm.get('statut_occupation')?.value || 'Nu',
       coordonnees_geometriques: this.parcelleForm.get('coordonnees_geometriques')?.value || [],
-      prix_unitaire_m2: this.parcelleForm.get('prix_unitaire_m2')?.value || 10.0,
+      prix_unitaire_m2: isExonere ? 0 : (this.parcelleForm.get('prix_unitaire_m2')?.value || 10.0),
       exonere_tnb: this.parcelleForm.get('exonere_tnb')?.value || false,
       date_permis: this.parcelleForm.get('date_permis')?.value || new Date().toISOString().split('T')[0],
       duree_exoneration: this.parcelleForm.get('duree_exoneration')?.value || 0,
@@ -996,20 +1030,33 @@ export class ParcelleCreateComponent implements OnInit, OnDestroy, AfterViewInit
   private prepareParcelleData(): any {
     // Préparer les données de base de la parcelle avec les noms de propriétés du backend
     const formValue = this.parcelleForm.value;
+    const isExonere = formValue.exonere_tnb || false;
     
     const parcelleData: any = {
       // Propriétés principales avec conversion camelCase
       referenceFonciere: formValue.reference_fonciere,
       surfaceTotale: formValue.surface_totale,
-      surfaceImposable: formValue.surface_imposable,
       statutFoncier: formValue.statut_foncier,
       statutOccupation: formValue.statut_occupation,
       zonage: formValue.zone_urbanistique,
-      exonereTnb: formValue.exonere_tnb,
+      exonereTnb: isExonere,
       datePermis: formValue.date_permis || undefined,
       dureeExoneration: formValue.duree_exoneration ? Number(formValue.duree_exoneration) : undefined,
       observations: formValue.observations || undefined
     };
+
+    // Gestion de la surface imposable selon l'exonération
+    if (isExonere) {
+      // Parcelle exonérée : surface imposable = 0
+      parcelleData.surfaceImposable = 0;
+      parcelleData.prixUnitaireM2 = 0; // Pas de tarif pour les exonérées
+      console.log('🔓 Parcelle exonérée : surface imposable = 0, tarif = 0');
+    } else {
+      // Parcelle imposable : utiliser la surface imposable saisie
+      parcelleData.surfaceImposable = formValue.surface_imposable || formValue.surface_totale;
+      parcelleData.prixUnitaireM2 = formValue.prix_unitaire_m2 || 0;
+      console.log('🔒 Parcelle imposable : surface imposable =', parcelleData.surfaceImposable, 'tarif =', parcelleData.prixUnitaireM2);
+    }
 
     // Ajouter une géométrie par défaut (solution simple)
     console.log('🔍 Ajout d\'une géométrie par défaut...');

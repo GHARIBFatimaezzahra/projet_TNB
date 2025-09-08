@@ -2,10 +2,10 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  // Route par défaut - redirection vers parcelles pour les tests
+  // Route par défaut - redirection vers login
   {
     path: '',
-    redirectTo: '/parcelles',
+    redirectTo: '/auth/login',
     pathMatch: 'full'
   },
   
@@ -25,8 +25,15 @@ export const routes: Routes = [
   // Dashboard
   {
     path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/dashboard.component').then(c => c.DashboardComponent),
-    canActivate: [AuthGuard]
+    loadComponent: () => import('./features/dashboard/dashboard.component').then(c => c.DashboardComponent)
+    // canActivate: [AuthGuard] // Temporairement désactivé
+  },
+  
+  // Requêtes spatiales
+  {
+    path: 'spatial-queries',
+    loadComponent: () => import('./features/spatial-queries/spatial-queries.component').then(c => c.SpatialQueriesComponent)
+    // canActivate: [AuthGuard] // Temporairement désactivé
   },
   
   // Route wildcard - redirection vers login

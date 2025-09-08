@@ -35,6 +35,12 @@ export class SearchParcelleDto {
   @Transform(({ value }) => value === 'true')
   exonereTnb?: boolean;
 
+  @ApiProperty({ required: false, description: 'Exclure les parcelles archivées (supprimées)' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  excludeArchived?: boolean;
+
   @ApiProperty({ required: false, example: 1 })
   @IsOptional()
   @IsNumber()

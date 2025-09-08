@@ -1,0 +1,366 @@
+<div class="spatial-queries-container">
+  <!-- En-tête -->
+  <div class="header">
+    <h1>
+      <mat-icon>search</mat-icon>
+      Requêtes Spatiales TNB
+    </h1>
+    <p>Recherche et analyse géographique des parcelles non bâties - Système d'Information Géographique</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Type de requête -->
+      <div class="query-section">
+        <h3 class="section-title">
+          <mat-icon>target</mat-icon>
+          Type de Requête
+        </h3>
+        
+        <mat-tab-group [(selectedIndex)]="currentTab" (selectedIndexChange)="switchTab($event === 0 ? 'emprise' : $event === 1 ? 'secteur' : 'distance')">
+          <!-- Onglet Emprise -->
+          <mat-tab label="Emprise">
+            <div class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Mode de définition</label>
+                <div class="draw-tools">
+                  <button 
+                    class="draw-btn" 
+                    [class.active]="currentDrawMode === 'polygon'"
+                    (click)="setDrawMode('polygon')">
+                    <mat-icon>gesture</mat-icon>
+                    Polygone
+                  </button>
+                  <button 
+                    class="draw-btn" 
+                    [class.active]="currentDrawMode === 'rectangle'"
+                    (click)="setDrawMode('rectangle')">
+                    <mat-icon>crop_square</mat-icon>
+                    Rectangle
+                  </button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Coordonnées manuelles (optionnel)</label>
+                <div class="coord-inputs">
+                  <mat-form-field appearance="outline">
+                    <mat-label>X min</mat-label>
+                    <input matInput type="number" [(ngModel)]="coordinates.xMin" placeholder="Ex: -1.9">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Y min</mat-label>
+                    <input matInput type="number" [(ngModel)]="coordinates.yMin" placeholder="Ex: 34.7">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>X max</mat-label>
+                    <input matInput type="number" [(ngModel)]="coordinates.xMax" placeholder="Ex: -1.8">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Y max</mat-label>
+                    <input matInput type="number" [(ngModel)]="coordinates.yMax" placeholder="Ex: 34.8">
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Onglet Secteur -->
+          <mat-tab label="Secteur">
+            <div class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Type de secteur</label>
+                <mat-form-field appearance="outline">
+                  <mat-label>Sélectionner...</mat-label>
+                  <mat-select [(ngModel)]="selectedSecteurType" (selectionChange)="onSecteurTypeChange()">
+                    <mat-option value="arrondissement">Arrondissement</mat-option>
+                    <mat-option value="quartier">Quartier</mat-option>
+                    <mat-option value="commune">Commune</mat-option>
+                    <mat-option value="zone-amenagement">Zone d'aménagement</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Secteur spécifique</label>
+                <mat-form-field appearance="outline">
+                  <mat-label>Choisir un secteur...</mat-label>
+                  <mat-select [(ngModel)]="selectedSecteur">
+                    <mat-option *ngFor="let secteur of secteurs" [value]="secteur.id">
+                      {{ secteur.nom }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Onglet Distance -->
+          <mat-tab label="Distance">
+            <div class="tab-content">
+              <div class="form-group">
+                <label class="form-label">Point de référence</label>
+                <div class="draw-tools">
+                  <button 
+                    class="draw-btn" 
+                    [class.active]="currentPointMode === 'click'"
+                    (click)="setPointMode('click')">
+                    <mat-icon>place</mat-icon>
+                    Clic carte
+                  </button>
+                  <button 
+                    class="draw-btn" 
+                    [class.active]="currentPointMode === 'coords'"
+                    (click)="setPointMode('coords')">
+                    <mat-icon>my_location</mat-icon>
+                    Coordonnées
+                  </button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Rayon de recherche</label>
+                <mat-slider 
+                  min="50" 
+                  max="5000" 
+                  step="50"
+                  [(ngModel)]="distanceValue"
+                  (input)="onDistanceChange($event)"
+                  class="distance-slider">
+                </mat-slider>
+                <div class="slider-value">
+                  {{ distanceValue >= 1000 ? (distanceValue / 1000).toFixed(1) + ' km' : distanceValue + ' mètres' }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Type de distance</label>
+                <mat-form-field appearance="outline">
+                  <mat-label>Sélectionner...</mat-label>
+                  <mat-select>
+                    <mat-option value="euclidienne">Distance euclidienne</mat-option>
+                    <mat-option value="reseau">Distance réseau routier</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+
+      <!-- Filtres additionnels -->
+      <div class="query-section">
+        <h3 class="section-title">
+          <mat-icon>tune</mat-icon>
+          Filtres Additionnels
+        </h3>
+        
+        <div class="form-group">
+          <label class="form-label">Statut foncier</label>
+          <mat-form-field appearance="outline">
+            <mat-label>Tous</mat-label>
+            <mat-select [(ngModel)]="filters.statutFoncier">
+              <mat-option value="">Tous</mat-option>
+              <mat-option value="TF">Titre Foncier (TF)</mat-option>
+              <mat-option value="R">Réquisition (R)</mat-option>
+              <mat-option value="NI">Non Immatriculé (NI)</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Zonage urbanistique</label>
+          <mat-form-field appearance="outline">
+            <mat-label>Tous</mat-label>
+            <mat-select [(ngModel)]="filters.zonage">
+              <mat-option value="">Tous</mat-option>
+              <mat-option value="R+2">Zone R+2</mat-option>
+              <mat-option value="R+4">Zone R+4</mat-option>
+              <mat-option value="Villas">Zone Villas</mat-option>
+              <mat-option value="Industriel">Zone Industrielle</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Surface minimale (m²)</label>
+          <mat-form-field appearance="outline">
+            <mat-label>Ex: 100</mat-label>
+            <input matInput type="number" [(ngModel)]="filters.surfaceMin" placeholder="Ex: 100">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="action-buttons">
+        <button 
+          class="btn btn-primary" 
+          (click)="executeQuery()"
+          [disabled]="isLoading">
+          <mat-icon>search</mat-icon>
+          <span *ngIf="!isLoading">Lancer la requête</span>
+          <span *ngIf="isLoading">Recherche...</span>
+        </button>
+        <button 
+          class="btn btn-secondary" 
+          (click)="clearQuery()"
+          [disabled]="isLoading">
+          <mat-icon>clear</mat-icon>
+          Effacer
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneau des résultats -->
+    <div class="results-panel">
+      <!-- En-tête des résultats -->
+      <div class="results-header">
+        <div class="results-title">
+          <mat-icon>analytics</mat-icon>
+          Résultats de recherche
+          <span class="results-count">{{ resultsCount }}</span>
+        </div>
+        <div class="export-buttons" *ngIf="hasResults">
+          <button class="btn-export" (click)="exportResults('excel')" matTooltip="Export Excel">
+            <mat-icon>table_chart</mat-icon>
+            Excel
+          </button>
+          <button class="btn-export" (click)="exportResults('csv')" matTooltip="Export CSV">
+            <mat-icon>description</mat-icon>
+            CSV
+          </button>
+          <button class="btn-export" (click)="exportResults('gpkg')" matTooltip="Export GeoPackage">
+            <mat-icon>map</mat-icon>
+            GeoPackage
+          </button>
+          <button class="btn-export" (click)="exportResults('pdf')" matTooltip="Carte PDF">
+            <mat-icon>picture_as_pdf</mat-icon>
+            PDF Carte
+          </button>
+        </div>
+      </div>
+
+      <!-- Cartes de résumé -->
+      <div class="summary-cards" *ngIf="hasResults">
+        <div class="summary-card">
+          <div class="summary-value">{{ summary.totalParcelles }}</div>
+          <div class="summary-label">Parcelles trouvées</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">{{ (summary.surfaceTotale / 10000).toFixed(2) }}</div>
+          <div class="summary-label">Surface totale (ha)</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">{{ (summary.surfaceImposable / 10000).toFixed(2) }}</div>
+          <div class="summary-label">Surface imposable (ha)</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-value">{{ summary.recettePrevue | number }}</div>
+          <div class="summary-label">Recette prévue (DH)</div>
+        </div>
+      </div>
+
+      <!-- Carte interactive -->
+      <div class="map-container">
+        <div #mapContainer id="map" class="map"></div>
+        
+        <!-- Placeholder de la carte -->
+        <div class="map-placeholder" *ngIf="!hasResults">
+          <div class="icon">🗺️</div>
+          <div><strong>Carte Interactive OpenLayers</strong></div>
+          <div>Dessinez votre zone de recherche ou sélectionnez un secteur</div>
+          <div class="subtitle">
+            Intégration PostGIS + GeoServer
+          </div>
+        </div>
+        
+        <!-- Instructions de dessin -->
+        <div class="drawing-instructions" *ngIf="currentTab === 'emprise' && isDrawing">
+          Cliquez sur la carte pour dessiner votre zone de recherche
+        </div>
+        
+        <!-- Contrôles de la carte -->
+        <div class="map-controls">
+          <button class="map-control-btn" matTooltip="Zoom avant" (click)="zoomIn()">
+            <mat-icon>add</mat-icon>
+          </button>
+          <button class="map-control-btn" matTooltip="Zoom arrière" (click)="zoomOut()">
+            <mat-icon>remove</mat-icon>
+          </button>
+          <button class="map-control-btn" matTooltip="Étendue complète" (click)="zoomToExtent()">
+            <mat-icon>home</mat-icon>
+          </button>
+          <button class="map-control-btn" matTooltip="Couches" (click)="toggleLayers()">
+            <mat-icon>layers</mat-icon>
+          </button>
+        </div>
+        
+        <!-- Affichage des coordonnées -->
+        <div class="coordinates-display" id="coordinates">
+          X: -1.900000 | Y: 34.700000
+        </div>
+        
+        <!-- Affichage de l'échelle -->
+        <div class="scale-display" id="scale">
+          1:50,000
+        </div>
+        
+        <!-- Indicateur de chargement -->
+        <div class="loading" *ngIf="isLoading">
+          <mat-spinner diameter="48"></mat-spinner>
+          <div class="loading-text">Recherche en cours...</div>
+        </div>
+      </div>
+
+      <!-- Tableau des résultats -->
+      <div class="results-table">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Propriétaire</th>
+                <th>Statut</th>
+                <th>Surface (m²)</th>
+                <th>Zone</th>
+                <th>Montant TNB</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!hasResults">
+                <td colspan="7" class="no-results">
+                  <mat-icon>search_off</mat-icon>
+                  <div>Aucune requête lancée - Utilisez les outils de recherche ci-dessus</div>
+                </td>
+              </tr>
+              <tr *ngFor="let parcelle of queryResults?.parcelles">
+                <td><strong>{{ parcelle.referenceFonciere }}</strong></td>
+                <td>{{ parcelle.proprietaire }}</td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + parcelle.statutFoncier.toLowerCase()">
+                    {{ parcelle.statutFoncier }}
+                  </span>
+                </td>
+                <td>{{ parcelle.surfaceCadastrale | number }}</td>
+                <td>{{ parcelle.zoneUrbanistique }}</td>
+                <td><strong>{{ parcelle.montantTNB | number }} DH</strong></td>
+                <td>
+                  <button 
+                    class="btn-export" 
+                    (click)="viewParcel(parcelle.referenceFonciere)"
+                    matTooltip="Voir la parcelle">
+                    <mat-icon>visibility</mat-icon>
+                    Voir
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

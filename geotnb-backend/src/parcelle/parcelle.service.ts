@@ -167,6 +167,13 @@ export class ParcelleService {
       });
     }
 
+    // Exclure les parcelles archivées si demandé
+    if (filters.excludeArchived) {
+      query.andWhere('parcelle.etatValidation != :archived', { 
+        archived: 'Archive' 
+      });
+    }
+
     // Tri - convertir camelCase en snake_case
     const sortColumn = sortBy === 'referenceFonciere' ? 'reference_fonciere' :
                       sortBy === 'surfaceTotale' ? 'surface_totale' :

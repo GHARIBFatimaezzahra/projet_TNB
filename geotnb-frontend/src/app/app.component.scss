@@ -34,13 +34,39 @@
 }
 
 /* Styles pour les pages d'authentification */
-:host ::ng-deep {
-  .login-container,
-  .register-container,
-  .forgot-password-container {
-    min-height: 100vh;
-    display: flex;
-  }
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+  min-width: 400px;
+}
+
+.login-card h1 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.login-card p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+.login-card button {
+  padding: 12px 30px;
+  font-size: 16px;
+  border-radius: 6px;
 }
 
 /* Responsive */

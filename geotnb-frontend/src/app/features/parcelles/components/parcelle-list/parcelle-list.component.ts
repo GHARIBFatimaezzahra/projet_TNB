@@ -26,6 +26,8 @@ import { takeUntil, debounceTime, distinctUntilChanged, filter } from 'rxjs/oper
 
 // Services
 import { ParcellesApiService, ParcelleAPI, SearchFilters } from '../../services/parcelles-api.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { UserProfil } from '../../../../core/models/database.models';
 
 // Interfaces locales
 export interface ListStatistics {
@@ -112,7 +114,8 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private snackBar: MatSnackBar,
-    private parcellesApiService: ParcellesApiService
+    private parcellesApiService: ParcellesApiService,
+    private authService: AuthService
   ) {
     // Configuration de la recherche avec debounce
     this.searchSubject$
@@ -154,10 +157,16 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    console.log('Chargement des parcelles avec filtres:', this.searchFilters);
+    // Filtrer automatiquement les parcelles archivées (supprimées)
+    const filtersWithExclusions = {
+      ...this.searchFilters,
+      excludeArchived: true // Nouveau filtre pour exclure les parcelles archivées
+    };
+
+    console.log('Chargement des parcelles avec filtres:', filtersWithExclusions);
     console.log('URL API appelée:', `${this.parcellesApiService['apiUrl']}`);
 
-    this.parcellesApiService.getParcelles(this.searchFilters)
+    this.parcellesApiService.getParcelles(filtersWithExclusions)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -406,20 +415,64 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
   }
 
   deleteParcelle(parcelle: ParcelleAPI): void {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette parcelle ?')) {
+    console.log('🗑️ Tentative de suppression de la parcelle:', parcelle);
+    
+    // Vérifier les permissions
+    if (!this.canDeleteParcelle()) {
+      this.snackBar.open('Vous n\'avez pas les permissions pour supprimer des parcelles', 'Fermer', { duration: 3000 });
+      return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la parcelle "${parcelle.referenceFonciere}" ?\n\nLa parcelle sera archivée et ne s'affichera plus dans la liste.`)) {
+      console.log('🗑️ Confirmation reçue, suppression en cours...');
+      
       this.parcellesApiService.deleteParcelle(parcelle.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
-            this.snackBar.open('Parcelle supprimée avec succès', 'Fermer', { duration: 2000 });
+          next: (response) => {
+            console.log('🗑️ Suppression réussie:', response);
+            this.snackBar.open('Parcelle archivée avec succès', 'Fermer', { duration: 2000 });
             this.loadParcelles();
+            this.loadStatistics();
           },
           error: (error) => {
-            console.error('Erreur suppression:', error);
-            this.snackBar.open('Erreur lors de la suppression', 'Fermer', { duration: 3000 });
+            console.error('🗑️ Erreur suppression détaillée:', error);
+            console.error('🗑️ Status:', error.status);
+            console.error('🗑️ Message:', error.message);
+            console.error('🗑️ Error body:', error.error);
+            
+            let errorMessage = 'Erreur lors de la suppression';
+            if (error.status === 403) {
+              errorMessage = 'Vous n\'avez pas les permissions pour supprimer cette parcelle';
+            } else if (error.status === 404) {
+              errorMessage = 'Parcelle introuvable';
+            } else if (error.status === 500) {
+              errorMessage = 'Erreur serveur lors de la suppression';
+            } else if (error.error?.message) {
+              errorMessage = error.error.message;
+            }
+            
+            this.snackBar.open(errorMessage, 'Fermer', { duration: 5000 });
           }
         });
+    } else {
+      console.log('🗑️ Suppression annulée par l\'utilisateur');
     }
+  }
+
+  canDeleteParcelle(): boolean {
+    return this.authService.hasPermission(
+      UserProfil.ADMIN,
+      UserProfil.TECHNICIEN_SIG
+    );
+  }
+
+  // Méthode de debug pour vérifier les permissions
+  debugPermissions(): void {
+    console.log('🔍 Debug des permissions de suppression:');
+    console.log('🔍 Utilisateur actuel:', this.authService.currentUser);
+    console.log('🔍 Peut supprimer:', this.canDeleteParcelle());
+    console.log('🔍 Rôles autorisés:', [UserProfil.ADMIN, UserProfil.TECHNICIEN_SIG]);
   }
 
   showBulkActions(): void {
@@ -493,12 +546,12 @@ export class ParcelleListComponent implements OnInit, OnDestroy {
     if (this.selection.selected.length === 0) return;
     
     const selectedIds = this.selection.selected.map(p => p.id);
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} parcelle(s) ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} parcelle(s) ?\n\nLes parcelles seront archivées et ne s'afficheront plus dans la liste.`)) {
       // Suppression individuelle pour chaque parcelle
       const deletions = selectedIds.map(id => this.parcellesApiService.deleteParcelle(id));
       
       Promise.all(deletions).then(() => {
-        this.snackBar.open(`${selectedIds.length} parcelles supprimées avec succès`, 'Fermer', { duration: 3000 });
+        this.snackBar.open(`${selectedIds.length} parcelles archivées avec succès`, 'Fermer', { duration: 3000 });
         this.loadParcelles();
         this.loadStatistics();
         this.selection.clear();

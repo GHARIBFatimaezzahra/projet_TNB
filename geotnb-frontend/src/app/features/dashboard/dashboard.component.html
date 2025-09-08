@@ -1,191 +1,268 @@
-<!-- =====================================================
-     DASHBOARD ANALYTIQUE - EXACTEMENT COMME VOS IMAGES
-     ===================================================== -->
-
 <div class="dashboard-container">
-  
-  <!-- TITRE DE LA PAGE -->
-  <div class="page-header">
-    <h1 class="page-title">Dashboard Analytique</h1>
-    <p class="page-subtitle">Vue d'ensemble des indicateurs clés et statistiques</p>
-  </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h2>GeoTNB</h2>
+      <p>Commune d'Oujda</p>
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="#" class="nav-link active">
+          <span class="nav-icon">📊</span>
+          Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link">
+          <span class="nav-icon">🗺️</span>
+          Cartographie
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link">
+          <span class="nav-icon">🏘️</span>
+          Parcelles
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/spatial-queries" class="nav-link">
+          <span class="nav-icon">🔍</span>
+          Recherche Avancée
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link">
+          <span class="nav-icon">👥</span>
+          Propriétaires
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link">
+          <span class="nav-icon">📋</span>
+          Fiches TNB
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link">
+          <span class="nav-icon">⚙️</span>
+          Paramètres
+        </a>
+      </li>
+    </ul>
+  </aside>
 
-  <!-- KPIs PRINCIPAUX -->
-  <div class="kpi-grid">
-    
-    <!-- Total Parcelles -->
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <div class="kpi-icon total">
-          <mat-icon>description</mat-icon>
+  <!-- Contenu principal -->
+  <main class="main-content">
+    <!-- En-tête -->
+    <header class="header">
+      <h1>Tableau de Bord TNB</h1>
+      <p>Vue d'ensemble des terrains non bâtis - Mise à jour en temps réel</p>
+    </header>
+
+    <!-- Filtres -->
+    <section class="filters-section">
+      <h3 style="margin-bottom: 20px; color: #333;">🔍 Filtres et Sélections</h3>
+      <div class="filters-grid">
+        <div class="control-group">
+          <label class="control-label">Secteur</label>
+          <select class="control-input" [(ngModel)]="selectedSecteur">
+            <option value="">Tous les secteurs</option>
+            <option value="centre">Centre-ville</option>
+            <option value="hay-al-qods">Hay Al Qods</option>
+            <option value="sidi-maafa">Sidi Maâfa</option>
+            <option value="al-andalous">Al Andalous</option>
+          </select>
         </div>
-        <div class="kpi-info">
-          <h3 class="kpi-title">TOTAL PARCELLES</h3>
-          <div class="kpi-value">2,847</div>
-          <div class="kpi-change positive">
-            <mat-icon>trending_up</mat-icon>
-            <span>+12% ce mois</span>
+        <div class="control-group">
+          <label class="control-label">Zonage</label>
+          <select class="control-input" [(ngModel)]="selectedZonage">
+            <option value="">Tous les zonages</option>
+            <option value="r+2">Zone R+2</option>
+            <option value="r+4">Zone R+4</option>
+            <option value="industriel">Zone Industrielle</option>
+            <option value="villas">Zone Villas</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Statut Foncier</label>
+          <select class="control-input" [(ngModel)]="selectedStatut">
+            <option value="">Tous les statuts</option>
+            <option value="tf">Titre Foncier (TF)</option>
+            <option value="r">Réquisition (R)</option>
+            <option value="ni">Non Immatriculé (NI)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label class="control-label">État d'occupation</label>
+          <select class="control-input" [(ngModel)]="selectedOccupation">
+            <option value="">Tous les états</option>
+            <option value="nu">Terrain nu</option>
+            <option value="partiel">Partiellement construit</option>
+            <option value="construction">En cours de construction</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Indicateurs clés -->
+    <section class="stats-grid">
+      <div class="stat-card pulse">
+        <div class="stat-value animate-number">{{ kpiData?.terrainsRecenses | number }}</div>
+        <div class="stat-label">Terrains recensés</div>
+        <div class="stat-trend">↗️ +5.2% ce mois</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value animate-number">{{ kpiData?.terrainsImposables | number }}</div>
+        <div class="stat-label">Terrains imposables</div>
+        <div class="stat-trend">📈 {{ tauxImposition | percent:'1.1-1' }} du total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value animate-number">{{ kpiData?.superficieTotale | number:'1.0-0' }} ha</div>
+        <div class="stat-label">Superficie totale</div>
+        <div class="stat-trend">🏘️ Périmètre urbain</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value animate-number">{{ kpiData?.surfaceImposable | number:'1.0-0' }} ha</div>
+        <div class="stat-label">Surface imposable</div>
+        <div class="stat-trend">💰 {{ tauxSurfaceImposable | percent:'1.1-1' }} taxable</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value animate-number">{{ kpiData?.rendementPrevisionnel | number:'1.1-1' }} MDH</div>
+        <div class="stat-label">Rendement prévisionnel</div>
+        <div class="stat-trend">💸 Recette annuelle</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value animate-number">{{ kpiData?.tauxAssujettissement | percent:'1.1-1' }}</div>
+        <div class="stat-label">Taux d'assujettissement</div>
+        <div class="stat-trend">⚖️ Base imposable</div>
+      </div>
+    </section>
+
+    <!-- Graphiques -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>📊 Répartition par Statut Foncier</span>
+          <button class="btn btn-secondary" (click)="exportChart('statut')">Export</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="statutChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>📈 Évolution Mensuelle des Recettes</span>
+          <button class="btn btn-secondary" (click)="exportChart('recettes')">Export</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="recettesChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>🏘️ Répartition par Zonage Urbanistique</span>
+          <button class="btn btn-secondary" (click)="exportChart('zonage')">Export</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="zonageChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>💰 Tranches Tarifaires</span>
+          <button class="btn btn-secondary" (click)="exportChart('tarifs')">Export</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="tarifsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section cartographique -->
+    <section class="map-section">
+      <div class="map-container">
+        <div class="chart-title">
+          <span>🗺️ Carte Thématique Interactive</span>
+          <select class="control-input" style="width: auto;" [(ngModel)]="selectedMapTheme" (change)="onMapThemeChange()">
+            <option value="density">Densité TNB par secteur</option>
+            <option value="tarif">Classification tarifaire</option>
+            <option value="statut">Statut foncier</option>
+            <option value="occupation">État d'occupation</option>
+            <option value="zonage">Zonage urbanistique</option>
+            <option value="rendement">Rendement fiscal</option>
+          </select>
+        </div>
+        <div class="map-placeholder">
+          <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 10px;">🗺️</div>
+            <div>Carte Thématique Interactive</div>
+            <div style="font-size: 12px; color: #999; margin-top: 5px;">
+              Intégration OpenLayers avec couches PostGIS
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Surface Imposable -->
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <div class="kpi-icon surface">
-          <mat-icon>square_foot</mat-icon>
+      <div class="map-controls">
+        <h4 style="margin-bottom: 15px; color: #333;">🎨 Légende</h4>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff4757;"></div>
+          <span>Tarif élevé (>15 DH/m²)</span>
         </div>
-        <div class="kpi-info">
-          <h3 class="kpi-title">SURFACE IMPOSABLE</h3>
-          <div class="kpi-value">1,245 ha</div>
-          <div class="kpi-subtitle">Surface totale recensée</div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #ff9ff3;"></div>
+          <span>Tarif moyen (8-15 DH/m²)</span>
         </div>
-      </div>
-    </div>
-
-    <!-- Recettes Prévues -->
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <div class="kpi-icon revenue">
-          <mat-icon>account_balance_wallet</mat-icon>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #54a0ff;"></div>
+          <span>Tarif faible (2-8 DH/m²)</span>
         </div>
-        <div class="kpi-info">
-          <h3 class="kpi-title">RECETTES PRÉVUES</h3>
-          <div class="kpi-value">8.2M DH</div>
-          <div class="kpi-change positive">
-            <mat-icon>trending_up</mat-icon>
-            <span>+5.8% vs année précédente</span>
-          </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #5f27cd;"></div>
+          <span>Exonéré temporairement</span>
         </div>
-      </div>
-    </div>
-
-    <!-- Taux Recouvrement -->
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <div class="kpi-icon collection">
-          <mat-icon>pie_chart</mat-icon>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #10ac84;"></div>
+          <span>Non imposable</span>
         </div>
-        <div class="kpi-info">
-          <h3 class="kpi-title">TAUX RECOUVREMENT</h3>
-          <div class="kpi-value">67%</div>
-          <div class="kpi-subtitle">Fiches payées 2024</div>
+        
+        <div style="margin-top: 20px;">
+          <h4 style="margin-bottom: 15px; color: #333;">📋 Couches Disponibles</h4>
+          <label style="display: block; margin-bottom: 8px;">
+            <input type="checkbox" [(ngModel)]="layers.parcelles" checked> Parcelles TNB
+          </label>
+          <label style="display: block; margin-bottom: 8px;">
+            <input type="checkbox" [(ngModel)]="layers.limites" checked> Limites administratives
+          </label>
+          <label style="display: block; margin-bottom: 8px;">
+            <input type="checkbox" [(ngModel)]="layers.plans"> Plans d'aménagement
+          </label>
+          <label style="display: block; margin-bottom: 8px;">
+            <input type="checkbox" [(ngModel)]="layers.orthophotos"> Orthophotos
+          </label>
         </div>
       </div>
-    </div>
+    </section>
 
-  </div>
-
-  <!-- GRAPHIQUES ET ANALYSES -->
-  <div class="charts-grid">
-    
-    <!-- Évolution des recettes TNB -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <h3 class="chart-title">Évolution des recettes TNB</h3>
-        <div class="chart-controls">
-          <mat-form-field appearance="outline" class="year-select">
-            <mat-select value="2024">
-              <mat-option value="2024">2024</mat-option>
-              <mat-option value="2023">2023</mat-option>
-              <mat-option value="2022">2022</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
-      <div class="chart-container">
-        <canvas #revenueChart></canvas>
-        <div class="chart-placeholder">
-          <mat-icon class="chart-icon">show_chart</mat-icon>
-          <p>Graphique Chart.js - Évolution mensuelle</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Répartition par Zone -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <h3 class="chart-title">Répartition par Zone</h3>
-        <div class="chart-controls">
-          <button mat-button class="view-toggle active">Dashboard</button>
-          <button mat-button class="view-toggle">Carte</button>
-        </div>
-      </div>
-      <div class="chart-container">
-        <canvas #zoneChart></canvas>
-        <div class="chart-placeholder">
-          <mat-icon class="chart-icon">donut_large</mat-icon>
-          <p>Pie Chart - Zones urbanistiques</p>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ACTIVITÉS RÉCENTES -->
-  <div class="activity-section">
-    <div class="activity-card">
-      <div class="activity-header">
-        <h3 class="activity-title">Activités récentes</h3>
-        <button mat-button class="view-all-btn">
-          <span>Voir tout</span>
-          <mat-icon>arrow_forward</mat-icon>
+    <!-- Section d'export -->
+    <section class="export-section">
+      <h3 style="margin-bottom: 20px; color: #333;">📤 Exports et Rapports</h3>
+      <div class="export-buttons">
+        <button class="btn btn-primary" (click)="exportReport('pdf')">
+          📊 Rapport PDF Complet
+        </button>
+        <button class="btn btn-primary" (click)="exportReport('excel')">
+          📈 Graphiques Excel
+        </button>
+        <button class="btn btn-secondary" (click)="exportReport('cartes')">
+          🗺️ Cartes Thématiques
+        </button>
+        <button class="btn btn-secondary" (click)="exportReport('donnees')">
+          📋 Données Tabulaires
+        </button>
+        <button class="btn btn-secondary" (click)="exportReport('secteurs')">
+          🏘️ Fiches par Secteur
         </button>
       </div>
-      
-      <div class="activity-list">
-        
-        <div class="activity-item">
-          <div class="activity-icon validated">
-            <mat-icon>check_circle</mat-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">Parcelle TF-478923-B validée</div>
-            <div class="activity-details">Par Mohammed ALAMI - Agent Fiscal</div>
-            <div class="activity-time">Il y a 2 heures</div>
-          </div>
-          <div class="activity-amount">5,603.75 DH</div>
-        </div>
-
-        <div class="activity-item">
-          <div class="activity-icon created">
-            <mat-icon>add_circle</mat-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">Nouvelle parcelle R-789456-C</div>
-            <div class="activity-details">Ajoutée par Fatima BENJELLOUN - Technicien SIG</div>
-            <div class="activity-time">Il y a 4 heures</div>
-          </div>
-          <div class="activity-amount">24,500.00 DH</div>
-        </div>
-
-        <div class="activity-item">
-          <div class="activity-icon warning">
-            <mat-icon>warning</mat-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">Fiche TNB en attente</div>
-            <div class="activity-details">TF-123789-A - Validation requise</div>
-            <div class="activity-time">Il y a 6 heures</div>
-          </div>
-          <div class="activity-amount pending">2,550.75 DH</div>
-        </div>
-
-        <div class="activity-item">
-          <div class="activity-icon paid">
-            <mat-icon>payment</mat-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">Paiement reçu</div>
-            <div class="activity-details">NI-456123-D - Paiement effectué</div>
-            <div class="activity-time">Hier à 16:30</div>
-          </div>
-          <div class="activity-amount">1,850.00 DH</div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
+    </section>
+  </main>
 </div>

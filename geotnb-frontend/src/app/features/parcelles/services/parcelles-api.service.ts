@@ -80,6 +80,7 @@ export interface SearchFilters {
   dateCreationDebut?: Date;
   dateCreationFin?: Date;
   exonereTnb?: boolean;
+  excludeArchived?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -310,26 +311,24 @@ export class ParcellesApiService {
    */
   deleteParcelle(id: number): Observable<void> {
     this.setLoading(true);
+    console.log('🗑️ Suppression de la parcelle ID:', id);
+    console.log('🗑️ URL de suppression:', `${this.apiUrl}/${id}`);
     
-    // Interface pour la réponse encapsulée de l'intercepteur
-    interface ApiResponse<T> {
-      success: boolean;
-      data: T;
-      timestamp: string;
-      path: string;
-      version: string;
-    }
-    
-    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`)
+    return this.http.delete(`${this.apiUrl}/${id}`)
       .pipe(
-        map(response => response.data), // Extraire les données de l'enveloppe API
-        tap(() => {
+        tap((response) => {
+          console.log('🗑️ Réponse de suppression reçue:', response);
           const currentParcelles = this.parcellesCache$.value;
           this.parcellesCache$.next(currentParcelles.filter(p => p.id !== id));
           this.setLoading(false);
           this.clearError();
         }),
-        catchError(this.handleError.bind(this))
+        map(() => void 0), // Convertir la réponse en void
+        catchError((error) => {
+          console.error('🗑️ Erreur lors de la suppression:', error);
+          this.setLoading(false);
+          return this.handleError(error);
+        })
       );
   }
 
