@@ -18,6 +18,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SpatialQueryService, SpatialQueryParams, ParcelleResult, SpatialQueryResult } from './services/spatial-query.service';
+import { MapComponent, MapOptions } from '../../shared/components/map/map.component';
+import Map from 'ol/Map';
 
 @Component({
   selector: 'app-spatial-queries',
@@ -35,7 +37,8 @@ import { SpatialQueryService, SpatialQueryParams, ParcelleResult, SpatialQueryRe
     MatSnackBarModule,
     MatTabsModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MapComponent
   ],
   templateUrl: './spatial-queries.component.html',
   styleUrls: ['./spatial-queries.component.scss']
@@ -47,6 +50,18 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // =====================================================
   // PROPRIÉTÉS
   // =====================================================
+
+  // Carte OpenLayers
+  map!: Map;
+  mapOptions: MapOptions = {
+    center: [-7.6114, 33.5731], // Casablanca en WGS84
+    zoom: 12,
+    enableDrawing: true,
+    enableSelection: false,
+    showParcelles: false,
+    showLayers: true,
+    mode: 'create' // Mode création avec outils de dessin
+  };
 
   // Onglets et modes
   currentTab: 'emprise' | 'secteur' | 'distance' = 'emprise';
@@ -87,11 +102,7 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   selectedSecteurType = '';
   selectedSecteur = '';
 
-  // Carte (sera initialisée avec OpenLayers)
-  map: any = null;
-  drawInteraction: any = null;
-  drawSource: any = null;
-  vectorLayer: any = null;
+  // Géométrie dessinée
   currentDrawing: any = null;
   isDrawing = false;
 
@@ -105,16 +116,11 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngAfterViewInit(): void {
-    // Initialiser la carte après que la vue soit prête
-    setTimeout(() => {
-      this.initializeMap();
-    }, 100);
+    // La carte est maintenant gérée par le composant app-map
   }
 
   ngOnDestroy(): void {
-    if (this.map) {
-      this.map.dispose();
-    }
+    // Nettoyage géré par le composant de carte
   }
 
   // =====================================================
@@ -142,45 +148,67 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // GESTION DE LA CARTE
   // =====================================================
 
-  private initializeMap(): void {
-    // Cette méthode sera implémentée avec OpenLayers
-    // Pour l'instant, on simule l'initialisation
-    console.log('🗺️ Initialisation de la carte OpenLayers');
+  onMapReady(map: Map): void {
+    console.log('🗺️ Carte prête:', map);
+    this.map = map;
+    // La carte est maintenant initialisée avec toutes les couches
+  }
+
+  onGeometryDrawn(geometry: any): void {
+    console.log('✏️ Géométrie dessinée:', geometry);
+    this.currentDrawing = geometry;
     
-    // TODO: Intégrer la même carte que celle de la création de parcelles
-    // avec les mêmes fonds de carte et couches
+    if (this.currentTab === 'emprise') {
+      // Lancer automatiquement la requête après le dessin
+      setTimeout(() => {
+        this.executeQuery();
+      }, 500);
+    }
   }
 
   // Méthodes de contrôle de la carte
   zoomIn(): void {
-    console.log('Zoom avant');
-    // TODO: Implémenter avec OpenLayers
+    if (this.map) {
+      const view = this.map.getView();
+      const currentZoom = view.getZoom() || 0;
+      view.animate({
+        zoom: currentZoom + 1,
+        duration: 300
+      });
+    }
   }
 
   zoomOut(): void {
-    console.log('Zoom arrière');
-    // TODO: Implémenter avec OpenLayers
+    if (this.map) {
+      const view = this.map.getView();
+      const currentZoom = view.getZoom() || 0;
+      view.animate({
+        zoom: currentZoom - 1,
+        duration: 300
+      });
+    }
   }
 
   zoomToExtent(): void {
-    console.log('Étendue complète');
-    // TODO: Implémenter avec OpenLayers
+    if (this.map) {
+      const view = this.map.getView();
+      view.animate({
+        center: [-7.6114, 33.5731], // Casablanca
+        zoom: 12,
+        duration: 500
+      });
+    }
   }
 
   toggleLayers(): void {
-    console.log('Basculer les couches');
-    // TODO: Implémenter avec OpenLayers
+    console.log('🗂️ Basculer les couches');
+    // Le composant de carte gère déjà le basculement des couches
   }
 
   private clearDrawings(): void {
-    if (this.drawInteraction) {
-      this.map?.removeInteraction(this.drawInteraction);
-    }
-    if (this.drawSource) {
-      this.drawSource.clear();
-    }
     this.currentDrawing = null;
     this.isDrawing = false;
+    // Le composant de carte gère l'effacement des dessins
   }
 
   // =====================================================
@@ -207,7 +235,10 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // =====================================================
 
   onDistanceChange(event: any): void {
-    this.distanceValue = event.value || event.target?.value || 500;
+    // Gérer l'événement du slider HTML
+    if (event && event.target && event.target.value !== undefined) {
+      this.distanceValue = parseFloat(event.target.value);
+    }
     this.distanceUnit = this.distanceValue >= 1000 ? 'km' : 'mètres';
   }
 

@@ -178,69 +178,194 @@
       </div>
     </section>
 
-    <!-- Section cartographique -->
-    <section class="map-section">
-      <div class="map-container">
-        <div class="chart-title">
-          <span>🗺️ Carte Thématique Interactive</span>
-          <select class="control-input" style="width: auto;" [(ngModel)]="selectedMapTheme" (change)="onMapThemeChange()">
-            <option value="density">Densité TNB par secteur</option>
-            <option value="tarif">Classification tarifaire</option>
-            <option value="statut">Statut foncier</option>
-            <option value="occupation">État d'occupation</option>
-            <option value="zonage">Zonage urbanistique</option>
-            <option value="rendement">Rendement fiscal</option>
-          </select>
-        </div>
-        <div class="map-placeholder">
-          <div style="text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 10px;">🗺️</div>
-            <div>Carte Thématique Interactive</div>
-            <div style="font-size: 12px; color: #999; margin-top: 5px;">
-              Intégration OpenLayers avec couches PostGIS
+    <!-- Section Cartes Thématiques -->
+    <section class="thematic-maps-section">
+        <!-- En-tête avec titre et informations -->
+        <div class="section-header">
+            <h2 class="section-title">🗺️ Cartes Thématiques TNB</h2>
+            <p class="section-subtitle">Visualisation géographique des parcelles par statut foncier et zonage urbanistique</p>
+            <div class="map-info">
+                <span class="info-item">📅 Dernière mise à jour : {{ lastUpdateDate | date:'dd/MM/yyyy' }}</span>
+                <span class="info-item">📍 Projection : EPSG:26191 (Merchich/Nord Maroc)</span>
+                <span class="info-item">📊 Source : Base de données TNB</span>
             </div>
-          </div>
         </div>
-      </div>
-      <div class="map-controls">
-        <h4 style="margin-bottom: 15px; color: #333;">🎨 Légende</h4>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #ff4757;"></div>
-          <span>Tarif élevé (>15 DH/m²)</span>
+
+        <!-- Contrôles des cartes thématiques -->
+        <div class="map-controls">
+            <!-- Sélecteur de thème -->
+            <div class="theme-selector">
+                <button 
+                    class="theme-btn" 
+                    [class.active]="selectedTheme === 'status'"
+                    (click)="switchTheme('status')">
+                    <i class="fas fa-certificate"></i>
+                    Statut Foncier
+                </button>
+                <button 
+                    class="theme-btn" 
+                    [class.active]="selectedTheme === 'zoning'"
+                    (click)="switchTheme('zoning')">
+                    <i class="fas fa-city"></i>
+                    Zonage Urbanistique
+                </button>
+            </div>
+            
+            <!-- Légende interactive -->
+            <div class="map-legend">
+                <h4>🎨 Légende</h4>
+                <div class="legend-items" [ngSwitch]="selectedTheme">
+                    <!-- Légende Statut Foncier -->
+                    <div *ngSwitchCase="'status'" class="legend-status">
+                        <div class="legend-item" (click)="toggleLegendItem('TF')" [class.disabled]="!isLegendItemActive('TF')">
+                            <span class="legend-color status-tf"></span>
+                            <span class="legend-label">Titre Foncier (TF)</span>
+                            <span class="legend-count">{{ getLegendCount('TF') }}</span>
+                        </div>
+                        <div class="legend-item" (click)="toggleLegendItem('R')" [class.disabled]="!isLegendItemActive('R')">
+                            <span class="legend-color status-r"></span>
+                            <span class="legend-label">Réquisition (R)</span>
+                            <span class="legend-count">{{ getLegendCount('R') }}</span>
+                        </div>
+                        <div class="legend-item" (click)="toggleLegendItem('NI')" [class.disabled]="!isLegendItemActive('NI')">
+                            <span class="legend-color status-ni"></span>
+                            <span class="legend-label">Non Immatriculé (NI)</span>
+                            <span class="legend-count">{{ getLegendCount('NI') }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Légende Zonage Urbanistique -->
+                    <div *ngSwitchCase="'zoning'" class="legend-zoning">
+                        <div class="legend-item" (click)="toggleLegendItem('R+2')" [class.disabled]="!isLegendItemActive('R+2')">
+                            <span class="legend-color zone-r2"></span>
+                            <span class="legend-label">Zone R+2</span>
+                            <span class="legend-count">{{ getLegendCount('R+2') }}</span>
+                        </div>
+                        <div class="legend-item" (click)="toggleLegendItem('R+4')" [class.disabled]="!isLegendItemActive('R+4')">
+                            <span class="legend-color zone-r4"></span>
+                            <span class="legend-label">Zone R+4</span>
+                            <span class="legend-count">{{ getLegendCount('R+4') }}</span>
+                        </div>
+                        <div class="legend-item" (click)="toggleLegendItem('Villas')" [class.disabled]="!isLegendItemActive('Villas')">
+                            <span class="legend-color zone-villas"></span>
+                            <span class="legend-label">Zone Villas</span>
+                            <span class="legend-count">{{ getLegendCount('Villas') }}</span>
+                        </div>
+                        <div class="legend-item" (click)="toggleLegendItem('Industriel')" [class.disabled]="!isLegendItemActive('Industriel')">
+                            <span class="legend-color zone-industriel"></span>
+                            <span class="legend-label">Zone Industrielle</span>
+                            <span class="legend-count">{{ getLegendCount('Industriel') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Couches disponibles -->
+            <div class="layers-control">
+                <h4>🗂️ Couches Disponibles</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="parcelles-layer" checked (change)="toggleLayer('parcelles', $event)">
+                    <label for="parcelles-layer">Parcelles TNB</label>
+                </div>
+                <div class="layer-item">
+                    <input type="checkbox" id="communes-layer" checked (change)="toggleLayer('communes', $event)">
+                    <label for="communes-layer">Limites Communales</label>
+                </div>
+                <div class="layer-item">
+                    <input type="checkbox" id="voirie-layer" (change)="toggleLayer('voirie', $event)">
+                    <label for="voirie-layer">Réseau Voirie</label>
+                </div>
+                <div class="layer-item">
+                    <input type="checkbox" id="hotels-layer" (change)="toggleLayer('hotels', $event)">
+                    <label for="hotels-layer">Hôtels</label>
+                </div>
+            </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #ff9ff3;"></div>
-          <span>Tarif moyen (8-15 DH/m²)</span>
+
+        <!-- Carte Thématique Interactive -->
+        <div class="thematic-map-container">
+            <div class="map-header">
+                <h3>{{ selectedTheme === 'status' ? 'Carte de Répartition par Statut Foncier' : 'Carte de Zonage Urbanistique' }}</h3>
+                <div class="map-tools">
+                    <button class="map-tool-btn" (click)="zoomIn()" title="Zoom avant">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="map-tool-btn" (click)="zoomOut()" title="Zoom arrière">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="map-tool-btn" (click)="zoomToExtent()" title="Vue d'ensemble">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </button>
+                    <button class="map-tool-btn" (click)="toggleFullscreen()" title="Plein écran">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <app-map
+                mapId="thematic-map"
+                [options]="thematicMapOptions"
+                [parcelles]="filteredParcelles"
+                [showControls]="true"
+                [showLayers]="true"
+                [enableSelection]="true"
+                [enableDrawing]="false"
+                (parcelleSelected)="onParcelleSelected($event)"
+                (mapReady)="onThematicMapReady($event)">
+            </app-map>
+            
+            <!-- Indicateurs de la carte -->
+            <div class="map-indicators">
+                <div class="coordinates-display" id="coordinates">
+                    X: -7.611400 | Y: 33.573100
+                </div>
+                <div class="scale-display" id="scale">
+                    1:50,000
+                </div>
+                <div class="north-indicator">
+                    <i class="fas fa-arrow-up"></i> N
+                </div>
+            </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #54a0ff;"></div>
-          <span>Tarif faible (2-8 DH/m²)</span>
+
+        <!-- Statistiques et informations -->
+        <div class="map-stats" *ngIf="thematicStats">
+            <h4>📊 Statistiques par Catégorie</h4>
+            <div class="stats-grid">
+                <div class="stat-card" *ngFor="let stat of thematicStats" [style.border-left-color]="stat.color">
+                    <div class="stat-value">{{ stat.count }}</div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                    <div class="stat-percentage">{{ stat.percentage }}%</div>
+                    <div class="stat-trend" *ngIf="stat.trend">
+                        <i class="fas" [class.fa-arrow-up]="stat.trend > 0" [class.fa-arrow-down]="stat.trend < 0"></i>
+                        {{ stat.trend }}%
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #5f27cd;"></div>
-          <span>Exonéré temporairement</span>
+
+        <!-- Exports et rapports -->
+        <div class="export-section">
+            <h4>📤 Exports et Rapports</h4>
+            <div class="export-buttons">
+                <button class="export-btn primary" (click)="exportMap('pdf')">
+                    <i class="fas fa-file-pdf"></i>
+                    Rapport PDF Complet
+                </button>
+                <button class="export-btn" (click)="exportMap('excel')">
+                    <i class="fas fa-file-excel"></i>
+                    Données Excel
+                </button>
+                <button class="export-btn" (click)="exportMap('image')">
+                    <i class="fas fa-image"></i>
+                    Image PNG
+                </button>
+                <button class="export-btn" (click)="exportMap('geopackage')">
+                    <i class="fas fa-map"></i>
+                    GeoPackage
+                </button>
+            </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #10ac84;"></div>
-          <span>Non imposable</span>
-        </div>
-        
-        <div style="margin-top: 20px;">
-          <h4 style="margin-bottom: 15px; color: #333;">📋 Couches Disponibles</h4>
-          <label style="display: block; margin-bottom: 8px;">
-            <input type="checkbox" [(ngModel)]="layers.parcelles" checked> Parcelles TNB
-          </label>
-          <label style="display: block; margin-bottom: 8px;">
-            <input type="checkbox" [(ngModel)]="layers.limites" checked> Limites administratives
-          </label>
-          <label style="display: block; margin-bottom: 8px;">
-            <input type="checkbox" [(ngModel)]="layers.plans"> Plans d'aménagement
-          </label>
-          <label style="display: block; margin-bottom: 8px;">
-            <input type="checkbox" [(ngModel)]="layers.orthophotos"> Orthophotos
-          </label>
-        </div>
-      </div>
     </section>
 
     <!-- Section d'export -->

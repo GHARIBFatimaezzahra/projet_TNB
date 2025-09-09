@@ -323,3 +323,242 @@ body {
     padding: 1.5rem 1rem;
   }
 }
+
+/* =====================================================
+   CARTES THÉMATIQUES
+   ===================================================== */
+
+.thematic-maps-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-100);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+
+.map-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.theme-selector {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--gray-50);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.theme-btn:hover {
+  background: var(--white);
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-btn.active {
+  background: var(--primary-color);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+
+.theme-btn i {
+  font-size: 1rem;
+}
+
+.map-legend {
+  background: var(--white);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  min-width: 250px;
+}
+
+.map-legend h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+.legend-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+}
+
+/* Couleurs pour le statut foncier */
+.status-tf {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.status-r {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.status-ni {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* Couleurs pour le zonage urbanistique */
+.zone-r2 {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+}
+
+.zone-r4 {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.zone-villas {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.zone-industriel {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.thematic-map-container {
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray-200);
+  margin-bottom: 2rem;
+}
+
+.map-stats {
+  background: var(--gray-50);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-100);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 0.25rem;
+}
+
+.stat-percentage {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+/* Responsive pour les cartes thématiques */
+@media (max-width: 768px) {
+  .thematic-maps-section {
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+  
+  .thematic-map-container {
+    height: 400px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .theme-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .map-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .theme-selector {
+    justify-content: center;
+  }
+}

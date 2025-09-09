@@ -20,6 +20,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserProfil } from '../../core/models/database.models';
 import { DashboardDataService } from './services/dashboard-data.service';
 import { DashboardKPIs, StatutFoncierData, ZonageUrbanistiqueData, EvolutionMensuelleData, TopParcelleTNB } from './models/dashboard.models';
+import { MapComponent, MapOptions } from '../../shared/components/map/map.component';
+import { ParcellesApiService, ParcelleAPI } from '../parcelles/services/parcelles-api.service';
+import Map from 'ol/Map';
 
 @Component({
   selector: 'app-dashboard',
@@ -34,7 +37,8 @@ import { DashboardKPIs, StatutFoncierData, ZonageUrbanistiqueData, EvolutionMens
     MatFormFieldModule,
     MatSelectModule,
     MatTooltipModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MapComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
@@ -76,15 +80,66 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   // Graphiques Chart.js
   private charts: { [key: string]: any } = {};
 
+  // =====================================================
+  // PROPRIÉTÉS CARTES THÉMATIQUES
+  // =====================================================
+  
+  // Thème sélectionné (par défaut : statut foncier)
+  selectedTheme: 'status' | 'zoning' = 'status';
+  
+  // Carte OpenLayers
+  thematicMap!: Map;
+  
+  // Options de la carte
+  thematicMapOptions: MapOptions = {
+    center: [-7.6114, 33.5731], // Casablanca
+    zoom: 12,
+    enableDrawing: false,
+    enableSelection: true,
+    showParcelles: true,
+    showLayers: true,
+    mode: 'view'
+  };
+  
+  // Données des parcelles
+  allParcelles: ParcelleAPI[] = [];
+  filteredParcelles: ParcelleAPI[] = [];
+  
+  // Statistiques thématiques
+  thematicStats: Array<{
+    label: string;
+    count: number;
+    percentage: number;
+    color: string;
+    trend?: number;
+  }> = [];
+
+  // Légende interactive
+  activeLegendItems: Set<string> = new Set();
+  
+  // Date de mise à jour
+  lastUpdateDate = new Date();
+
   constructor(
     private authService: AuthService,
     private dashboardDataService: DashboardDataService,
+    private parcellesApiService: ParcellesApiService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.initializeDashboard();
     this.startRealTimeUpdates();
+    this.loadParcelles();
+    
+    // Écouter les changements de taille de fenêtre
+    window.addEventListener('resize', () => {
+      if (this.thematicMap) {
+        setTimeout(() => {
+          this.thematicMap.updateSize();
+        }, 100);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -108,6 +163,13 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.realTimeSubscription) {
       this.realTimeSubscription.unsubscribe();
     }
+    
+    // Nettoyer l'event listener de redimensionnement
+    window.removeEventListener('resize', () => {
+      if (this.thematicMap) {
+        this.thematicMap.updateSize();
+      }
+    });
   }
 
   // =====================================================
@@ -416,5 +478,199 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   exportReport(reportType: string): void {
     console.log('Export du rapport:', reportType);
     this.snackBar.open(`Export du rapport ${reportType} en cours...`, 'Fermer', { duration: 2000 });
+  }
+
+  // =====================================================
+  // MÉTHODES CARTES THÉMATIQUES
+  // =====================================================
+
+  private loadParcelles(): void {
+    this.parcellesApiService.getParcelles()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result: any) => {
+          this.allParcelles = result.data || result.parcelles || [];
+          this.filteredParcelles = this.allParcelles;
+          console.log('Parcelles chargées:', this.allParcelles.length);
+          if (this.selectedTheme) {
+            this.updateThematicStats();
+            this.applyThematicStyles();
+          }
+        },
+        error: (error: any) => {
+          console.error('Erreur lors du chargement des parcelles:', error);
+          this.snackBar.open('Erreur lors du chargement des parcelles', 'Fermer', { duration: 3000 });
+        }
+      });
+  }
+
+  switchTheme(theme: 'status' | 'zoning'): void {
+    this.selectedTheme = theme;
+    this.updateThematicStats();
+    this.applyThematicStyles();
+    console.log('Thème changé vers:', theme);
+  }
+
+  private updateThematicStats(): void {
+    if (!this.selectedTheme || this.allParcelles.length === 0) {
+      this.thematicStats = [];
+      return;
+    }
+
+    const total = this.allParcelles.length;
+    const stats: { [key: string]: number } = {};
+
+    this.allParcelles.forEach(parcelle => {
+      let key: string;
+      
+      if (this.selectedTheme === 'status') {
+        key = parcelle.statutFoncier || 'Inconnu';
+      } else {
+        key = (parcelle as any).zoneUrbanistique || 'Inconnu';
+      }
+      
+      stats[key] = (stats[key] || 0) + 1;
+    });
+
+    this.thematicStats = Object.entries(stats).map(([label, count]) => ({
+      label,
+      count,
+      percentage: Math.round((count / total) * 100),
+      color: this.getColorForCategory(label, this.selectedTheme!),
+      trend: Math.random() * 20 - 10 // Simulation de tendance
+    }));
+
+    console.log('Statistiques mises à jour:', this.thematicStats);
+  }
+
+  private getColorForCategory(category: string, theme: 'status' | 'zoning'): string {
+    if (theme === 'status') {
+      switch (category.toUpperCase()) {
+        case 'TF':
+        case 'TITRE FONCIER':
+          return '#10b981'; // Green
+        case 'R':
+        case 'RÉQUISITION':
+          return '#f59e0b'; // Yellow
+        case 'NI':
+        case 'NON IMMATRICULÉ':
+          return '#ef4444'; // Red
+        default:
+          return '#6b7280'; // Gray
+      }
+    } else { // zoning
+      switch (category.toUpperCase()) {
+        case 'R+2':
+        case 'ZONE R+2':
+          return '#3b82f6'; // Blue
+        case 'R+4':
+        case 'ZONE R+4':
+          return '#10b981'; // Green
+        case 'VILLAS':
+        case 'ZONE VILLAS':
+          return '#f59e0b'; // Orange
+        case 'INDUSTRIEL':
+        case 'ZONE INDUSTRIELLE':
+          return '#6b7280'; // Gray
+        default:
+          return '#9ca3af'; // Light Gray
+      }
+    }
+  }
+
+  onParcelleSelected(parcelle: ParcelleAPI): void {
+    console.log('Parcelle sélectionnée:', parcelle);
+    this.snackBar.open(`Parcelle ${parcelle.referenceFonciere} sélectionnée`, 'Fermer', { duration: 2000 });
+  }
+
+  onThematicMapReady(map: Map): void {
+    this.thematicMap = map;
+    console.log('Carte thématique prête');
+    
+    // Forcer le redimensionnement de la carte
+    setTimeout(() => {
+      if (this.thematicMap) {
+        this.thematicMap.updateSize();
+        console.log('Taille de la carte mise à jour');
+      }
+    }, 100);
+    
+    if (this.selectedTheme) {
+      this.applyThematicStyles();
+    }
+  }
+
+  private applyThematicStyles(): void {
+    if (!this.thematicMap || !this.selectedTheme) {
+      return;
+    }
+    console.log('Application des styles thématiques pour:', this.selectedTheme);
+    this.snackBar.open(`Mode ${this.selectedTheme === 'status' ? 'Statut Foncier' : 'Zonage Urbanistique'} activé`, 'Fermer', { duration: 2000 });
+  }
+
+  // Contrôles de la carte
+  zoomIn(): void {
+    if (this.thematicMap) {
+      const view = this.thematicMap.getView();
+      const zoom = view.getZoom();
+      view.setZoom(zoom! + 1);
+    }
+  }
+
+  zoomOut(): void {
+    if (this.thematicMap) {
+      const view = this.thematicMap.getView();
+      const zoom = view.getZoom();
+      view.setZoom(zoom! - 1);
+    }
+  }
+
+  zoomToExtent(): void {
+    if (this.thematicMap) {
+      // Zoom pour voir toutes les parcelles
+      this.thematicMap.getView().fit([-7.7, 33.4, -7.5, 33.7]);
+    }
+  }
+
+  toggleFullscreen(): void {
+    const mapContainer = document.querySelector('.thematic-map-container');
+    if (mapContainer) {
+      if (!document.fullscreenElement) {
+        mapContainer.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  // Légende interactive
+  toggleLegendItem(item: string): void {
+    if (this.activeLegendItems.has(item)) {
+      this.activeLegendItems.delete(item);
+    } else {
+      this.activeLegendItems.add(item);
+    }
+    this.applyThematicStyles();
+  }
+
+  isLegendItemActive(item: string): boolean {
+    return this.activeLegendItems.has(item);
+  }
+
+  getLegendCount(category: string): number {
+    const stat = this.thematicStats.find(s => s.label === category);
+    return stat ? stat.count : 0;
+  }
+
+  // Gestion des couches
+  toggleLayer(layerName: string, event: any): void {
+    console.log(`Basculement de la couche ${layerName}:`, event.target.checked);
+    // Ici, intégration avec le composant de carte pour basculer les couches
+  }
+
+  // Exports
+  exportMap(format: string): void {
+    console.log(`Export de la carte en format ${format}`);
+    this.snackBar.open(`Export ${format} en cours...`, 'Fermer', { duration: 2000 });
   }
 }

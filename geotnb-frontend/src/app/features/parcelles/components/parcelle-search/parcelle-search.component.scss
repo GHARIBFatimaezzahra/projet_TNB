@@ -66,6 +66,41 @@
           }
         }
       }
+
+      // Bouton Recherche Avancée
+      button[mat-raised-button] {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+          background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+        }
+
+        &:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
+        }
+
+        mat-icon {
+          font-size: 1.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+          color: white;
+        }
+      }
     }
   }
 
@@ -156,78 +191,79 @@
     }
   }
 
-  // Recherche avancée
-  .advanced-search-card {
-    mat-card-header {
-      mat-card-title {
+  // Requêtes spatiales
+  .spatial-queries-card {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-left: 4px solid #4caf50;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+
+    .spatial-queries-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+
+      mat-icon {
+        font-size: 3rem;
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 16px;
+        color: #4caf50;
+      }
+
+      h3 {
+        margin: 0 0 12px 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #2e7d32;
+      }
+
+      p {
+        margin: 0 0 8px 0;
+        font-size: 0.95rem;
+        color: #388e3c;
+        max-width: 500px;
+        line-height: 1.5;
+
+        &:last-of-type {
+          margin-bottom: 24px;
+        }
+      }
+
+      button {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #7b1fa2;
-        font-size: 1.1rem;
-      }
-    }
-
-    .advanced-search-form {
-      .search-section {
-        margin-bottom: 16px;
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: 500;
         border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 
-        .mat-expansion-panel-header {
-          background: #f8f9fa;
-          font-weight: 500;
-
-          mat-panel-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #7b1fa2;
-
-            mat-icon {
-              font-size: 1.1rem;
-              width: 1.1rem;
-              height: 1.1rem;
-            }
-          }
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+          background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
         }
 
-        .section-content {
-          padding: 16px;
-
-          .form-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-
-            mat-form-field {
-              flex: 1;
-              min-width: 200px;
-            }
-          }
+        &:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
         }
-      }
 
-      .search-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid #e0e0e0;
-        flex-wrap: wrap;
-
-        button {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 120px;
-
-          mat-spinner {
-            margin-right: 8px;
-          }
+        mat-icon {
+          font-size: 1.2rem;
+          width: 1.2rem;
+          height: 1.2rem;
+          margin: 0;
+          color: white;
         }
       }
     }

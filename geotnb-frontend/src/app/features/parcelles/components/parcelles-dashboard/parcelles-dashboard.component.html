@@ -86,4 +86,99 @@
             <p>Données SIG et fichiers attributaires</p>
         </div>
     </div>
+
+    <!-- Section Cartes Thématiques -->
+    <div class="thematic-maps-section">
+        <div class="section-header">
+            <h2 class="section-title">Cartes Thématiques</h2>
+            <p class="section-subtitle">Visualisation des données par statut foncier et zonage urbanistique</p>
+        </div>
+
+        <!-- Contrôles des cartes thématiques -->
+        <div class="map-controls">
+            <div class="theme-selector">
+                <button 
+                    class="theme-btn" 
+                    [class.active]="selectedTheme === 'status'"
+                    (click)="switchTheme('status')">
+                    <i class="fas fa-certificate"></i>
+                    Statut Foncier
+                </button>
+                <button 
+                    class="theme-btn" 
+                    [class.active]="selectedTheme === 'zoning'"
+                    (click)="switchTheme('zoning')">
+                    <i class="fas fa-city"></i>
+                    Zonage Urbanistique
+                </button>
+            </div>
+            
+            <div class="map-legend" *ngIf="selectedTheme">
+                <h4>Légende</h4>
+                <div class="legend-items" [ngSwitch]="selectedTheme">
+                    <!-- Légende Statut Foncier -->
+                    <div *ngSwitchCase="'status'" class="legend-status">
+                        <div class="legend-item">
+                            <span class="legend-color status-tf"></span>
+                            <span class="legend-label">Titre Foncier (TF)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color status-r"></span>
+                            <span class="legend-label">Réquisition (R)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color status-ni"></span>
+                            <span class="legend-label">Non Immatriculé (NI)</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Légende Zonage Urbanistique -->
+                    <div *ngSwitchCase="'zoning'" class="legend-zoning">
+                        <div class="legend-item">
+                            <span class="legend-color zone-r2"></span>
+                            <span class="legend-label">Zone R+2</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color zone-r4"></span>
+                            <span class="legend-label">Zone R+4</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color zone-villas"></span>
+                            <span class="legend-label">Zone Villas</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color zone-industriel"></span>
+                            <span class="legend-label">Zone Industrielle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte Thématique -->
+        <div class="thematic-map-container">
+            <app-map
+                mapId="thematic-map"
+                [options]="thematicMapOptions"
+                [parcelles]="filteredParcelles"
+                [showControls]="true"
+                [showLayers]="true"
+                [enableSelection]="true"
+                [enableDrawing]="false"
+                (parcelleSelected)="onParcelleSelected($event)"
+                (mapReady)="onThematicMapReady($event)">
+            </app-map>
+        </div>
+
+        <!-- Statistiques de la carte thématique -->
+        <div class="map-stats" *ngIf="thematicStats">
+            <div class="stats-grid">
+                <div class="stat-card" *ngFor="let stat of thematicStats">
+                    <div class="stat-value">{{ stat.count }}</div>
+                    <div class="stat-label">{{ stat.label }}</div>
+                    <div class="stat-percentage">{{ stat.percentage }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -19,11 +19,18 @@
           <mat-icon>flash_on</mat-icon>
           Rapide
         </mat-button-toggle>
-        <mat-button-toggle value="advanced" matTooltip="Recherche avancée">
-          <mat-icon>tune</mat-icon>
-          Avancée
+        <mat-button-toggle value="advanced" matTooltip="Requêtes spatiales">
+          <mat-icon>location_searching</mat-icon>
+          Spatiales
         </mat-button-toggle>
       </mat-button-toggle-group>
+
+      <!-- Bouton Recherche Avancée qui redirige vers les requêtes spatiales -->
+      <button mat-raised-button color="accent" (click)="goToSpatialQueries()" 
+             matTooltip="Accéder aux requêtes spatiales avancées">
+        <mat-icon>location_searching</mat-icon>
+        Recherche Avancée
+      </button>
 
       <button mat-icon-button (click)="clearSearch()" 
              matTooltip="Effacer la recherche"
@@ -93,290 +100,19 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Recherche avancée -->
-  <mat-card class="advanced-search-card" *ngIf="isAdvancedMode">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>tune</mat-icon>
-        Recherche Avancée
-      </mat-card-title>
-    </mat-card-header>
-
+  <!-- Message pour les requêtes spatiales -->
+  <mat-card class="spatial-queries-card" *ngIf="isAdvancedMode">
     <mat-card-content>
-      <form [formGroup]="advancedSearchForm" class="advanced-search-form">
-        
-        <!-- Section Identification -->
-        <mat-expansion-panel class="search-section" [expanded]="true">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>fingerprint</mat-icon>
-              Identification
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Référence foncière</mat-label>
-                <input matInput formControlName="reference_fonciere" 
-                      placeholder="Ex: TF-123456">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Zonage</mat-label>
-                <input matInput formControlName="zonage" 
-                      [matAutocomplete]="zonageAuto"
-                      placeholder="Ex: U1, R2...">
-                <mat-autocomplete #zonageAuto="matAutocomplete">
-                  <mat-option *ngFor="let zonage of filteredZonages" [value]="zonage">
-                    {{ zonage }}
-                  </mat-option>
-                </mat-autocomplete>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Secteur</mat-label>
-                <input matInput formControlName="secteur" 
-                      placeholder="Nom du secteur">
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Section Caractéristiques -->
-        <mat-expansion-panel class="search-section">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>category</mat-icon>
-              Caractéristiques Foncières
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Statut foncier</mat-label>
-                <mat-select formControlName="statut_foncier">
-                  <mat-option value="">Tous</mat-option>
-                  <mat-option *ngFor="let statut of statutFoncierOptions" [value]="statut.value">
-                    {{ statut.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Statut d'occupation</mat-label>
-                <mat-select formControlName="statut_occupation">
-                  <mat-option value="">Tous</mat-option>
-                  <mat-option *ngFor="let statut of statutOccupationOptions" [value]="statut.value">
-                    {{ statut.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>État de validation</mat-label>
-                <mat-select formControlName="etat_validation">
-                  <mat-option value="">Tous</mat-option>
-                  <mat-option *ngFor="let etat of etatValidationOptions" [value]="etat.value">
-                    {{ etat.label }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Section Surfaces -->
-        <mat-expansion-panel class="search-section">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>crop_landscape</mat-icon>
-              Surfaces
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Surface totale min</mat-label>
-                <input matInput type="number" formControlName="surface_totale_min" 
-                      min="0" step="0.01">
-                <span matSuffix>m²</span>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Surface totale max</mat-label>
-                <input matInput type="number" formControlName="surface_totale_max" 
-                      min="0" step="0.01">
-                <span matSuffix>m²</span>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Surface imposable min</mat-label>
-                <input matInput type="number" formControlName="surface_imposable_min" 
-                      min="0" step="0.01">
-                <span matSuffix>m²</span>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Surface imposable max</mat-label>
-                <input matInput type="number" formControlName="surface_imposable_max" 
-                      min="0" step="0.01">
-                <span matSuffix>m²</span>
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Section Aspects Fiscaux -->
-        <mat-expansion-panel class="search-section">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>account_balance</mat-icon>
-              Aspects Fiscaux
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Exonération TNB</mat-label>
-                <mat-select formControlName="exonere_tnb">
-                  <mat-option value="">Toutes</mat-option>
-                  <mat-option value="true">Exonérées</mat-option>
-                  <mat-option value="false">Non exonérées</mat-option>
-                </mat-select>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Montant TNB min</mat-label>
-                <input matInput type="number" formControlName="montant_tnb_min" 
-                      min="0" step="0.01">
-                <span matSuffix>DH</span>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Montant TNB max</mat-label>
-                <input matInput type="number" formControlName="montant_tnb_max" 
-                      min="0" step="0.01">
-                <span matSuffix>DH</span>
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Section Dates -->
-        <mat-expansion-panel class="search-section">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>date_range</mat-icon>
-              Dates
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Date création (début)</mat-label>
-                <input matInput [matDatepicker]="creationStartPicker" 
-                      formControlName="date_creation_debut">
-                <mat-datepicker-toggle matIconSuffix [for]="creationStartPicker"></mat-datepicker-toggle>
-                <mat-datepicker #creationStartPicker></mat-datepicker>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Date création (fin)</mat-label>
-                <input matInput [matDatepicker]="creationEndPicker" 
-                      formControlName="date_creation_fin">
-                <mat-datepicker-toggle matIconSuffix [for]="creationEndPicker"></mat-datepicker-toggle>
-                <mat-datepicker #creationEndPicker></mat-datepicker>
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Date permis (début)</mat-label>
-                <input matInput [matDatepicker]="permisStartPicker" 
-                      formControlName="date_permis_debut">
-                <mat-datepicker-toggle matIconSuffix [for]="permisStartPicker"></mat-datepicker-toggle>
-                <mat-datepicker #permisStartPicker></mat-datepicker>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Date permis (fin)</mat-label>
-                <input matInput [matDatepicker]="permisEndPicker" 
-                      formControlName="date_permis_fin">
-                <mat-datepicker-toggle matIconSuffix [for]="permisEndPicker"></mat-datepicker-toggle>
-                <mat-datepicker #permisEndPicker></mat-datepicker>
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Section Propriétaires -->
-        <mat-expansion-panel class="search-section">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>group</mat-icon>
-              Propriétaires
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
-          <div class="section-content">
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Nom du propriétaire</mat-label>
-                <input matInput formControlName="proprietaire_nom" 
-                      placeholder="Nom ou raison sociale">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>CIN/RC</mat-label>
-                <input matInput formControlName="proprietaire_cin" 
-                      placeholder="CIN ou Registre de commerce">
-              </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Nombre propriétaires min</mat-label>
-                <input matInput type="number" formControlName="nombre_proprietaires_min" 
-                      min="1">
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Nombre propriétaires max</mat-label>
-                <input matInput type="number" formControlName="nombre_proprietaires_max" 
-                      min="1">
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-expansion-panel>
-
-        <!-- Actions -->
-        <div class="search-actions">
-          <button mat-button (click)="clearAllFilters()" [disabled]="isSearching">
-            <mat-icon>clear_all</mat-icon>
-            Effacer tout
-          </button>
-
-          <button mat-button (click)="saveCurrentSearch()" 
-                 [disabled]="!hasActiveFilters" *ngIf="showSavedSearches">
-            <mat-icon>save</mat-icon>
-            Sauvegarder
-          </button>
-
-          <button mat-raised-button color="primary" (click)="executeSearch()" 
-                 [disabled]="isSearching">
-            <mat-spinner diameter="20" *ngIf="isSearching"></mat-spinner>
-            <mat-icon *ngIf="!isSearching">search</mat-icon>
-            {{ isSearching ? 'Recherche...' : 'Rechercher' }}
-          </button>
-        </div>
-      </form>
+      <div class="spatial-queries-message">
+        <mat-icon color="primary">location_searching</mat-icon>
+        <h3>Requêtes Spatiales</h3>
+        <p>Cliquez sur "Spatiales" pour accéder aux outils de requêtes spatiales avancées.</p>
+        <p>Vous pourrez effectuer des recherches par emprise, secteur et distance.</p>
+        <button mat-raised-button color="primary" (click)="navigateToSpatialQueries()">
+          <mat-icon>location_searching</mat-icon>
+          Accéder aux Requêtes Spatiales
+        </button>
+      </div>
     </mat-card-content>
   </mat-card>
 

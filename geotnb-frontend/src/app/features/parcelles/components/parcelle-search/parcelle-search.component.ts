@@ -5,6 +5,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, startWith, map } from 'rxjs';
 
 // Angular Material
@@ -145,7 +146,8 @@ export class ParcelleSearchComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private parcelleService: ParcelleService
+    private parcelleService: ParcelleService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -266,8 +268,22 @@ export class ParcelleSearchComponent implements OnInit, OnDestroy {
   // =====================================================
 
   toggleSearchMode(): void {
-    this.searchMode = this.searchMode === 'quick' ? 'advanced' : 'quick';
-    this.clearSearch();
+    if (this.searchMode === 'quick') {
+      // Rediriger vers les requêtes spatiales au lieu du mode avancé
+      this.navigateToSpatialQueries();
+    } else {
+      this.searchMode = 'quick';
+      this.clearSearch();
+    }
+  }
+
+  // Méthode pour rediriger directement vers les requêtes spatiales
+  goToSpatialQueries(): void {
+    this.navigateToSpatialQueries();
+  }
+
+  navigateToSpatialQueries(): void {
+    this.router.navigate(['/spatial-queries']);
   }
 
   selectQuickFilter(filterId: string): void {
