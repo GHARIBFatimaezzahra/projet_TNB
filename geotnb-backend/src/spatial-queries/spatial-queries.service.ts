@@ -15,12 +15,19 @@ export interface SpatialQueryResult {
     queryType: 'intersection' | 'sector' | 'buffer';
     parameters: any;
     executionTime: number;
+    existingParcelles?: number;
+    temporaryParcelles?: number;
   };
 }
 
 export interface IntersectionQuery {
   geometry: string; // WKT ou GeoJSON
   srid?: number;
+  filters?: {
+    statutFoncier?: string;
+    zonage?: string;
+    surfaceMin?: number;
+  };
 }
 
 export interface SectorQuery {
@@ -36,6 +43,9 @@ export interface BufferQuery {
 
 @Injectable()
 export class SpatialQueriesService {
+  // Stockage temporaire des parcelles en cours de création
+  private temporaryParcelles: Map<string, any[]> = new Map();
+
   constructor(
     @InjectRepository(Parcelle)
     private parcelleRepository: Repository<Parcelle>,
@@ -50,33 +60,69 @@ export class SpatialQueriesService {
     const srid = query.srid || 26191; // Merchich/Nord Maroc par défaut
 
     try {
-      // Requête PostGIS avec ST_Intersects
+      // Construire la requête avec filtres optionnels
+      let whereConditions = ['ST_Intersects(p.geom, ST_GeomFromText($1, $2))'];
+      const queryParams = [query.geometry, srid];
+      let paramIndex = 3;
+
+      // Ajouter les filtres si fournis
+      if (query.filters) {
+        if (query.filters.statutFoncier) {
+          whereConditions.push(`p.statut_foncier = $${paramIndex}`);
+          queryParams.push(query.filters.statutFoncier);
+          paramIndex++;
+        }
+        
+        if (query.filters.zonage) {
+          whereConditions.push(`p.zone_urbanistique = $${paramIndex}`);
+          queryParams.push(query.filters.zonage);
+          paramIndex++;
+        }
+        
+        if (query.filters.surfaceMin) {
+          whereConditions.push(`ST_Area(p.geom) >= $${paramIndex}`);
+          queryParams.push(query.filters.surfaceMin);
+          paramIndex++;
+        }
+      }
+
+      // Requête principale pour les parcelles existantes
       const sql = `
         SELECT 
           p.*,
           ST_AsGeoJSON(p.geom) as geometry,
           ST_Area(p.geom) as surface,
-          ST_Area(ST_Intersection(p.geom, ST_GeomFromText($1, $2))) as surface_intersection
+          ST_Area(ST_Intersection(p.geom, ST_GeomFromText($1, $2))) as surface_intersection,
+          'existing' as source_type
         FROM parcelles p
-        WHERE ST_Intersects(p.geom, ST_GeomFromText($1, $2))
+        WHERE ${whereConditions.join(' AND ')}
         ORDER BY surface_intersection DESC
       `;
 
-      const parcelles = await this.parcelleRepository.query(sql, [
-        query.geometry,
-        srid
-      ]);
+      const parcelles = await this.parcelleRepository.query(sql, queryParams);
+
+      // Récupérer les parcelles temporaires (en cours de création)
+      const tempParcelles = await this.getTemporaryParcelles(query);
+      
+      // Combiner les parcelles existantes et temporaires
+      const allParcelles = [...parcelles, ...tempParcelles];
 
       const executionTime = Date.now() - startTime;
 
       return {
-        parcelles,
-        total: parcelles.length,
+        parcelles: allParcelles,
+        total: allParcelles.length,
         geometry: query.geometry,
         metadata: {
           queryType: 'intersection',
-          parameters: { geometry: query.geometry, srid },
-          executionTime
+          parameters: { 
+            geometry: query.geometry, 
+            srid, 
+            filters: query.filters 
+          },
+          executionTime,
+          existingParcelles: parcelles.length,
+          temporaryParcelles: tempParcelles.length
         }
       };
     } catch (error) {
@@ -357,5 +403,123 @@ export class SpatialQueriesService {
       parcellesParZonage,
       executionTime: result.metadata.executionTime
     };
+  }
+
+  /**
+   * Récupérer les communes de Casablanca
+   */
+  async getCommunes(): Promise<any[]> {
+    return this.parcelleRepository.query(`
+      SELECT 
+        id, 
+        "COMMUNE_AR" as nom, 
+        geom,
+        "PREFECTURE" as prefecture,
+        numero,
+        "PLAN_AMENA" as plan_amena
+      FROM "Communes_Casablanca" 
+      ORDER BY "COMMUNE_AR"
+    `);
+  }
+
+  /**
+   * Récupérer les hôtels (avec les vrais noms d'attributs)
+   */
+  async getHotels(): Promise<any[]> {
+    return this.parcelleRepository.query(`
+      SELECT 
+        id, 
+        "HOTEL" as nom, 
+        geom,
+        "NUMERO" as numero,
+        "CATÉGORIE" as categorie,
+        "ADRESSE" as adresse
+      FROM "Hotels_wgs" 
+      ORDER BY "HOTEL"
+    `);
+  }
+
+  /**
+   * Récupérer les voies routières
+   */
+  async getRoads(): Promise<any[]> {
+    return this.parcelleRepository.query(`
+      SELECT 
+        id, 
+        "NOM" as nom, 
+        geom,
+        "LENGTH" as length
+      FROM "voirie" 
+      ORDER BY "NOM"
+    `);
+  }
+
+  /**
+   * Récupérer les parcelles temporaires qui intersectent la zone de requête
+   */
+  private async getTemporaryParcelles(query: IntersectionQuery): Promise<any[]> {
+    const tempParcelles: any[] = [];
+    
+    // Récupérer toutes les parcelles temporaires de toutes les sessions
+    for (const [sessionId, parcelles] of this.temporaryParcelles.entries()) {
+      for (const parcelle of parcelles) {
+        // Vérifier l'intersection avec la zone de requête
+        if (this.checkIntersection(parcelle.geometry, query.geometry)) {
+          tempParcelles.push({
+            ...parcelle,
+            source_type: 'temporary',
+            sessionId: sessionId
+          });
+        }
+      }
+    }
+    
+    return tempParcelles;
+  }
+
+  /**
+   * Vérifier l'intersection entre deux géométries (simplifié)
+   */
+  private checkIntersection(geom1: any, geom2: string): boolean {
+    // Pour l'instant, on retourne true pour toutes les parcelles temporaires
+    // Dans une implémentation complète, on utiliserait PostGIS pour vérifier l'intersection
+    return true;
+  }
+
+  /**
+   * Ajouter une parcelle temporaire (appelée depuis la création de parcelle)
+   */
+  addTemporaryParcelle(sessionId: string, parcelle: any): void {
+    if (!this.temporaryParcelles.has(sessionId)) {
+      this.temporaryParcelles.set(sessionId, []);
+    }
+    this.temporaryParcelles.get(sessionId)!.push(parcelle);
+  }
+
+  /**
+   * Supprimer une parcelle temporaire
+   */
+  removeTemporaryParcelle(sessionId: string, parcelleId: string): void {
+    if (this.temporaryParcelles.has(sessionId)) {
+      const parcelles = this.temporaryParcelles.get(sessionId)!;
+      const index = parcelles.findIndex(p => p.id === parcelleId);
+      if (index > -1) {
+        parcelles.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Vider les parcelles temporaires d'une session
+   */
+  clearTemporaryParcelles(sessionId: string): void {
+    this.temporaryParcelles.delete(sessionId);
+  }
+
+  /**
+   * Obtenir toutes les parcelles temporaires d'une session
+   */
+  getTemporaryParcellesBySession(sessionId: string): any[] {
+    return this.temporaryParcelles.get(sessionId) || [];
   }
 }

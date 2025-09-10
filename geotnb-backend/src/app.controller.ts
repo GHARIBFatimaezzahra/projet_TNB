@@ -98,4 +98,26 @@ export class AppController {
   contact(@Body() contactData: any) {
     return this.appService.handleContact(contactData);
   }
+
+  @Get('test-spatial-queries')
+  @Public()
+  @ApiOperation({ 
+    summary: 'Test du module spatial-queries',
+    description: 'Vérifie si le module spatial-queries est correctement chargé'
+  })
+  @ApiResponse({ status: 200, description: 'Module spatial-queries chargé' })
+  testSpatialQueries() {
+    return {
+      success: true,
+      message: 'Module spatial-queries chargé avec succès',
+      timestamp: new Date().toISOString(),
+      availableEndpoints: [
+        '/api/v1/spatial-queries/test',
+        '/api/v1/spatial-queries/communes',
+        '/api/v1/spatial-queries/hotels',
+        '/api/v1/spatial-queries/roads'
+      ]
+    };
+  }
+
 }

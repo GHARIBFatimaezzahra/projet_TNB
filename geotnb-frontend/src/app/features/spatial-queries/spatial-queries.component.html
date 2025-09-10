@@ -29,12 +29,47 @@
           </div>
           
           <div class="form-group">
+            <label class="form-label">Filtres optionnels</label>
+            <div class="filters-grid">
+              <div class="filter-item">
+                <label>Statut Foncier</label>
+                <select class="form-select" [(ngModel)]="filters.statutFoncier" name="statutFoncier">
+                  <option value="">Tous les statuts</option>
+                  <option *ngFor="let statut of statutFoncierOptions" [value]="statut.value">{{ statut.label }}</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label>Zonage Urbanistique</label>
+                <select class="form-select" [(ngModel)]="filters.zonage" name="zonage">
+                  <option value="">Tous les zonages</option>
+                  <option *ngFor="let zonage of zonageOptions" [value]="zonage.value">{{ zonage.label }}</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label>Surface min. (m²)</label>
+                <input type="number" class="form-input" [(ngModel)]="filters.surfaceMin" name="surfaceMin" placeholder="0">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
             <label class="form-label">Coordonnées manuelles (optionnel)</label>
             <div class="coord-inputs">
               <input type="number" class="form-input" placeholder="X min" [(ngModel)]="coordinates.xMin" name="xMin">
               <input type="number" class="form-input" placeholder="Y min" [(ngModel)]="coordinates.yMin" name="yMin">
               <input type="number" class="form-input" placeholder="X max" [(ngModel)]="coordinates.xMax" name="xMax">
               <input type="number" class="form-input" placeholder="Y max" [(ngModel)]="coordinates.yMax" name="yMax">
+            </div>
+          </div>
+          
+          <div class="form-group" *ngIf="currentDrawing">
+            <div class="drawing-info">
+              <h4>🎯 Zone dessinée</h4>
+              <p>Cliquez sur "Rechercher" pour trouver les parcelles dans cette zone</p>
+              <button class="btn btn-success" (click)="executeIntersectionQuery()" [disabled]="isLoadingQuery">
+                <i class="fas fa-search"></i>
+                {{ isLoadingQuery ? 'Recherche...' : 'Rechercher dans cette zone' }}
+              </button>
             </div>
           </div>
         </div>
@@ -312,13 +347,13 @@
                   Aucune requête lancée - Utilisez les outils de recherche ci-dessus
                 </td>
               </tr>
-              <tr *ngFor="let parcelle of spatialQueryResults">
+              <tr *ngFor="let parcelle of spatialQueryResults?.parcelles || []">
                 <td><strong>{{ parcelle.referenceFonciere }}</strong></td>
-                <td>{{ parcelle.proprietaire }}</td>
-                <td><span class="status-badge" [class]="'status-' + parcelle.statutFoncier.toLowerCase()">{{ parcelle.statutFoncier }}</span></td>
-                <td>{{ parcelle.surfaceCadastrale | number }}</td>
+                <td>{{ parcelle.proprietaire || 'N/A' }}</td>
+                <td><span class="status-badge" [class]="'status-' + parcelle.statutFoncier?.toLowerCase()">{{ parcelle.statutFoncier }}</span></td>
+                <td>{{ parcelle.surfaceTotale | number }}</td>
                 <td>{{ parcelle.zoneUrbanistique }}</td>
-                <td><strong>{{ parcelle.montantTNB | number }} DH</strong></td>
+                <td><strong>{{ parcelle.montantTotalTnb | number }} DH</strong></td>
                 <td>
                   <button class="btn-export" (click)="viewParcel(parcelle.referenceFonciere)">👁️ Voir</button>
                 </td>

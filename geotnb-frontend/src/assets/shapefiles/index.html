@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GéoTNB - Interface Cartographique</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 350px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d6f 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .controls-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        
+        .control-section {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #495057;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        
+        .section-header:hover {
+            background: #e9ecef;
+        }
+        
+        .section-content {
+            padding: 15px;
+        }
+        
+        .layer-control {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .layer-control input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .layer-control label {
+            font-size: 13px;
+            color: #495057;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .layer-opacity {
+            margin-left: 10px;
+            width: 60px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .map-toolbar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .toolbar-btn {
+            padding: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .toolbar-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .toolbar-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .parcel-popup {
+            max-width: 400px;
+            font-size: 13px;
+        }
+        
+        .popup-header {
+            background: #2c5aa0;
+            color: white;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .popup-content {
+            line-height: 1.6;
+        }
+        
+        .popup-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .popup-label {
+            font-weight: 600;
+            min-width: 120px;
+            color: #495057;
+        }
+        
+        .popup-value {
+            flex: 1;
+            color: #212529;
+        }
+        
+        .coordinates-display {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 1000;
+        }
+        
+        .search-container {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-top: none;
+            background: white;
+            display: none;
+        }
+        
+        .search-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+        
+        .search-item:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Fiche attributaire détaillée */
+        .parcel-details-panel {
+            position: fixed;
+            right: -450px;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: white;
+            box-shadow: -3px 0 15px rgba(0,0,0,0.2);
+            z-index: 2000;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .parcel-details-panel.open {
+            right: 0;
+        }
+        
+        .parcel-header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d6f 100%);
+            color: white;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .parcel-header h2 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+        
+        .parcel-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .close-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .close-panel:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .parcel-content {
+            padding: 20px;
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .info-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #2c5aa0;
+            margin-right: 8px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        .info-value.highlight {
+            color: #2c5aa0;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .info-value.amount {
+            color: #28a745;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-tf {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-r {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-ni {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .state-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .state-nu {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .state-construit {
+            background: #d6d8db;
+            color: #383d41;
+        }
+        
+        .state-amenagement {
+            background: #fdebd0;
+            color: #8a6d3b;
+        }
+        
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .document-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8f9fa;
+        }
+        
+        .document-card:hover {
+            border-color: #2c5aa0;
+            background: #e3f2fd;
+        }
+        
+        .document-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .document-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .proprietaires-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .proprietaire-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .proprietaire-item:last-child {
+            border-bottom: none;
+        }
+        
+        .proprietaire-info {
+            flex: 1;
+        }
+        
+        .proprietaire-name {
+            font-weight: 600;
+            color: #212529;
+            font-size: 14px;
+        }
+        
+        .proprietaire-id {
+            color: #6c757d;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+        
+        .proprietaire-share {
+            background: #2c5aa0;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #2c5aa0;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1e3d6f;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Panneau latéral -->
+        <div class="sidebar">
+            <div class="header">
+                <h1>GéoTNB</h1>
+                <p>Système d'Information Géographique - Taxe Terrains Non Bâtis</p>
+            </div>
+            
+            <!-- Recherche -->
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Rechercher une parcelle (référence, propriétaire...)" id="searchInput">
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            
+            <div class="controls-panel">
+                <!-- Contrôle des couches -->
+                <div class="control-section">
+                    <div class="section-header" onclick="toggleSection('layers')">
+                        <span>📋 Couches cartographiques</span>
+                        <span id="layers-arrow">▼</span>
+                    </div>
+                    <div class="section-content" id="layers-content">
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-osm" checked onchange="toggleLayer('osm')">
+                            <label for="layer-osm">OpenStreetMap</label>
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-ortho" onchange="toggleLayer('ortho')">
+                            <label for="layer-ortho">Orthophotos</label>
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-cadastre" onchange="toggleLayer('cadastre')">
+                            <label for="layer-cadastre">Cadastre</label>
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-tf" checked onchange="toggleLayer('tf')">
+                            <label for="layer-tf">Titres Fonciers (TF)</label>
+                            <input type="range" class="layer-opacity" min="0" max="1" step="0.1" value="0.7" onchange="setLayerOpacity('tf', this.value)">
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-requisitions" onchange="toggleLayer('requisitions')">
+                            <label for="layer-requisitions">Réquisitions</label>
+                            <input type="range" class="layer-opacity" min="0" max="1" step="0.1" value="0.7" onchange="setLayerOpacity('requisitions', this.value)">
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-zonage" checked onchange="toggleLayer('zonage')">
+                            <label for="layer-zonage">Plans d'aménagement (Zonage)</label>
+                            <input type="range" class="layer-opacity" min="0" max="1" step="0.1" value="0.5" onchange="setLayerOpacity('zonage', this.value)">
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-admin" onchange="toggleLayer('admin')">
+                            <label for="layer-admin">Limites administratives</label>
+                        </div>
+                        
+                        <div class="layer-control">
+                            <input type="checkbox" id="layer-domaine" onchange="toggleLayer('domaine')">
+                            <label for="layer-domaine">Domaines publics</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Légende -->
+                <div class="control-section">
+                    <div class="section-header" onclick="toggleSection('legend')">
+                        <span>🎨 Légende</span>
+                        <span id="legend-arrow">▼</span>
+                    </div>
+                    <div class="section-content" id="legend-content">
+                        <h4 style="margin-bottom: 10px; font-size: 13px;">Statut juridique</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745;"></div>
+                            <span>Titre Foncier (TF)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107;"></div>
+                            <span>Réquisition (R)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #17a2b8;"></div>
+                            <span>Non Immatriculé (NI)</span>
+                        </div>
+                        
+                        <h4 style="margin: 15px 0 10px 0; font-size: 13px;">État d'occupation</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #dc3545; opacity: 0.7;"></div>
+                            <span>Terrain nu (imposable)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6c757d; opacity: 0.7;"></div>
+                            <span>Terrain construit</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fd7e14; opacity: 0.7;"></div>
+                            <span>En cours d'aménagement</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistiques -->
+                <div class="control-section">
+                    <div class="section-header" onclick="toggleSection('stats')">
+                        <span>📊 Statistiques</span>
+                        <span id="stats-arrow">▶</span>
+                    </div>
+                    <div class="section-content" id="stats-content" style="display: none;">
+                        <div style="font-size: 12px; line-height: 1.6;">
+                            <div><strong>Parcelles recensées :</strong> 4</div>
+                            <div><strong>Surface totale :</strong> 4.89 ha</div>
+                            <div><strong>Parcelles imposables :</strong> 3</div>
+                            <div><strong>Recette prévisionnelle :</strong> 33,600 DH</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conteneur carte -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Barre d'outils -->
+            <div class="map-toolbar">
+                <button class="toolbar-btn active" title="Sélection" onclick="setTool('select')" id="select-btn">
+                    🖱️
+                </button>
+                <button class="toolbar-btn" title="Mesure distance" onclick="setTool('measure-distance')" id="measure-distance-btn">
+                    📏
+                </button>
+                <button class="toolbar-btn" title="Mesure surface" onclick="setTool('measure-area')" id="measure-area-btn">
+                    📐
+                </button>
+                <button class="toolbar-btn" title="Imprimer" onclick="printMap()" id="print-btn">
+                    🖨️
+                </button>
+                <button class="toolbar-btn" title="Plein écran" onclick="toggleFullscreen()" id="fullscreen-btn">
+                    ⛶
+                </button>
+            </div>
+            
+            <!-- Affichage coordonnées -->
+            <div class="coordinates-display" id="coordinates">
+                Lat: 0.000000, Lng: 0.000000
+            </div>
+        </div>
+        
+        <!-- Panneau fiche attributaire détaillée -->
+        <div class="parcel-details-panel" id="parcelDetailsPanel">
+            <div class="parcel-header">
+                <h2 id="parcelTitle">Fiche Parcelle TNB</h2>
+                <p id="parcelSubtitle">Informations détaillées</p>
+                <button class="close-panel" onclick="closeParcelDetails()">×</button>
+            </div>
+            
+            <div class="parcel-content">
+                <!-- Informations générales -->
+                <div class="info-section">
+                    <div class="section-title">📋 Informations Générales</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Référence foncière</div>
+                            <div class="info-value highlight" id="parcelRef">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Statut foncier</div>
+                            <div class="info-value" id="parcelStatus">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Zonage urbanistique</div>
+                            <div class="info-value" id="parcelZoning">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">État d'occupation</div>
+                            <div class="info-value" id="parcelState">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Surfaces et calculs -->
+                <div class="info-section">
+                    <div class="section-title">📏 Surfaces et Calculs</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Surface totale</div>
+                            <div class="info-value" id="parcelSurfaceTotal">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Surface imposable</div>
+                            <div class="info-value" id="parcelSurfaceImposable">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Tarif appliqué</div>
+                            <div class="info-value" id="parcelTarif">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Montant TNB</div>
+                            <div class="info-value amount" id="parcelMontant">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Propriétaires -->
+                <div class="info-section">
+                    <div class="section-title">👥 Propriétaires</div>
+                    <div class="proprietaires-list" id="proprietairesList">
+                        <!-- Contenu dynamique -->
+                    </div>
+                </div>
+                
+                <!-- Documents joints -->
+                <div class="info-section">
+                    <div class="section-title">📎 Documents Joints</div>
+                    <div class="documents-grid" id="documentsGrid">
+                        <!-- Contenu dynamique -->
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="info-section">
+                    <div class="section-title">⚡ Actions</div>
+                    <div class="action-buttons">
+                        <button class="action-btn btn-primary" onclick="generateFiche()">
+                            Générer Fiche PDF
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="editParcel()">
+                            Modifier
+                        </button>
+                        <button class="action-btn btn-success" onclick="validateTNB()">
+                            Valider TNB
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js"></script>
+    
+    <script>
+        // Initialisation de la carte
+        const map = L.map('map').setView([33.2316, -8.5007], 13); // El Jadida, Morocco
+        
+        // Couches de base
+        const layers = {
+            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map),
+            
+            ortho: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles © Esri'
+            }),
+            
+            cadastre: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenTopoMap'
+            })
+        };
+        
+        // Couches vectorielles TNB
+        const tnbLayers = {};
+        
+        // Données d'exemple des parcelles (enrichies)
+        const parcellesData = [
+            {
+                id: 'TF_15423',
+                geometry: [[33.2320, -8.5010], [33.2322, -8.5010], [33.2322, -8.5008], [33.2320, -8.5008]],
+                properties: {
+                    reference: 'TF 15423/06',
+                    statut: 'Titre Foncier',
+                    surface_totale: 1250,
+                    surface_imposable: 1100,
+                    zonage: 'R2 - Résidentiel collectif',
+                    proprietaires: [
+                        {
+                            nom: 'ALAMI Ahmed',
+                            cin: 'N123456789',
+                            quote_part: '1/1',
+                            type: 'Personne physique'
+                        }
+                    ],
+                    montant_tnb: 11000,
+                    tarif_unitaire: 10,
+                    etat: 'nu',
+                    date_creation: '2023-01-15',
+                    derniere_maj: '2024-11-20',
+                    documents: [
+                        { nom: 'Certificat de propriété', type: 'pdf', icon: '📄' },
+                        { nom: 'Plan topographique', type: 'dwg', icon: '📐' },
+                        { nom: 'Photo terrain', type: 'jpg', icon: '📷' },
+                        { nom: 'Fiche technique', type: 'pdf', icon: '📋' }
+                    ]
+                }
+            },
+            {
+                id: 'R_8934',
+                geometry: [[33.2318, -8.5015], [33.2320, -8.5015], [33.2320, -8.5012], [33.2318, -8.5012]],
+                properties: {
+                    reference: 'R 8934/12',
+                    statut: 'Réquisition',
+                    surface_totale: 890,
+                    surface_imposable: 780,
+                    zonage: 'I1 - Industriel léger',
+                    proprietaires: [
+                        {
+                            nom: 'BENNANI Fatima',
+                            cin: 'M987654321',
+                            quote_part: '1/2',
+                            type: 'Personne physique'
+                        },
+                        {
+                            nom: 'TAZI Mohamed',
+                            cin: 'H456789123',
+                            quote_part: '1/2',
+                            type: 'Personne physique'
+                        }
+                    ],
+                    montant_tnb: 7800,
+                    tarif_unitaire: 10,
+                    etat: 'nu',
+                    date_creation: '2022-08-10',
+                    derniere_maj: '2024-10-15',
+                    documents: [
+                        { nom: 'Réquisition d\'immatriculation', type: 'pdf', icon: '📄' },
+                        { nom: 'Levé topographique', type: 'dwg', icon: '📐' },
+                        { nom: 'Procès-verbal délimitation', type: 'pdf', icon: '📋' }
+                    ]
+                }
+            },
+            {
+                id: 'NI_2567',
+                geometry: [[33.2315, -8.5020], [33.2318, -8.5020], [33.2318, -8.5017], [33.2315, -8.5017]],
+                properties: {
+                    reference: 'NI 2567',
+                    statut: 'Non Immatriculé',
+                    surface_totale: 650,
+                    surface_imposable: 0,
+                    zonage: 'C1 - Commercial central',
+                    proprietaires: [
+                        {
+                            nom: 'Société ATLAS SARL',
+                            cin: 'RC 12345',
+                            quote_part: '1/1',
+                            type: 'Personne morale'
+                        }
+                    ],
+                    montant_tnb: 0,
+                    tarif_unitaire: 15,
+                    etat: 'construit',
+                    date_creation: '2021-03-22',
+                    derniere_maj: '2024-09-30',
+                    documents: [
+                        { nom: 'Acte adoulaire', type: 'pdf', icon: '📜' },
+                        { nom: 'Autorisation de construire', type: 'pdf', icon: '🏗️' },
+                        { nom: 'Plan architectural', type: 'dwg', icon: '📐' },
+                        { nom: 'Certificat de conformité', type: 'pdf', icon: '✅' }
+                    ]
+                }
+            },
+            {
+                id: 'TF_22890',
+                geometry: [[33.2325, -8.5005], [33.2328, -8.5005], [33.2328, -8.5002], [33.2325, -8.5002]],
+                properties: {
+                    reference: 'TF 22890/15',
+                    statut: 'Titre Foncier',
+                    surface_totale: 2100,
+                    surface_imposable: 1850,
+                    zonage: 'V1 - Villa économique',
+                    proprietaires: [
+                        {
+                            nom: 'HASSANI Khadija',
+                            cin: 'K789123456',
+                            quote_part: '2/3',
+                            type: 'Personne physique'
+                        },
+                        {
+                            nom: 'HASSANI Omar',
+                            cin: 'O123789456',
+                            quote_part: '1/3',
+                            type: 'Personne physique'
+                        }
+                    ],
+                    montant_tnb: 14800,
+                    tarif_unitaire: 8,
+                    etat: 'amenagement',
+                    date_creation: '2023-06-12',
+                    derniere_maj: '2024-12-01',
+                    documents: [
+                        { nom: 'Titre foncier', type: 'pdf', icon: '📋' },
+                        { nom: 'Plan de masse', type: 'dwg', icon: '📐' },
+                        { nom: 'Permis de lotir', type: 'pdf', icon: '🏘️' },
+                        { nom: 'Photos aériennes', type: 'jpg', icon: '🛰️' }
+                    ]
+                }
+            }
+        ];
+        
+        // Fonction pour obtenir la couleur selon le statut
+        function getColorByStatus(statut) {
+            switch(statut) {
+                case 'Titre Foncier': return '#28a745';
+                case 'Réquisition': return '#ffc107';
+                case 'Non Immatriculé': return '#17a2b8';
+                default: return '#6c757d';
+            }
+        }
+        
+        // Fonction pour obtenir l'opacité selon l'état
+        function getOpacityByState(etat) {
+            switch(etat) {
+                case 'nu': return 0.8;
+                case 'construit': return 0.4;
+                case 'amenagement': return 0.6;
+                default: return 0.7;
+            }
+        }
+        
+        // Créer la couche des parcelles TF
+        function createParcelLayer() {
+            const parcelles = [];
+            
+            parcellesData.forEach(parcel => {
+                const polygon = L.polygon(parcel.geometry, {
+                    color: getColorByStatus(parcel.properties.statut),
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: getOpacityByState(parcel.properties.etat)
+                });
+                
+                // Popup avec informations détaillées
+                const popupContent = createPopupContent(parcel.properties);
+                polygon.bindPopup(popupContent);
+                
+                // Event click pour ouvrir la fiche détaillée
+                polygon.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    openParcelDetails(parcel);
+                });
+                
+                // Tooltip au survol
+                polygon.bindTooltip(`${parcel.properties.reference}<br>${parcel.properties.proprietaires[0].nom}${parcel.properties.proprietaires.length > 1 ? ' et autres' : ''}`, {
+                    permanent: false,
+                    direction: 'top'
+                });
+                
+                parcelles.push(polygon);
+            });
+            
+            return L.layerGroup(parcelles);
+        }
+        
+        // Créer le contenu du popup (version simplifiée)
+        function createPopupContent(properties) {
+            const proprietairesText = properties.proprietaires.map(p => p.nom).join(', ');
+            
+            return `
+                <div class="parcel-popup">
+                    <div class="popup-header">
+                        Aperçu Parcelle TNB
+                    </div>
+                    <div class="popup-content">
+                        <div class="popup-row">
+                            <span class="popup-label">Référence :</span>
+                            <span class="popup-value"><strong>${properties.reference}</strong></span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Statut :</span>
+                            <span class="popup-value">${properties.statut}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Surface imposable :</span>
+                            <span class="popup-value">${properties.surface_imposable.toLocaleString()} m²</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Propriétaire(s) :</span>
+                            <span class="popup-value">${proprietairesText}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Montant TNB :</span>
+                            <span class="popup-value"><strong>${properties.montant_tnb.toLocaleString()} DH</strong></span>
+                        </div>
+                        <div style="text-align: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                            <small>📱 Cliquez sur la parcelle pour plus de détails</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Ouvrir la fiche attributaire détaillée
+        function openParcelDetails(parcel) {
+            const panel = document.getElementById('parcelDetailsPanel');
+            const properties = parcel.properties;
+            
+            // Titre
+            document.getElementById('parcelTitle').textContent = `Parcelle ${properties.reference}`;
+            document.getElementById('parcelSubtitle').textContent = `${properties.statut} • ${properties.zonage}`;
+            
+            // Informations générales
+            document.getElementById('parcelRef').textContent = properties.reference;
+            document.getElementById('parcelStatus').innerHTML = getStatusBadge(properties.statut);
+            document.getElementById('parcelZoning').textContent = properties.zonage;
+            document.getElementById('parcelState').innerHTML = getStateBadge(properties.etat);
+            
+            // Surfaces et calculs
+            document.getElementById('parcelSurfaceTotal').textContent = `${properties.surface_totale.toLocaleString()} m²`;
+            document.getElementById('parcelSurfaceImposable').textContent = `${properties.surface_imposable.toLocaleString()} m²`;
+            document.getElementById('parcelTarif').textContent = `${properties.tarif_unitaire} DH/m²`;
+            document.getElementById('parcelMontant').textContent = `${properties.montant_tnb.toLocaleString()} DH`;
+            
+            // Propriétaires
+            const proprietairesList = document.getElementById('proprietairesList');
+            proprietairesList.innerHTML = properties.proprietaires.map(prop => `
+                <div class="proprietaire-item">
+                    <div class="proprietaire-info">
+                        <div class="proprietaire-name">${prop.nom}</div>
+                        <div class="proprietaire-id">${prop.type} • ${prop.cin}</div>
+                    </div>
+                    <div class="proprietaire-share">${prop.quote_part}</div>
+                </div>
+            `).join('');
+            
+            // Documents
+            const documentsGrid = document.getElementById('documentsGrid');
+            documentsGrid.innerHTML = properties.documents.map(doc => `
+                <div class="document-card" onclick="openDocument('${doc.nom}', '${doc.type}')">
+                    <span class="document-icon">${doc.icon}</span>
+                    <div class="document-name">${doc.nom}</div>
+                </div>
+            `).join('');
+            
+            // Ouvrir le panneau
+            panel.classList.add('open');
+            
+            // Centrer la carte sur la parcelle
+            const bounds = L.latLngBounds(parcel.geometry);
+            map.fitBounds(bounds, { paddingRight: 450 });
+        }
+        
+        // Fermer la fiche attributaire
+        function closeParcelDetails() {
+            document.getElementById('parcelDetailsPanel').classList.remove('open');
+            map.fitBounds(map.getBounds(), { paddingRight: 0 });
+        }
+        
+        // Générer les badges de statut
+        function getStatusBadge(statut) {
+            const badges = {
+                'Titre Foncier': '<span class="status-badge status-tf">Titre Foncier</span>',
+                'Réquisition': '<span class="status-badge status-r">Réquisition</span>',
+                'Non Immatriculé': '<span class="status-badge status-ni">Non Immatriculé</span>'
+            };
+            return badges[statut] || statut;
+        }
+        
+        // Générer les badges d'état
+        function getStateBadge(etat) {
+            const badges = {
+                'nu': '<span class="state-badge state-nu">Terrain nu</span>',
+                'construit': '<span class="state-badge state-construit">Construit</span>',
+                'amenagement': '<span class="state-badge state-amenagement">En aménagement</span>'
+            };
+            return badges[etat] || etat;
+        }
+        
+        // Ajouter les couches TNB
+        tnbLayers.tf = createParcelLayer().addTo(map);
+        tnbLayers.zonage = L.layerGroup().addTo(map);
+        tnbLayers.requisitions = L.layerGroup();
+        tnbLayers.admin = L.layerGroup();
+        tnbLayers.domaine = L.layerGroup();
+        
+        // Contrôle des couches
+        function toggleLayer(layerName) {
+            const checkbox = document.getElementById(`layer-${layerName}`);
+            
+            if (layers[layerName]) {
+                if (checkbox.checked) {
+                    layers[layerName].addTo(map);
+                } else {
+                    map.removeLayer(layers[layerName]);
+                }
+            } else if (tnbLayers[layerName]) {
+                if (checkbox.checked) {
+                    tnbLayers[layerName].addTo(map);
+                } else {
+                    map.removeLayer(tnbLayers[layerName]);
+                }
+            }
+        }
+        
+        // Contrôle de l'opacité
+        function setLayerOpacity(layerName, opacity) {
+            if (tnbLayers[layerName]) {
+                tnbLayers[layerName].setStyle({fillOpacity: opacity});
+            }
+        }
+        
+        // Gestion des sections repliables
+        function toggleSection(sectionName) {
+            const content = document.getElementById(`${sectionName}-content`);
+            const arrow = document.getElementById(`${sectionName}-arrow`);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        }
+        
+        // Outils de mesure
+        let currentTool = 'select';
+        let measureControl;
+        
+        function setTool(tool) {
+            // Réinitialiser les boutons
+            document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(`${tool}-btn`).classList.add('active');
+            currentTool = tool;
+            
+            // Supprimer les contrôles de mesure précédents
+            if (measureControl) {
+                map.removeControl(measureControl);
+            }
+            
+            if (tool === 'measure-distance') {
+                enableDistanceMeasure();
+            } else if (tool === 'measure-area') {
+                enableAreaMeasure();
+            }
+        }
+        
+        function enableDistanceMeasure() {
+            // Implémentation simplifiée de mesure de distance
+            let isDrawing = false;
+            let markers = [];
+            let polyline;
+            
+            map.on('click', function(e) {
+                if (currentTool !== 'measure-distance') return;
+                
+                if (!isDrawing) {
+                    isDrawing = true;
+                    markers = [];
+                    if (polyline) map.removeLayer(polyline);
+                }
+                
+                markers.push(e.latlng);
+                L.marker(e.latlng).addTo(map);
+                
+                if (markers.length > 1) {
+                    if (polyline) map.removeLayer(polyline);
+                    polyline = L.polyline(markers, {color: 'red'}).addTo(map);
+                    
+                    let distance = 0;
+                    for (let i = 1; i < markers.length; i++) {
+                        distance += markers[i-1].distanceTo(markers[i]);
+                    }
+                    
+                    const popup = L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(`Distance: ${distance.toFixed(2)} m`)
+                        .openOn(map);
+                }
+            });
+        }
+        
+        function enableAreaMeasure() {
+            // Implémentation simplifiée de mesure de surface
+            console.log('Mesure de surface activée');
+        }
+        
+        // Affichage des coordonnées
+        map.on('mousemove', function(e) {
+            document.getElementById('coordinates').textContent = 
+                `Lat: ${e.latlng.lat.toFixed(6)}, Lng: ${e.latlng.lng.toFixed(6)}`;
+        });
+        
+        // Recherche
+        const searchData = parcellesData.map(p => ({
+            reference: p.properties.reference,
+            proprietaire: p.properties.proprietaires.map(prop => prop.nom).join(', '),
+            geometry: p.geometry,
+            id: p.id
+        }));
+        
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const results = document.getElementById('searchResults');
+            
+            if (query.length < 2) {
+                results.style.display = 'none';
+                return;
+            }
+            
+            const matches = searchData.filter(item => 
+                item.reference.toLowerCase().includes(query) || 
+                item.proprietaire.toLowerCase().includes(query)
+            );
+            
+            if (matches.length > 0) {
+                results.innerHTML = matches.slice(0, 5).map(match => 
+                    `<div class="search-item" onclick="zoomToParcel('${match.id}')">
+                        <strong>${match.reference}</strong><br>
+                        ${match.proprietaire}
+                    </div>`
+                ).join('');
+                results.style.display = 'block';
+            } else {
+                results.style.display = 'none';
+            }
+        });
+        
+        // Zoom vers parcelle
+        function zoomToParcel(id) {
+            const parcel = parcellesData.find(p => p.id === id);
+            if (parcel) {
+                const bounds = L.latLngBounds(parcel.geometry);
+                map.fitBounds(bounds);
+                openParcelDetails(parcel);
+            }
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+        }
+        
+        // Fonctions utilitaires
+        function openDocument(docName, docType) {
+            // Simulation d'ouverture de document
+            const actions = {
+                'pdf': () => {
+                    alert(`📄 Ouverture du document PDF: ${docName}\n\nSimulation: Le document s'ouvrirait dans un nouvel onglet avec la visionneuse PDF intégrée.`);
+                },
+                'dwg': () => {
+                    alert(`📐 Ouverture du plan DWG: ${docName}\n\nSimulation: Le plan s'ouvrirait dans l'éditeur CAD web intégré.`);
+                },
+                'jpg': () => {
+                    alert(`📷 Affichage de l'image: ${docName}\n\nSimulation: L'image s'afficherait dans une galerie avec géolocalisation.`);
+                },
+                default: () => {
+                    alert(`📎 Téléchargement du document: ${docName}`);
+                }
+            };
+            
+            (actions[docType] || actions.default)();
+        }
+        
+        function generateFiche() {
+            alert(`📋 Génération de la fiche fiscale PDF en cours...\n\nLa fiche sera générée avec :\n- Plan parcellaire\n- Informations propriétaires\n- Calculs TNB détaillés\n- Cachet officiel de la commune`);
+        }
+        
+        function editParcel() {
+            alert(`✏️ Ouverture du mode édition...\n\nFonctionnalités disponibles :\n- Modification des attributs\n- Mise à jour des surfaces\n- Gestion des propriétaires\n- Upload de nouveaux documents`);
+        }
+        
+        function validateTNB() {
+            alert(`✅ Validation TNB effectuée\n\nActions réalisées :\n- Vérification des calculs\n- Validation juridique\n- Passage au statut "Validé"\n- Préparation pour mise en recouvrement`);
+        }
+        
+        function printMap() {
+            window.print();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Fermer le panneau détaillé si on clique ailleurs sur la carte
+        map.on('click', function(e) {
+            // Fermer seulement si le clic ne vient pas d'une parcelle
+            if (!e.originalEvent.defaultPrevented) {
+                closeParcelDetails();
+            }
+        });
+        
+        // Initialisation par défaut
+        setTool('select');
+        
+        // Gestion du redimensionnement de la fenêtre
+        window.addEventListener('resize', function() {
+            map.invalidateSize();
+        });
+        
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeParcelDetails();
+            }
+        });
+    </script>
+</body>
+</html>

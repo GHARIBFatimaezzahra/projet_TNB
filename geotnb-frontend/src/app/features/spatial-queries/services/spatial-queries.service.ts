@@ -28,6 +28,11 @@ export interface SpatialQueryResponse {
 export interface IntersectionQuery {
   geometry: string; // WKT ou GeoJSON
   srid?: number;
+  filters?: {
+    statutFoncier?: string;
+    zonage?: string;
+    surfaceMin?: number;
+  };
 }
 
 export interface SectorQuery {
@@ -52,7 +57,7 @@ export interface ReferenceData {
   providedIn: 'root'
 })
 export class SpatialQueriesService {
-  private apiUrl = `${environment.apiUrl}/spatial-queries`;
+  private apiUrl = `${environment.apiUrl}/v1/spatial-queries`;
 
   constructor(private http: HttpClient) {}
 
@@ -215,5 +220,29 @@ export class SpatialQueriesService {
       default:
         return false;
     }
+  }
+
+  /**
+   * Ajouter une parcelle temporaire
+   */
+  addTemporaryParcelle(sessionId: string, parcelle: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/temporary-parcelle`, {
+      sessionId,
+      parcelle
+    });
+  }
+
+  /**
+   * Obtenir les parcelles temporaires d'une session
+   */
+  getTemporaryParcelles(sessionId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/temporary-parcelles/${sessionId}`);
+  }
+
+  /**
+   * Vider les parcelles temporaires d'une session
+   */
+  clearTemporaryParcelles(sessionId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/temporary-parcelles/${sessionId}`);
   }
 }

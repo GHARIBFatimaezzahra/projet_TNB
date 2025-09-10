@@ -15,6 +15,8 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ParcelleModule } from './parcelle/parcelle.module';
 import { ProprietaireModule } from './proprietaire/proprietaire.module';
+import { SpatialQueriesModule } from './spatial-queries/spatial-queries.module';
+import { Parcelle } from './parcelle/entities/parcelle.entity';
 // import { ParcelleProprietaireModule } from './parcelle-proprietaire/parcelle-proprietaire.module';
 // import { FicheFiscaleModule } from './fiche-fiscale/fiche-fiscale.module';
 // import { DocumentJointModule } from './document-joint/document-joint.module';
@@ -25,6 +27,7 @@ import { ProprietaireModule } from './proprietaire/proprietaire.module';
 // Modules Core
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SpatialQueriesTempController } from './spatial-queries-temp.controller';
 
 // Configuration de la base de données
 import { databaseConfig } from './config/database.config';
@@ -104,11 +107,15 @@ import { JwtStrategy } from './auth/jwt.strategy';
       inject: [ConfigService],
     }),
 
+    // Repository pour les requêtes spatiales temporaires
+    TypeOrmModule.forFeature([Parcelle]),
+
     // Modules métier
     UserModule,
     AuthModule, // Auth doit être après User car il en dépend
     ParcelleModule,
     ProprietaireModule,
+    SpatialQueriesModule,
     // Modules à décommenter au fur et à mesure de l'implémentation
     // ParcelleProprietaireModule,
     // FicheFiscaleModule,
@@ -118,7 +125,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
     // ConfigurationModule,
   ],
 
-  controllers: [AppController],
+  controllers: [AppController, SpatialQueriesTempController],
   providers: [
     AppService,
     

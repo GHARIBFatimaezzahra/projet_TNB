@@ -2,7 +2,7 @@
    CONTRÔLEUR REQUÊTES SPATIALES - API ENDPOINTS
    ===================================================== */
 
-import { Controller, Post, Get, Body, Query, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, HttpException, HttpStatus, Param, Delete } from '@nestjs/common';
 import { SpatialQueriesService, IntersectionQuery, SectorQuery, BufferQuery } from './spatial-queries.service';
 
 @Controller('api/v1/spatial-queries')
@@ -220,5 +220,32 @@ export class SpatialQueriesController {
         'along-road'
       ]
     };
+  }
+
+  /**
+   * Ajouter une parcelle temporaire
+   */
+  @Post('temporary-parcelle')
+  async addTemporaryParcelle(@Body() body: { sessionId: string; parcelle: any }) {
+    this.spatialQueriesService.addTemporaryParcelle(body.sessionId, body.parcelle);
+    return { success: true, message: 'Parcelle temporaire ajoutée' };
+  }
+
+  /**
+   * Obtenir les parcelles temporaires d'une session
+   */
+  @Get('temporary-parcelles/:sessionId')
+  async getTemporaryParcelles(@Param('sessionId') sessionId: string) {
+    const parcelles = this.spatialQueriesService.getTemporaryParcellesBySession(sessionId);
+    return { success: true, data: parcelles };
+  }
+
+  /**
+   * Vider les parcelles temporaires d'une session
+   */
+  @Delete('temporary-parcelles/:sessionId')
+  async clearTemporaryParcelles(@Param('sessionId') sessionId: string) {
+    this.spatialQueriesService.clearTemporaryParcelles(sessionId);
+    return { success: true, message: 'Parcelles temporaires supprimées' };
   }
 }

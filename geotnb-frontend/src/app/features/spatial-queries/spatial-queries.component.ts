@@ -17,9 +17,9 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { SpatialQueryService, SpatialQueryParams, ParcelleResult, SpatialQueryResult } from './services/spatial-query.service';
+import { SpatialQueryService, SpatialQueryParams, ParcelleResult, SpatialQueryResult as OldSpatialQueryResult } from './services/spatial-query.service';
 import { MapComponent, MapOptions } from '../../shared/components/map/map.component';
-import { SpatialQueriesService, IntersectionQuery, SectorQuery, BufferQuery, SpatialQueryResponse } from './services/spatial-queries.service';
+import { SpatialQueriesService, IntersectionQuery, SectorQuery, BufferQuery, SpatialQueryResponse, SpatialQueryResult } from './services/spatial-queries.service';
 import Map from 'ol/Map';
 
 @Component({
@@ -64,8 +64,8 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
     mode: 'create' // Mode création avec outils de dessin
   };
 
-  // Onglets et modes
-  currentTab: 'emprise' | 'secteur' | 'distance' = 'emprise';
+  // Onglets et modes - Types étendus pour les nouveaux onglets
+  currentTab: 'emprise' | 'secteur' | 'distance' | 'hotel' | 'road' | 'point' = 'emprise';
   currentDrawMode: 'polygon' | 'rectangle' = 'polygon';
   currentPointMode: 'click' | 'coords' = 'click';
   
@@ -98,6 +98,23 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
     yMax: undefined as number | undefined
   };
 
+  // Options de statut foncier (selon la création de parcelles)
+  statutFoncierOptions = [
+    { value: 'TF', label: 'Titre Foncier (TF)' },
+    { value: 'R', label: 'Réquisition (R)' },
+    { value: 'NI', label: 'Non Immatriculé (NI)' },
+    { value: 'Collectif', label: 'Collectif' }
+  ];
+
+  // Options de zonage urbanistique (selon la création de parcelles)
+  zonageOptions = [
+    { value: 'R1', label: 'R1 - Résidentiel dense' },
+    { value: 'R2', label: 'R2 - Résidentiel moyen' },
+    { value: 'R3', label: 'R3 - Résidentiel faible' },
+    { value: 'I', label: 'I - Industriel' },
+    { value: 'C', label: 'C - Commercial' }
+  ];
+
   // Secteurs
   secteurs: any[] = [];
   selectedSecteurType = '';
@@ -116,7 +133,7 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   selectedRoad: string = '';
   bufferRadius: number = 1000;
   roadBuffer: number = 100;
-  spatialQueryResults: any[] = [];
+  spatialQueryResults: SpatialQueryResult | null = null;
   queryStatistics: any = null;
   isLoadingQuery = false;
 
@@ -187,9 +204,14 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // GESTION DES ONGLETS
   // =====================================================
 
-  switchTab(tab: 'emprise' | 'secteur' | 'distance'): void {
+  switchTab(tab: 'emprise' | 'secteur' | 'distance' | 'hotel' | 'road' | 'point'): void {
     this.currentTab = tab;
-    this.queryParams.type = tab;
+    // Mapper les nouveaux onglets vers les types de requête existants
+    if (tab === 'hotel' || tab === 'road' || tab === 'point') {
+      this.queryParams.type = 'distance'; // Ces onglets utilisent des requêtes de distance
+    } else {
+      this.queryParams.type = tab as 'emprise' | 'secteur' | 'distance';
+    }
     this.clearDrawings();
   }
 
@@ -243,15 +265,20 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
       
       const query: IntersectionQuery = {
         geometry: wkt,
-        srid: 26191 // Merchich/Nord Maroc
+        srid: 26191, // Merchich/Nord Maroc
+        filters: {
+          statutFoncier: this.filters.statutFoncier || undefined,
+          zonage: this.filters.zonage || undefined,
+          surfaceMin: this.filters.surfaceMin || undefined
+        }
       };
 
       this.spatialQueriesService.findParcellesByIntersection(query).subscribe({
         next: (response: SpatialQueryResponse) => {
           this.isLoadingQuery = false;
           if (response.success) {
-            this.spatialQueryResults = response.data.parcelles;
-            this.queryStatistics = response.statistics;
+            this.spatialQueryResults = response.data;
+            this.queryStatistics = response.data.metadata;
             this.showNotification(`Trouvé ${response.data.total} parcelles intersectées`, 'success');
             console.log('Résultats de la requête d\'intersection:', response);
           } else {
@@ -291,8 +318,8 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
         next: (response: SpatialQueryResponse) => {
           this.isLoadingQuery = false;
           if (response.success) {
-            this.spatialQueryResults = response.data.parcelles;
-            this.queryStatistics = response.statistics;
+            this.spatialQueryResults = response.data;
+            this.queryStatistics = response.data.metadata;
             this.showNotification(`Trouvé ${response.data.total} parcelles dans la commune`, 'success');
             console.log('Résultats de la requête par secteur:', response);
           } else {
@@ -322,8 +349,8 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
         next: (response: SpatialQueryResponse) => {
           this.isLoadingQuery = false;
           if (response.success) {
-            this.spatialQueryResults = response.data.parcelles;
-            this.queryStatistics = response.statistics;
+            this.spatialQueryResults = response.data;
+            this.queryStatistics = response.data.metadata;
             this.showNotification(`Trouvé ${response.data.total} parcelles près de l'hôtel`, 'success');
             console.log('Résultats de la requête près d\'un hôtel:', response);
           } else {
@@ -353,8 +380,8 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
         next: (response: SpatialQueryResponse) => {
           this.isLoadingQuery = false;
           if (response.success) {
-            this.spatialQueryResults = response.data.parcelles;
-            this.queryStatistics = response.statistics;
+            this.spatialQueryResults = response.data;
+            this.queryStatistics = response.data.metadata;
             this.showNotification(`Trouvé ${response.data.total} parcelles le long de la voie`, 'success');
             console.log('Résultats de la requête le long d\'une voie:', response);
           } else {
@@ -385,8 +412,8 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
         next: (response: SpatialQueryResponse) => {
           this.isLoadingQuery = false;
           if (response.success) {
-            this.spatialQueryResults = response.data.parcelles;
-            this.queryStatistics = response.statistics;
+            this.spatialQueryResults = response.data;
+            this.queryStatistics = response.data.metadata;
             this.showNotification(`Trouvé ${response.data.total} parcelles dans le rayon`, 'success');
             console.log('Résultats de la requête par rayon:', response);
           } else {
@@ -492,7 +519,7 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
    * Vérifier s'il y a des résultats
    */
   get hasResults(): boolean {
-    return this.spatialQueryResults && this.spatialQueryResults.length > 0;
+    return !!(this.spatialQueryResults && this.spatialQueryResults.parcelles && this.spatialQueryResults.parcelles.length > 0);
   }
 
   /**
@@ -508,10 +535,11 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
       };
     }
 
-    const totalParcelles = this.spatialQueryResults.length;
-    const surfaceTotale = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.surface || 0), 0);
-    const surfaceImposable = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.surface_imposable || 0), 0);
-    const recettePrevue = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.montant_tnb || 0), 0);
+    const parcelles = this.spatialQueryResults?.parcelles || [];
+    const totalParcelles = parcelles.length;
+    const surfaceTotale = parcelles.reduce((sum: number, p: any) => sum + (p.surfaceTotale || 0), 0);
+    const surfaceImposable = parcelles.reduce((sum: number, p: any) => sum + (p.surfaceImposable || 0), 0);
+    const recettePrevue = parcelles.reduce((sum: number, p: any) => sum + (p.montantTotalTnb || 0), 0);
 
     return {
       totalParcelles,
@@ -567,8 +595,18 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
     console.log('🔍 Exécution requête spatiale:', this.queryParams);
 
     this.spatialQueryService.executeSpatialQuery(this.queryParams).subscribe({
-      next: (results) => {
-        this.queryResults = results;
+      next: (results: OldSpatialQueryResult) => {
+        // Convertir l'ancien format vers le nouveau format
+        this.spatialQueryResults = {
+          parcelles: results.parcelles,
+          total: results.parcelles.length,
+          geometry: null,
+          metadata: {
+            queryType: 'intersection' as const,
+            parameters: this.queryParams,
+            executionTime: 0
+          }
+        };
         this.isLoading = false;
         this.showMessage(
           `Requête ${this.currentTab} terminée: ${results.parcelles.length} parcelles trouvées`,
@@ -705,6 +743,6 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // =====================================================
 
   get resultsCount(): number {
-    return this.spatialQueryResults?.length || 0;
+    return this.spatialQueryResults?.parcelles?.length || 0;
   }
 }
