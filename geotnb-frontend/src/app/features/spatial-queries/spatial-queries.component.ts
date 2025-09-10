@@ -19,6 +19,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SpatialQueryService, SpatialQueryParams, ParcelleResult, SpatialQueryResult } from './services/spatial-query.service';
 import { MapComponent, MapOptions } from '../../shared/components/map/map.component';
+import { SpatialQueriesService, IntersectionQuery, SectorQuery, BufferQuery, SpatialQueryResponse } from './services/spatial-queries.service';
 import Map from 'ol/Map';
 
 @Component({
@@ -106,13 +107,72 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   currentDrawing: any = null;
   isDrawing = false;
 
+  // Nouvelles propriétés pour les requêtes spatiales
+  communes: any[] = [];
+  hotels: any[] = [];
+  roads: any[] = [];
+  selectedCommune: string = '';
+  selectedHotel: string = '';
+  selectedRoad: string = '';
+  bufferRadius: number = 1000;
+  roadBuffer: number = 100;
+  spatialQueryResults: any[] = [];
+  queryStatistics: any = null;
+  isLoadingQuery = false;
+
   constructor(
     private spatialQueryService: SpatialQueryService,
+    private spatialQueriesService: SpatialQueriesService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     console.log('🔍 Initialisation composant requêtes spatiales');
+    this.loadReferenceData();
+  }
+
+  /**
+   * Charger les données de référence (communes, hôtels, voies)
+   */
+  private loadReferenceData(): void {
+    // Charger les communes
+    this.spatialQueriesService.getCommunes().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.communes = response.data;
+          console.log('Communes chargées:', this.communes.length);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des communes:', error);
+      }
+    });
+
+    // Charger les hôtels
+    this.spatialQueriesService.getHotels().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.hotels = response.data;
+          console.log('Hôtels chargés:', this.hotels.length);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des hôtels:', error);
+      }
+    });
+
+    // Charger les voies
+    this.spatialQueriesService.getRoads().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.roads = response.data;
+          console.log('Voies chargées:', this.roads.length);
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement des voies:', error);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -161,9 +221,184 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
     if (this.currentTab === 'emprise') {
       // Lancer automatiquement la requête après le dessin
       setTimeout(() => {
-        this.executeQuery();
+        this.executeIntersectionQuery();
       }, 500);
     }
+  }
+
+  /**
+   * Exécuter une requête d'intersection avec l'emprise dessinée
+   */
+  executeIntersectionQuery(): void {
+    if (!this.currentDrawing) {
+      this.showNotification('Aucune géométrie dessinée', 'error');
+      return;
+    }
+
+    this.isLoadingQuery = true;
+    
+    try {
+      // Convertir la géométrie en WKT
+      const wkt = this.spatialQueriesService.convertGeoJSONToWKT(this.currentDrawing);
+      
+      const query: IntersectionQuery = {
+        geometry: wkt,
+        srid: 26191 // Merchich/Nord Maroc
+      };
+
+      this.spatialQueriesService.findParcellesByIntersection(query).subscribe({
+        next: (response: SpatialQueryResponse) => {
+          this.isLoadingQuery = false;
+          if (response.success) {
+            this.spatialQueryResults = response.data.parcelles;
+            this.queryStatistics = response.statistics;
+            this.showNotification(`Trouvé ${response.data.total} parcelles intersectées`, 'success');
+            console.log('Résultats de la requête d\'intersection:', response);
+          } else {
+            this.showNotification('Erreur lors de la requête', 'error');
+          }
+        },
+        error: (error) => {
+          this.isLoadingQuery = false;
+          console.error('Erreur lors de la requête d\'intersection:', error);
+          this.showNotification('Erreur lors de la requête d\'intersection', 'error');
+        }
+      });
+    } catch (error) {
+      this.isLoadingQuery = false;
+      console.error('Erreur de conversion de géométrie:', error);
+      this.showNotification('Erreur de conversion de géométrie', 'error');
+    }
+  }
+
+  /**
+   * Exécuter une requête par secteur (commune)
+   */
+  executeSectorQuery(): void {
+    if (!this.selectedCommune) {
+      this.showNotification('Veuillez sélectionner une commune', 'error');
+      return;
+    }
+
+    this.isLoadingQuery = true;
+
+    const query: SectorQuery = {
+      secteurId: this.selectedCommune,
+      secteurName: this.communes.find(c => c.id === this.selectedCommune)?.nom
+    };
+
+    this.spatialQueriesService.findParcellesBySector(query).subscribe({
+        next: (response: SpatialQueryResponse) => {
+          this.isLoadingQuery = false;
+          if (response.success) {
+            this.spatialQueryResults = response.data.parcelles;
+            this.queryStatistics = response.statistics;
+            this.showNotification(`Trouvé ${response.data.total} parcelles dans la commune`, 'success');
+            console.log('Résultats de la requête par secteur:', response);
+          } else {
+            this.showNotification('Erreur lors de la requête par secteur', 'error');
+          }
+        },
+      error: (error) => {
+        this.isLoadingQuery = false;
+        console.error('Erreur lors de la requête par secteur:', error);
+        this.showNotification('Erreur lors de la requête par secteur', 'error');
+      }
+    });
+  }
+
+  /**
+   * Exécuter une requête par rayon autour d'un hôtel
+   */
+  executeHotelBufferQuery(): void {
+    if (!this.selectedHotel) {
+      this.showNotification('Veuillez sélectionner un hôtel', 'error');
+      return;
+    }
+
+    this.isLoadingQuery = true;
+
+    this.spatialQueriesService.findParcellesNearHotel(this.selectedHotel, this.bufferRadius).subscribe({
+        next: (response: SpatialQueryResponse) => {
+          this.isLoadingQuery = false;
+          if (response.success) {
+            this.spatialQueryResults = response.data.parcelles;
+            this.queryStatistics = response.statistics;
+            this.showNotification(`Trouvé ${response.data.total} parcelles près de l'hôtel`, 'success');
+            console.log('Résultats de la requête près d\'un hôtel:', response);
+          } else {
+            this.showNotification('Erreur lors de la requête près d\'un hôtel', 'error');
+          }
+        },
+      error: (error) => {
+        this.isLoadingQuery = false;
+        console.error('Erreur lors de la requête près d\'un hôtel:', error);
+        this.showNotification('Erreur lors de la requête près d\'un hôtel', 'error');
+      }
+    });
+  }
+
+  /**
+   * Exécuter une requête le long d'une voie
+   */
+  executeRoadBufferQuery(): void {
+    if (!this.selectedRoad) {
+      this.showNotification('Veuillez sélectionner une voie', 'error');
+      return;
+    }
+
+    this.isLoadingQuery = true;
+
+    this.spatialQueriesService.findParcellesAlongRoad(this.selectedRoad, this.roadBuffer).subscribe({
+        next: (response: SpatialQueryResponse) => {
+          this.isLoadingQuery = false;
+          if (response.success) {
+            this.spatialQueryResults = response.data.parcelles;
+            this.queryStatistics = response.statistics;
+            this.showNotification(`Trouvé ${response.data.total} parcelles le long de la voie`, 'success');
+            console.log('Résultats de la requête le long d\'une voie:', response);
+          } else {
+            this.showNotification('Erreur lors de la requête le long d\'une voie', 'error');
+          }
+        },
+      error: (error) => {
+        this.isLoadingQuery = false;
+        console.error('Erreur lors de la requête le long d\'une voie:', error);
+        this.showNotification('Erreur lors de la requête le long d\'une voie', 'error');
+      }
+    });
+  }
+
+  /**
+   * Exécuter une requête par rayon autour d'un point cliqué
+   */
+  executePointBufferQuery(center: { x: number; y: number }): void {
+    this.isLoadingQuery = true;
+
+    const query: BufferQuery = {
+      center,
+      radius: this.bufferRadius,
+      srid: 26191
+    };
+
+    this.spatialQueriesService.findParcellesByBuffer(query).subscribe({
+        next: (response: SpatialQueryResponse) => {
+          this.isLoadingQuery = false;
+          if (response.success) {
+            this.spatialQueryResults = response.data.parcelles;
+            this.queryStatistics = response.statistics;
+            this.showNotification(`Trouvé ${response.data.total} parcelles dans le rayon`, 'success');
+            console.log('Résultats de la requête par rayon:', response);
+          } else {
+            this.showNotification('Erreur lors de la requête par rayon', 'error');
+          }
+        },
+      error: (error) => {
+        this.isLoadingQuery = false;
+        console.error('Erreur lors de la requête par rayon:', error);
+        this.showNotification('Erreur lors de la requête par rayon', 'error');
+      }
+    });
   }
 
   // Méthodes de contrôle de la carte
@@ -209,6 +444,81 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
     this.currentDrawing = null;
     this.isDrawing = false;
     // Le composant de carte gère l'effacement des dessins
+  }
+
+  /**
+   * Afficher une notification
+   */
+  private showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
+    this.snackBar.open(message, 'Fermer', {
+      duration: 3000,
+      panelClass: [`snackbar-${type}`]
+    });
+  }
+
+  /**
+   * Obtenir la répartition par statut pour l'affichage
+   */
+  getStatutDistribution(): Array<{label: string, count: number, percentage: number}> {
+    if (!this.queryStatistics?.parcellesParStatut) {
+      return [];
+    }
+
+    const total = this.queryStatistics.totalParcelles;
+    return Object.entries(this.queryStatistics.parcellesParStatut).map(([label, count]) => ({
+      label,
+      count: count as number,
+      percentage: Math.round((count as number / total) * 100)
+    }));
+  }
+
+  /**
+   * Obtenir la répartition par zonage pour l'affichage
+   */
+  getZonageDistribution(): Array<{label: string, count: number, percentage: number}> {
+    if (!this.queryStatistics?.parcellesParZonage) {
+      return [];
+    }
+
+    const total = this.queryStatistics.totalParcelles;
+    return Object.entries(this.queryStatistics.parcellesParZonage).map(([label, count]) => ({
+      label,
+      count: count as number,
+      percentage: Math.round((count as number / total) * 100)
+    }));
+  }
+
+  /**
+   * Vérifier s'il y a des résultats
+   */
+  get hasResults(): boolean {
+    return this.spatialQueryResults && this.spatialQueryResults.length > 0;
+  }
+
+  /**
+   * Obtenir le résumé des résultats
+   */
+  get summary(): any {
+    if (!this.hasResults) {
+      return {
+        totalParcelles: 0,
+        surfaceTotale: 0,
+        surfaceImposable: 0,
+        recettePrevue: 0
+      };
+    }
+
+    const totalParcelles = this.spatialQueryResults.length;
+    const surfaceTotale = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.surface || 0), 0);
+    const surfaceImposable = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.surface_imposable || 0), 0);
+    const recettePrevue = this.spatialQueryResults.reduce((sum: number, p: any) => sum + (p.montant_tnb || 0), 0);
+
+    return {
+      totalParcelles,
+      surfaceTotale,
+      surfaceImposable,
+      recettePrevue
+    };
   }
 
   // =====================================================
@@ -394,20 +704,7 @@ export class SpatialQueriesComponent implements OnInit, OnDestroy, AfterViewInit
   // GETTERS POUR LE TEMPLATE
   // =====================================================
 
-  get hasResults(): boolean {
-    return this.queryResults !== null && this.queryResults.parcelles.length > 0;
-  }
-
   get resultsCount(): number {
-    return this.queryResults?.parcelles.length || 0;
-  }
-
-  get summary(): any {
-    return this.queryResults?.summary || {
-      totalParcelles: 0,
-      surfaceTotale: 0,
-      surfaceImposable: 0,
-      recettePrevue: 0
-    };
+    return this.spatialQueryResults?.length || 0;
   }
 }

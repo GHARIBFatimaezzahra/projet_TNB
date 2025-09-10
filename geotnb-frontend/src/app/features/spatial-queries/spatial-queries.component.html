@@ -14,16 +14,8 @@
           <button class="tab-btn" [class.active]="currentTab === 'distance'" (click)="switchTab('distance')">Distance</button>
         </div>
 
-        <!-- Onglet Emprise - Intersection avec une emprise -->
+        <!-- Onglet Emprise -->
         <div class="tab-content" [class.active]="currentTab === 'emprise'">
-          <div class="query-info">
-            <h4>🔍 Intersection avec une Emprise</h4>
-            <p>Dessinez une zone géographique pour trouver toutes les parcelles qui la coupent (même partiellement).</p>
-            <div class="usage-example">
-              <strong>Usage :</strong> Savoir combien de terrains non bâtis se trouvent dans une zone d'aménagement.
-            </div>
-          </div>
-
           <div class="form-group">
             <label class="form-label">Mode de définition</label>
             <div class="draw-tools">
@@ -32,9 +24,6 @@
               </button>
               <button class="draw-btn" [class.active]="currentDrawMode === 'rectangle'" (click)="setDrawMode('rectangle')">
                 ⬛ Rectangle
-              </button>
-              <button class="draw-btn" [class.active]="currentDrawMode === 'circle'" (click)="setDrawMode('circle')">
-                ⭕ Cercle
               </button>
             </div>
           </div>
@@ -48,38 +37,97 @@
               <input type="number" class="form-input" placeholder="Y max" [(ngModel)]="coordinates.yMax" name="yMax">
             </div>
           </div>
-
-          <div class="form-group" *ngIf="currentDrawMode === 'circle'">
-            <label class="form-label">Rayon (mètres)</label>
-            <input type="range" class="form-range" min="100" max="5000" step="100" [(ngModel)]="circleRadius" name="circleRadius">
-            <div class="range-value">{{ circleRadius }} m</div>
-          </div>
         </div>
 
         <!-- Onglet Secteur -->
         <div class="tab-content" [class.active]="currentTab === 'secteur'">
           <div class="form-group">
-            <label class="form-label">Type de secteur</label>
-            <select class="form-select" [(ngModel)]="selectedSecteurType" name="secteurType" (change)="onSecteurTypeChange()">
-              <option value="">Sélectionner...</option>
-              <option value="arrondissement">Arrondissement</option>
-              <option value="quartier">Quartier</option>
-              <option value="commune">Commune</option>
-              <option value="zone-amenagement">Zone d'aménagement</option>
+            <label class="form-label">Commune</label>
+            <select class="form-select" [(ngModel)]="selectedCommune" name="commune">
+              <option value="">Sélectionner une commune...</option>
+              <option *ngFor="let commune of communes" [value]="commune.id">{{ commune.nom }}</option>
             </select>
           </div>
           
           <div class="form-group">
-            <label class="form-label">Secteur spécifique</label>
-            <select class="form-select" [(ngModel)]="selectedSecteur" name="secteur">
-              <option value="">Choisir un secteur...</option>
-              <option *ngFor="let secteur of secteurs" [value]="secteur.id">{{ secteur.nom }}</option>
-            </select>
+            <button class="btn btn-primary" (click)="executeSectorQuery()" [disabled]="!selectedCommune || isLoadingQuery">
+              <i class="fas fa-search"></i>
+              {{ isLoadingQuery ? 'Recherche...' : 'Rechercher par commune' }}
+            </button>
           </div>
         </div>
 
         <!-- Onglet Distance -->
         <div class="tab-content" [class.active]="currentTab === 'distance'">
+          <div class="form-group">
+            <label class="form-label">Type de recherche par distance</label>
+            <div class="distance-options">
+              <button class="btn btn-secondary" (click)="switchTab('hotel')">
+                <i class="fas fa-hotel"></i>
+                Près d'un hôtel
+              </button>
+              <button class="btn btn-secondary" (click)="switchTab('road')">
+                <i class="fas fa-road"></i>
+                Le long d'une voie
+              </button>
+              <button class="btn btn-secondary" (click)="switchTab('point')">
+                <i class="fas fa-map-marker-alt"></i>
+                Point personnalisé
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Onglet Hôtel -->
+        <div class="tab-content" [class.active]="currentTab === 'hotel'">
+          <div class="form-group">
+            <label class="form-label">Hôtel de référence</label>
+            <select class="form-select" [(ngModel)]="selectedHotel" name="hotel">
+              <option value="">Sélectionner un hôtel...</option>
+              <option *ngFor="let hotel of hotels" [value]="hotel.id">{{ hotel.nom }}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Rayon de recherche</label>
+            <input type="range" class="distance-slider" min="100" max="5000" [(ngModel)]="bufferRadius" name="bufferRadius">
+            <div class="slider-value">{{ bufferRadius >= 1000 ? (bufferRadius / 1000).toFixed(1) + ' km' : bufferRadius + ' mètres' }}</div>
+          </div>
+          
+          <div class="form-group">
+            <button class="btn btn-primary" (click)="executeHotelBufferQuery()" [disabled]="!selectedHotel || isLoadingQuery">
+              <i class="fas fa-search"></i>
+              {{ isLoadingQuery ? 'Recherche...' : 'Rechercher près de l\'hôtel' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Onglet Voie -->
+        <div class="tab-content" [class.active]="currentTab === 'road'">
+          <div class="form-group">
+            <label class="form-label">Voie de référence</label>
+            <select class="form-select" [(ngModel)]="selectedRoad" name="road">
+              <option value="">Sélectionner une voie...</option>
+              <option *ngFor="let road of roads" [value]="road.id">{{ road.nom }}</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Distance de la voie</label>
+            <input type="range" class="distance-slider" min="10" max="500" [(ngModel)]="roadBuffer" name="roadBuffer">
+            <div class="slider-value">{{ roadBuffer }} mètres</div>
+          </div>
+          
+          <div class="form-group">
+            <button class="btn btn-primary" (click)="executeRoadBufferQuery()" [disabled]="!selectedRoad || isLoadingQuery">
+              <i class="fas fa-search"></i>
+              {{ isLoadingQuery ? 'Recherche...' : 'Rechercher le long de la voie' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Onglet Point personnalisé -->
+        <div class="tab-content" [class.active]="currentTab === 'point'">
           <div class="form-group">
             <label class="form-label">Point de référence</label>
             <div class="draw-tools">
@@ -94,16 +142,8 @@
           
           <div class="form-group">
             <label class="form-label">Rayon de recherche</label>
-            <input type="range" class="distance-slider" min="50" max="5000" [value]="distanceValue" (input)="onDistanceChange($event)">
-            <div class="slider-value">{{ distanceValue >= 1000 ? (distanceValue / 1000).toFixed(1) + ' km' : distanceValue + ' mètres' }}</div>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Type de distance</label>
-            <select class="form-select">
-              <option value="euclidienne">Distance euclidienne</option>
-              <option value="reseau">Distance réseau routier</option>
-            </select>
+            <input type="range" class="distance-slider" min="50" max="5000" [(ngModel)]="bufferRadius" name="bufferRadius">
+            <div class="slider-value">{{ bufferRadius >= 1000 ? (bufferRadius / 1000).toFixed(1) + ' km' : bufferRadius + ' mètres' }}</div>
           </div>
         </div>
       </div>
@@ -159,6 +199,51 @@
           <button class="btn-export" (click)="exportResults('csv')">📋 CSV</button>
           <button class="btn-export" (click)="exportResults('gpkg')">🗺️ GeoPackage</button>
           <button class="btn-export" (click)="exportResults('pdf')">📄 PDF Carte</button>
+        </div>
+      </div>
+
+      <!-- Statistiques des requêtes spatiales -->
+      <div class="query-statistics" *ngIf="queryStatistics">
+        <h3 class="section-title">📊 Statistiques de la Requête</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value">{{ queryStatistics.totalParcelles }}</div>
+            <div class="stat-label">Parcelles trouvées</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ (queryStatistics.totalSurface / 10000).toFixed(2) }}</div>
+            <div class="stat-label">Surface totale (ha)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ (queryStatistics.surfaceMoyenne / 10000).toFixed(2) }}</div>
+            <div class="stat-label">Surface moyenne (ha)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ queryStatistics.executionTime }}ms</div>
+            <div class="stat-label">Temps d'exécution</div>
+          </div>
+        </div>
+        
+        <!-- Répartition par statut -->
+        <div class="distribution-section" *ngIf="queryStatistics.parcellesParStatut">
+          <h4>Répartition par Statut Foncier</h4>
+          <div class="distribution-chart">
+            <div class="distribution-item" *ngFor="let statut of getStatutDistribution()">
+              <div class="distribution-bar" [style.width.%]="statut.percentage"></div>
+              <span class="distribution-label">{{ statut.label }} ({{ statut.count }})</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Répartition par zonage -->
+        <div class="distribution-section" *ngIf="queryStatistics.parcellesParZonage">
+          <h4>Répartition par Zonage</h4>
+          <div class="distribution-chart">
+            <div class="distribution-item" *ngFor="let zonage of getZonageDistribution()">
+              <div class="distribution-bar" [style.width.%]="zonage.percentage"></div>
+              <span class="distribution-label">{{ zonage.label }} ({{ zonage.count }})</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -227,7 +312,7 @@
                   Aucune requête lancée - Utilisez les outils de recherche ci-dessus
                 </td>
               </tr>
-              <tr *ngFor="let parcelle of queryResults?.parcelles">
+              <tr *ngFor="let parcelle of spatialQueryResults">
                 <td><strong>{{ parcelle.referenceFonciere }}</strong></td>
                 <td>{{ parcelle.proprietaire }}</td>
                 <td><span class="status-badge" [class]="'status-' + parcelle.statutFoncier.toLowerCase()">{{ parcelle.statutFoncier }}</span></td>
